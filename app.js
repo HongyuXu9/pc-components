@@ -571,7 +571,7 @@ function render() {
     const visual = p.image
       ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(p.image)}" alt="${escapeAttr(p.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
       : '<div class="part-visual image-missing"></div>';
-    top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(p.category)} · ${p.offers.length} offer${p.offers.length === 1 ? "" : "s"}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">＋ Store</button><button class="icon-button" title="Edit" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="Delete" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
+    top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(p.category)} · ${p.offers.length} offer${p.offers.length === 1 ? "" : "s"}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">＋ Store</button><button class="mini-button" title="Move to Da valutare" data-act="watchlist" data-id="${escapeAttr(p.id)}">☆ Da valutare</button><button class="icon-button" title="Edit" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="Delete" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
     row.append(top);
     const offerList = document.createElement("div");
     offerList.className = "offer-list";
@@ -949,6 +949,15 @@ $("componentList").addEventListener("click", async (e) => {
     case "add-offer":
       addOffer(p.id);
       break;
+    case "watchlist": {
+      const snapshot = JSON.stringify({ components, watchlist, trash });
+      components = components.filter((item) => item !== p);
+      watchlist.unshift(p);
+      if (await saveCollectionMutation(snapshot)) {
+        notify("Moved to Da valutare");
+      }
+      break;
+    }
     case "log":
       selectedHistoryOfferId = b.dataset.offer;
       logPrice(p.id, b.dataset.offer);
