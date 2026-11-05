@@ -190,15 +190,7 @@ function setupActivityLogWindow() {
     width: Number.isFinite(saved.width) ? Math.max(320, saved.width) : 500,
     height: Number.isFinite(saved.height) ? Math.max(180, saved.height) : 320,
   };
-  const toggle = $("toggleActivityLog");
   const maximize = $("maximizeActivityLog");
-  const setCollapsed = (collapsed) => {
-    panel.classList.toggle("collapsed", collapsed);
-    toggle.textContent = collapsed ? "□" : "−";
-    toggle.title = collapsed ? "Expand" : "Collapse";
-    toggle.setAttribute("aria-label", collapsed ? "Expand activity log" : "Collapse activity log");
-    maximize.disabled = collapsed;
-  };
   const setMaximized = (maximized) => {
     panel.classList.toggle("maximized", maximized);
     maximize.textContent = maximized ? "❐" : "⛶";
@@ -212,7 +204,7 @@ function setupActivityLogWindow() {
   const persist = () => {
     if (panel.hidden) return;
     const rect = panel.getBoundingClientRect();
-    if (!panel.classList.contains("collapsed") && !panel.classList.contains("maximized")) {
+    if (!panel.classList.contains("maximized")) {
       normalSize.width = Math.round(rect.width);
       normalSize.height = Math.round(rect.height);
     }
@@ -220,7 +212,6 @@ function setupActivityLogWindow() {
       localStorage.setItem(stateKey, JSON.stringify({
         width: normalSize.width,
         height: normalSize.height,
-        collapsed: panel.classList.contains("collapsed"),
         maximized: panel.classList.contains("maximized"),
         hidden: false,
       }));
@@ -228,18 +219,11 @@ function setupActivityLogWindow() {
   };
   panel.style.left = "auto";
   panel.style.top = "auto";
-  setCollapsed(Boolean(saved.collapsed));
-  setMaximized(Boolean(saved.maximized) && !saved.collapsed);
+  setMaximized(Boolean(saved.maximized));
   // Start with the small launcher button every time; the user opens the panel on demand.
   panel.hidden = true;
   reopen.hidden = false;
-  toggle.addEventListener("click", () => {
-    if (panel.classList.contains("maximized")) setMaximized(false);
-    setCollapsed(!panel.classList.contains("collapsed"));
-    persist();
-  });
   maximize.addEventListener("click", () => {
-    if (panel.classList.contains("collapsed")) setCollapsed(false);
     setMaximized(!panel.classList.contains("maximized"));
     persist();
   });
@@ -257,6 +241,46 @@ function setupActivityLogWindow() {
     reopen.hidden = true;
     persist();
   });
+  const resizeEdges = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
+  for (const edges of resizeEdges) {
+    const handle = document.createElement("div");
+    handle.className = `activity-log-resize activity-log-resize-${edges}`;
+    handle.setAttribute("aria-hidden", "true");
+    handle.addEventListener("pointerdown", (event) => {
+      if (panel.classList.contains("maximized")) return;
+      event.preventDefault();
+      handle.setPointerCapture(event.pointerId);
+      const start = panel.getBoundingClientRect();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const west = edges.includes("w");
+      const east = edges.includes("e");
+      const north = edges.includes("n");
+      const south = edges.includes("s");
+      const move = (pointerEvent) => {
+        const dx = pointerEvent.clientX - startX;
+        const dy = pointerEvent.clientY - startY;
+        const minWidth = Math.min(320, window.innerWidth - 24);
+        const minHeight = Math.min(180, window.innerHeight - 24);
+        const width = Math.max(minWidth, Math.min(window.innerWidth - 20, start.width + (west ? -dx : east ? dx : 0)));
+        const height = Math.max(minHeight, Math.min(window.innerHeight - 20, start.height + (north ? -dy : south ? dy : 0)));
+        panel.style.width = `${width}px`;
+        panel.style.height = `${height}px`;
+        if (east) panel.style.right = `${Math.max(10, window.innerWidth - start.left - width)}px`;
+        if (south) panel.style.bottom = `${Math.max(10, window.innerHeight - start.top - height)}px`;
+      };
+      const finish = () => {
+        handle.removeEventListener("pointermove", move);
+        handle.removeEventListener("pointerup", finish);
+        handle.removeEventListener("pointercancel", finish);
+        persist();
+      };
+      handle.addEventListener("pointermove", move);
+      handle.addEventListener("pointerup", finish);
+      handle.addEventListener("pointercancel", finish);
+    });
+    panel.append(handle);
+  }
   new ResizeObserver(persist).observe(panel);
   window.addEventListener("resize", () => {
     if (panel.classList.contains("maximized")) setMaximized(true);
