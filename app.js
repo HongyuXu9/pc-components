@@ -95,6 +95,12 @@ function bindStoreUrl(urlId, storeId) {
   url.addEventListener("change", () => syncStoreName(urlId, storeId));
 }
 
+function resolveStoreName(store, url) {
+  const current = String(store || "").trim();
+  if (current && current.toLowerCase() !== "unknown store") return current;
+  return storeNameFromUrl(String(url || "")) || "Unknown source";
+}
+
 function migrate(data) {
   const categories = {
     "Scheda Video (GPU)": "GPU",
@@ -113,6 +119,7 @@ function migrate(data) {
         offers: p.offers.map((o, j) => ({
           ...o,
           id: o.id || `${p.id}-${j}`,
+          store: resolveStoreName(o.store, o.url),
           condition: o.condition || "New",
           history: Array.isArray(o.history) ? o.history : [],
         })),
@@ -124,7 +131,7 @@ function migrate(data) {
       offers: [
         {
           id: `${p.id || i}-legacy`,
-          store: p.store || "Unknown store",
+          store: resolveStoreName(p.store, p.url),
           price: Number(p.currentPrice) || 0,
           condition: "New",
           url: "",
@@ -738,14 +745,14 @@ $("partForm").addEventListener("submit", async (e) => {
     if (!o) {
       o = {
         id: Date.now(),
-        store: $("partStore").value.trim(),
+        store: resolveStoreName($("partStore").value, $("partUrl").value),
         condition: $("partCondition").value,
         url: $("partUrl").value.trim(),
         history: [],
       };
       p.offers.push(o);
     }
-    o.store = $("partStore").value.trim();
+    o.store = resolveStoreName($("partStore").value, $("partUrl").value);
     o.condition = $("partCondition").value;
     o.url = $("partUrl").value.trim();
     o.price = price;
@@ -761,7 +768,7 @@ $("partForm").addEventListener("submit", async (e) => {
       offers: [
         {
           id: `o-${Date.now()}`,
-          store: $("partStore").value.trim(),
+          store: resolveStoreName($("partStore").value, $("partUrl").value),
           condition: $("partCondition").value,
           url: $("partUrl").value.trim(),
           price,
@@ -794,7 +801,7 @@ $("offerForm").addEventListener("submit", (e) => {
   const price = Number($("offerPrice").value);
   p.offers.push({
     id: `o-${Date.now()}`,
-    store: $("offerStore").value.trim(),
+    store: resolveStoreName($("offerStore").value, $("offerUrl").value),
     condition: $("offerCondition").value,
     url: $("offerUrl").value.trim(),
     price,
@@ -1233,7 +1240,7 @@ $("addBatchProducts").addEventListener("click", async () => {
     notify("No products to add");
     return;
   }
-  const store = $("batchStore").value.trim();
+  const store = resolveStoreName($("batchStore").value, "");
   const products = rows.map((row) => ({
     name: row.querySelector(".batch-name").value.trim(),
     category: row.querySelector(".batch-category").value,
