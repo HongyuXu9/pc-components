@@ -8,7 +8,7 @@ save succeeds.
 
 ## Start the app
 
-1. On Windows, double-click `Partly.lnk` to open the app in its own Edge window. The local server runs without a console window and stops when you close the Partly window.
+1. On Windows, double-click `Partly.lnk` to open Partly in your default browser. The local server runs without a console window and stops when you close the Partly browser window.
 2. Copy `Partly.lnk` to your Desktop if you want a desktop icon.
 3. Close the Partly window to stop the local server.
 

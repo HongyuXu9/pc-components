@@ -60,22 +60,8 @@ try {
         if (-not $serverReady) { throw "Partly could not start its local server." }
     }
 
-    $stage = "finding a browser"
-    $edgeCandidates = @(
-        (Join-Path ${env:ProgramFiles(x86)} "Microsoft\Edge\Application\msedge.exe"),
-        (Join-Path $env:ProgramFiles "Microsoft\Edge\Application\msedge.exe"),
-        (Join-Path $env:LOCALAPPDATA "Microsoft\Edge\Application\msedge.exe")
-    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
-    $edgeCommand = Get-Command msedge.exe -ErrorAction SilentlyContinue
     $stage = "opening Partly in the browser"
-    if ($edgeCandidates.Count -gt 0) {
-        $edgePath = $edgeCandidates[0]
-        Start-Process -FilePath $edgePath -ArgumentList "--app=$appUrl"
-    } elseif ($edgeCommand) {
-        Start-Process -FilePath $edgeCommand.Source -ArgumentList "--app=$appUrl"
-    } else {
-        Start-Process $appUrl
-    }
+    Start-Process -FilePath $appUrl
 
     $windowSeen = $false
     $stage = "waiting for the Partly window to close"
