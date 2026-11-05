@@ -25,10 +25,13 @@
         ></a
       >
       <div class="nav-label">WORKSPACE</div>
-      <a class="nav active" href="#overview"><span>◫</span> Overview</a
-      ><a class="nav" href="#parts"
-        ><span>▦</span> My components <b id="navCount">0</b></a
-      ><a class="nav" href="#history"><span>⌁</span> Price history</a>
+      <a class="nav active" href="#overview" data-sidebar-view="overview"><span>◫</span> Overview</a>
+      <div class="nav-label">YOUR PC</div>
+      <button class="nav" type="button" data-sidebar-view="build" data-collection="build"><span>▦</span> Build <b id="navCount">0</b></button>
+      <button class="nav" type="button" data-sidebar-view="watchlist" data-collection="watchlist"><span>☆</span> Da valutare <b id="sidebarWatchCount">0</b></button>
+      <div class="nav-label">TOOLS</div>
+      <a class="nav" href="#history" data-sidebar-view="history"><span>⌁</span> Price history</a>
+      <button class="nav" type="button" data-sidebar-view="trash" data-collection="trash"><span>▤</span> Cestino <b id="sidebarTrashCount">0</b></button>
       <div class="sidebar-bottom">
         <div class="local-note">
           <span class="live-dot"></span>

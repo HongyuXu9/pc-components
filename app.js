@@ -154,7 +154,9 @@ let components = [];
 let watchlist = [];
 let trash = [];
 let activeCollection = "build";
+let activeSidebarView = "overview";
 let editingCollection = "components";
+let offerCollection = "components";
 let dataReady = false;
 let saveQueue = Promise.resolve();
 function reportClientIssue(level, message, context = "") {
@@ -558,6 +560,8 @@ function render() {
   $("watchlistCount").textContent = watchlist.length;
   $("trashCount").textContent = trash.length;
   $("navCount").textContent = components.length;
+  $("sidebarWatchCount").textContent = watchlist.length;
+  $("sidebarTrashCount").textContent = trash.length;
   $("statStores").textContent = stores.size;
   $("statBest").textContent = historicalLow ? money(historicalLow.price) : "—";
   $("bestName").textContent = historicalLow
@@ -620,6 +624,9 @@ function render() {
     tab.classList.toggle("active", tab.dataset.collection === activeCollection);
     tab.setAttribute("aria-selected", String(tab.dataset.collection === activeCollection));
   });
+  document.querySelectorAll("[data-sidebar-view]").forEach((item) => {
+    item.classList.toggle("active", item.dataset.sidebarView === activeSidebarView);
+  });
   renderSavedCollection(watchlist, $("watchlistList"), "watchlist");
   renderSavedCollection(trash, $("trashList"), "trash");
   $("watchlistEmpty").hidden = watchlist.length > 0;
@@ -630,7 +637,7 @@ function renderSavedCollection(items, list, collection) {
   list.replaceChildren();
   for (const part of items) {
     const row = document.createElement("article");
-    row.className = "component saved-component";
+    row.className = `component saved-component ${collection === "watchlist" ? "watchlist-component" : "trash-component"}`;
     row.classList.toggle(
       "is-selected",
       collection === "watchlist" && part.offers.some((offer) => String(offer.id) === String(selectedWatchlistOfferId)),
@@ -639,19 +646,38 @@ function renderSavedCollection(items, list, collection) {
     const visual = part.image
       ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(part.image)}" alt="${escapeAttr(part.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
       : '<div class="part-visual image-missing"></div>';
-    const price = offer ? money(offer.price) : "No price";
-    const store = offer?.url
-      ? `<a href="${escapeAttr(offer.url)}" target="_blank" rel="noopener">${escapeHtml(offer.store)} ↗</a>`
-      : escapeHtml(offer?.store || "Unknown source");
     const buttons = collection === "watchlist"
-      ? `<button class="mini-button" data-list-act="add" data-id="${escapeAttr(part.id)}">Add to build</button>${components.length ? `<button class="mini-button" data-list-act="replace" data-id="${escapeAttr(part.id)}">Replace…</button>` : ""}<button class="icon-button" title="Edit" data-list-act="edit" data-id="${escapeAttr(part.id)}">✎</button><button class="icon-button" title="Move to trash" data-list-act="trash" data-id="${escapeAttr(part.id)}">×</button>`
+      ? `<button class="mini-button" data-list-act="add-offer" data-id="${escapeAttr(part.id)}">＋ Store</button><button class="mini-button" data-list-act="add" data-id="${escapeAttr(part.id)}">Add to build</button>${components.length ? `<button class="mini-button" data-list-act="replace" data-id="${escapeAttr(part.id)}">Replace…</button>` : ""}<button class="icon-button" title="Edit" data-list-act="edit" data-id="${escapeAttr(part.id)}">✎</button><button class="icon-button" title="Move to trash" data-list-act="trash" data-id="${escapeAttr(part.id)}">×</button>`
       : `<button class="mini-button" data-list-act="restore" data-id="${escapeAttr(part.id)}">Restore</button><button class="mini-button danger-text" data-list-act="purge" data-id="${escapeAttr(part.id)}">Delete permanently</button>`;
     const removed = collection === "trash" && part.deletedAt
       ? ` · Deleted ${escapeHtml(new Date(part.deletedAt).toLocaleDateString())}`
       : "";
-    row.innerHTML = `<div class="component-top">${visual}<div class="part-title"><strong>${escapeHtml(part.name)}</strong><span>${escapeHtml(part.category)} · ${price} · ${store}${removed}</span></div><div class="component-actions">${buttons}</div></div>`;
+    row.innerHTML = `<div class="component-top">${visual}<div class="part-title"><strong>${escapeHtml(part.name)}${collection === "watchlist" ? '<em class="watchlist-tag">Considering</em>' : ""}</strong><span>${escapeHtml(part.category)}${removed}</span></div><div class="component-actions">${buttons}</div></div>`;
     row.dataset.id = part.id;
     row.dataset.defaultOfferId = offer?.id ?? "";
+    if (collection === "watchlist") {
+      const offerList = document.createElement("div");
+      offerList.className = "offer-list saved-offer-list";
+      part.offers.forEach((item) => {
+        const bestOffer = item === offer;
+        const line = document.createElement("div");
+        line.className = "offer-row";
+        line.dataset.viewOffer = item.id;
+        line.classList.toggle("is-selected", String(item.id) === String(selectedWatchlistOfferId));
+        const name = item.url
+          ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.store)} ↗</a>`
+          : escapeHtml(item.store || "Unknown source");
+        const removeButton = part.offers.length > 1
+          ? `<button data-list-act="remove-offer" data-id="${escapeAttr(part.id)}" data-offer="${escapeAttr(item.id)}" title="Remove offer">×</button>`
+          : "";
+        line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(item.condition || "New")}</span></span><span class="offer-meta">${item.history.length} price record${item.history.length === 1 ? "" : "s"}${bestOffer ? " · Best price" : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${money(item.price)}</div><div class="offer-controls"><button data-list-act="log" data-id="${escapeAttr(part.id)}" data-offer="${escapeAttr(item.id)}">Log price</button>${removeButton}</div>`;
+        offerList.append(line);
+      });
+      row.append(offerList);
+    } else {
+      const bestLabel = offer ? `${money(offer.price)} · ${offer.store || "Unknown source"}` : "No price saved";
+      row.querySelector(".part-title span").textContent += ` · ${bestLabel}`;
+    }
     list.append(row);
   }
 }
@@ -884,8 +910,10 @@ async function logPrice(partId, offerId, entryDate = null) {
   render();
   notify(existingEntry ? "Price point updated" : "Price history updated");
 }
-function addOffer(partId) {
-  const p = components.find((x) => String(x.id) === String(partId));
+function addOffer(partId, collection = "components") {
+  offerCollection = collection;
+  const source = collection === "watchlist" ? watchlist : components;
+  const p = source.find((x) => String(x.id) === String(partId));
   if (!p) return;
   $("offerForm").reset();
   $("offerStore").dataset.autoStore = "";
@@ -985,10 +1013,12 @@ $("partForm").addEventListener("submit", async (e) => {
   }
 });
 $("addWatchlist").addEventListener("click", () => openModal(null, "watchlist"));
-$("offerForm").addEventListener("submit", (e) => {
+$("offerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const p = components.find((x) => String(x.id) === $("offerPartId").value);
+  const source = offerCollection === "watchlist" ? watchlist : components;
+  const p = source.find((x) => String(x.id) === $("offerPartId").value);
   if (!p) return;
+  const snapshot = JSON.stringify({ components, watchlist, trash });
   const price = Number($("offerPrice").value);
   p.offers.push({
     id: `o-${Date.now()}`,
@@ -998,10 +1028,10 @@ $("offerForm").addEventListener("submit", (e) => {
     price,
     history: [{ date: today(), price }],
   });
-  save();
-  $("offerModal").classList.remove("open");
-  render();
-  notify("Store offer added");
+  if (await saveCollectionMutation(snapshot)) {
+    $("offerModal").classList.remove("open");
+    notify("Store offer added");
+  }
 });
 $("componentList").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]");
@@ -1078,6 +1108,12 @@ $("watchlistList").addEventListener("click", async (event) => {
   const button = event.target.closest("[data-list-act]");
   if (!button) {
     if (event.target.closest("a")) return;
+    const offerRow = event.target.closest("[data-view-offer]");
+    if (offerRow) {
+      selectedWatchlistOfferId = offerRow.dataset.viewOffer;
+      render();
+      return;
+    }
     const row = event.target.closest(".saved-component");
     if (row && row.dataset.defaultOfferId) {
       selectedWatchlistOfferId = row.dataset.defaultOfferId;
@@ -1088,6 +1124,33 @@ $("watchlistList").addEventListener("click", async (event) => {
   const part = watchlist.find((item) => String(item.id) === button.dataset.id);
   if (!part) return;
   const action = button.dataset.listAct;
+  if (action === "add-offer") {
+    addOffer(part.id, "watchlist");
+    return;
+  }
+  if (action === "log") {
+    selectedWatchlistOfferId = button.dataset.offer;
+    logPrice(part.id, button.dataset.offer);
+    return;
+  }
+  if (action === "remove-offer") {
+    if (part.offers.length <= 1) {
+      notify("A component needs at least one offer");
+      return;
+    }
+    const offer = part.offers.find((item) => String(item.id) === button.dataset.offer);
+    if (!(await openActionDialog({
+      eyebrow: "REMOVE STORE OFFER",
+      title: `Remove ${offer?.store || "this offer"}?`,
+      subtitle: "This also removes its price history from the graph.",
+      confirmLabel: "Remove offer",
+      danger: true,
+    }))) return;
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    part.offers = part.offers.filter((item) => String(item.id) !== button.dataset.offer);
+    if (await saveCollectionMutation(snapshot)) notify("Offer removed");
+    return;
+  }
   if (action === "edit") {
     openModal(part, "watchlist");
     return;
@@ -1168,7 +1231,24 @@ $("trashList").addEventListener("click", async (event) => {
 document.querySelectorAll(".collection-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     activeCollection = tab.dataset.collection;
+    activeSidebarView = activeCollection;
     render();
+  });
+});
+document.querySelectorAll(".sidebar [data-collection]").forEach((item) => {
+  item.addEventListener("click", () => {
+    activeCollection = item.dataset.collection;
+    activeSidebarView = item.dataset.sidebarView;
+    render();
+    $("parts").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [data-sidebar-view='history']").forEach((item) => {
+  item.addEventListener("click", () => {
+    activeSidebarView = item.dataset.sidebarView;
+    document.querySelectorAll("[data-sidebar-view]").forEach((link) => {
+      link.classList.toggle("active", link.dataset.sidebarView === activeSidebarView);
+    });
   });
 });
 ["openAdd", "emptyAdd"].forEach((id) =>

@@ -71,8 +71,10 @@ body {
 }
 .nav-label {
   padding: 0 12px;
+  margin-top: 18px;
   margin-bottom: 10px;
 }
+.brand + .nav-label { margin-top: 0; }
 .nav {
   height: 43px;
   display: flex;
@@ -84,6 +86,19 @@ body {
   color: #69756c;
   text-decoration: none;
   font-weight: 600;
+  font-family: var(--font);
+  font-size: 11px;
+}
+.sidebar button.nav {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar button.nav:hover {
+  background: #f5f7f3;
+  color: #344b37;
 }
 .nav span {
   font-size: 18px;
@@ -98,7 +113,11 @@ body {
   margin-left: auto;
   font-size: 11px;
   color: #7c887c;
+  border-radius: 20px;
+  background: #f0f3ed;
+  padding: 2px 7px;
 }
+.nav.active b { background: #e4f1d7; color: #516d38; }
 .sidebar-bottom {
   margin-top: auto;
 }
@@ -463,6 +482,49 @@ body {
 .saved-component .part-title span a {
   color: inherit;
   text-decoration: none;
+}
+.saved-component .offer-list {
+  margin-left: 103px;
+}
+.saved-component .component-actions {
+  flex-wrap: wrap;
+}
+.watchlist-component {
+  margin: 8px 10px;
+  padding: 13px 11px;
+  border: 1px solid #e9e9f4;
+  border-left: 3px solid #8a78c5;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #fcfbff, #ffffff 48%);
+}
+.watchlist-component .component-top {
+  grid-template-columns: 90px minmax(0, 1fr) auto;
+  gap: 13px;
+}
+.watchlist-component .part-title strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.watchlist-tag {
+  border-radius: 20px;
+  padding: 3px 7px;
+  background: #f0edfa;
+  color: #7764b2;
+  font: 700 8px var(--font);
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.watchlist-component .offer-list {
+  border-top-color: #e9e5f3;
+}
+.watchlist-component .offer-row.is-selected {
+  background: #faf9fe;
+}
+.trash-component {
+  opacity: .86;
+  background: #fbfcfb;
 }
 .danger-text {
   color: #b44d45;
@@ -987,6 +1049,9 @@ footer span {
   }
   .saved-component .component-actions {
     flex-wrap: wrap;
+  }
+  .saved-component .offer-list {
+    margin-left: 0;
   }
   .collection-toolbar {
     align-items: flex-start;
