@@ -375,10 +375,20 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
     document.addEventListener("keydown", onKeyDown);
   });
 }
+function setComponentEntryMode(mode) {
+  const bulk = mode === "bulk";
+  $("bulkReview").hidden = !bulk;
+  $("singleFields").hidden = bulk;
+  $("singleFields").querySelectorAll("input, select, textarea, button").forEach((control) => {
+    control.disabled = bulk;
+  });
+  $("bulkReview").querySelectorAll("input, select, textarea, button").forEach((control) => {
+    control.disabled = !bulk;
+  });
+}
 function openModal(part) {
   $("partForm").reset();
-  $("bulkReview").hidden = true;
-  $("singleFields").hidden = false;
+  setComponentEntryMode("single");
   $("ocrStatus").textContent = "";
   $("partId").value = part?.id || "";
   $("modalTitle").textContent = part ? "Edit component" : "Add a component";
@@ -1081,8 +1091,7 @@ function renderBatchReview(items, detectedStore = "") {
     rows.append(row);
   }
 
-  $("singleFields").hidden = true;
-  $("bulkReview").hidden = false;
+  setComponentEntryMode("bulk");
   $("ocrStatus").textContent =
     "Check the detected products, correct anything needed, then add the whole list.";
 }
@@ -1152,13 +1161,11 @@ document.addEventListener("paste", (event) => {
 });
 
 $("backFromBatch").addEventListener("click", () => {
-  $("bulkReview").hidden = true;
-  $("singleFields").hidden = false;
+  setComponentEntryMode("single");
   $("ocrStatus").textContent = "";
 });
 $("cancelBatch").addEventListener("click", () => {
-  $("bulkReview").hidden = true;
-  $("singleFields").hidden = false;
+  setComponentEntryMode("single");
   $("partForm").reset();
   $("ocrStatus").textContent = "";
 });

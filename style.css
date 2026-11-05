@@ -999,6 +999,11 @@ footer span {
 .activity-log-actions button:hover { background: #ffffff2a; }
 .activity-log-head span { color: #b9ee62; font-size: 10px; }
 .activity-log ol { flex: 1; min-height: 0; overflow: auto; list-style: none; padding: 0; margin: 0; }
+.activity-log ol { scrollbar-width: thin; scrollbar-color: #789b62 #203127; }
+.activity-log ol::-webkit-scrollbar { width: 9px; }
+.activity-log ol::-webkit-scrollbar-track { margin: 5px 0; border-radius: 8px; background: #203127; }
+.activity-log ol::-webkit-scrollbar-thumb { border: 2px solid #203127; border-radius: 8px; background: #789b62; }
+.activity-log ol::-webkit-scrollbar-thumb:hover { background: #b9ee62; }
 .activity-log li { padding: 6px 0; border-bottom: 1px solid #ffffff12; overflow-wrap: anywhere; }
 .activity-log li:last-child { border-bottom: 0; }
 .activity-log .log-error { color: #ffaaa2; }
