@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101611" />
+    <title>Partly — PC build & price tracker</title>
+    <link rel="icon" href="partly.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="#"
+        ><span class="brand-mark">P</span
+        ><span
+          >partly<span class="brand-dot">.</span
+          ><small>BUILD & PRICE TRACKER</small></span
+        ></a
+      >
+      <div class="nav-label">WORKSPACE</div>
+      <a class="nav active" href="#overview"><span>◫</span> Overview</a
+      ><a class="nav" href="#parts"
+        ><span>▦</span> My components <b id="navCount">0</b></a
+      ><a class="nav" href="#history"><span>⌁</span> Price history</a>
+      <div class="sidebar-bottom">
+        <div class="local-note">
+          <span class="live-dot"></span>
+          <div>
+            <strong id="storageTitle">Your data stays on this PC</strong
+            ><small id="storageStatus">Saved to data.json</small>
+          </div>
+        </div>
+        <div class="side-foot">MADE FOR YOUR NEXT BUILD</div>
+      </div>
+    </aside>
+    <main class="main" id="overview">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">YOUR PC BUILD, AT A GLANCE</span>
+          <h1>Build overview</h1>
+        </div>
+        <button class="primary" id="openAdd">＋ Add component</button>
+      </header>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="hero-kicker"><i></i> BUILD BUDGET</span>
+          <h2>Every part.<br /><em>One smart build.</em></h2>
+          <p>
+            Keep your components, compare stores and track every price change in
+            one place.
+          </p>
+        </div>
+        <div class="hero-total">
+          <span>Current build total</span><strong id="grandTotal">€0.00</strong
+          ><small id="totalFoot">Across 0 components</small>
+          <div class="hero-line"></div>
+          <div class="hero-mini">
+            <span><b id="offerCount">0</b> offers tracked</span
+            ><span><b id="historyCount">0</b> price entries</span>
+          </div>
+        </div>
+        <div class="hero-orbit orbit-one"></div>
+        <div class="hero-orbit orbit-two"></div>
+      </section>
+      <section class="stats">
+        <article class="stat-card">
+          <span class="stat-icon lime">▦</span>
+          <div>
+            <small>COMPONENTS</small><strong id="statParts">0</strong
+            ><span>in your build</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon violet">◎</span>
+          <div>
+            <small>STORES COMPARED</small><strong id="statStores">0</strong
+            ><span>across all components</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon amber">↘</span>
+          <div>
+            <small>BEST CURRENT PRICE</small><strong id="statBest">—</strong
+            ><span id="bestName">Add your first offer</span>
+          </div>
+        </article>
+      </section>
+      <section class="content-grid">
+        <div class="panel components-panel" id="parts">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">YOUR PARTS LIST</span>
+              <h2>
+                Components <span class="count-pill" id="partsCount">0</span>
+              </h2>
+            </div>
+            <div class="tools">
+              <label class="search"
+                ><span>⌕</span
+                ><input id="search" placeholder="Search components…" /></label
+              ><select id="categoryFilter">
+                <option value="">All categories</option>
+              </select>
+            </div>
+          </div>
+          <div id="componentList" class="component-list"></div>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-icon">▦</div>
+            <h3>Your build starts here</h3>
+            <p>
+              Add a component to compare offers and watch its price over time.
+            </p>
+            <button class="primary" id="emptyAdd">
+              ＋ Add your first component
+            </button>
+          </div>
+        </div>
+        <div class="panel history-panel" id="history">
+          <div class="panel-head">
+            <div>
+              <span class="eyebrow">PRICE WATCH</span>
+              <h2>Price history</h2>
+            </div>
+            <select id="chartOffer" aria-label="Select offer">
+              <option value="">Select an offer</option>
+            </select>
+          </div>
+          <div class="chart-caption">
+            <span class="legend-dot"></span
+            ><span id="chartLabel"
+              >Choose an offer to view its price trend</span
+            >
+          </div>
+          <div class="chart-wrap">
+            <canvas id="priceChart"></canvas>
+            <div class="chart-empty" id="chartEmpty">
+              Your price history will appear here.
+            </div>
+          </div>
+          <div class="chart-foot">
+            <span>Prices are logged manually</span
+            ><button class="text-button" id="logPriceBtn">
+              ＋ Log a price
+            </button>
+          </div>
+        </div>
+      </section>
+      <footer>PARTLY <span>·</span> A clearer way to build your PC</footer>
+    </main>
+    <div class="modal-backdrop" id="modal">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow">COMPONENT DETAILS</span>
+            <h2 id="modalTitle">Add a component</h2>
+          </div>
+          <button class="icon-button" id="closeModal" aria-label="Close">
+            ×
+          </button>
+        </div>
+        <form id="partForm">
+          <input type="hidden" id="partId" />
+          <div class="screenshot-box">
+            <div>
+              <strong>Quick add from screenshot</strong
+              ><span
+                >We’ll read visible product text and price. Review before
+                saving.</span
+              >
+            </div>
+            <label class="upload-button"
+              >Choose image<input
+                type="file"
+                id="screenshotInput"
+                accept="image/*"
+                hidden
+            /></label>
+          </div>
+          <div id="ocrStatus" class="ocr-status"></div>
+          <div class="form-grid">
+            <label class="field wide"
+              >Component name<input
+                id="partName"
+                required
+                placeholder="e.g. AMD Ryzen 7 9800X3D" /></label
+            ><label class="field"
+              >Category<select id="partCategory">
+                <option>CPU</option>
+                <option>GPU</option>
+                <option>RAM</option>
+                <option>Motherboard</option>
+                <option>Storage</option>
+                <option>Power supply</option>
+                <option>Case</option>
+                <option>Cooling</option>
+                <option>Monitor</option>
+                <option>Accessories</option>
+                <option>Other</option>
+              </select></label
+            ><label class="field"
+              >Product image URL <span class="optional">optional</span
+              ><input id="partImageUrl" type="url" placeholder="https://…"
+            /></label>
+          </div>
+          <div class="section-divider">
+            <span>STORE OFFER</span><span class="divider-line"></span
+            ><span class="optional">Add more stores after saving</span>
+          </div>
+          <div class="form-grid">
+            <label class="field"
+              >Store name<input
+                id="partStore"
+                required
+                placeholder="e.g. Amazon" /></label
+            ><label class="field"
+              >Product condition<select id="partCondition">
+                <option>New</option>
+                <option>Used — like new</option>
+                <option>Used — good</option>
+                <option>Used — acceptable</option>
+                <option>Refurbished</option>
+              </select></label
+            ><label class="field"
+              >Price (€)<input
+                id="partPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                placeholder="0.00" /></label
+            ><label class="field"
+              >Product link <span class="optional">optional</span
+              ><input id="partUrl" type="url" placeholder="https://…"
+            /></label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="secondary" id="cancelModal">
+              Cancel</button
+            ><button class="primary" type="submit">Save component</button>
+          </div>
+        </form>
+      </section>
+    </div>
+    <div class="modal-backdrop" id="offerModal">
+      <section class="modal small-modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow">COMPARE ANOTHER STORE</span>
+            <h2>Add an offer</h2>
+            <p class="modal-subtitle" id="offerProductName"></p>
+          </div>
+          <button class="icon-button" id="closeOfferModal" aria-label="Close">
+            ×
+          </button>
+        </div>
+        <form id="offerForm">
+          <input type="hidden" id="offerPartId" />
+          <div class="form-grid">
+            <label class="field"
+              >Store name<input
+                id="offerStore"
+                required
+                placeholder="e.g. MediaWorld" /></label
+            ><label class="field"
+              >Condition<select id="offerCondition">
+                <option>New</option>
+                <option>Used — like new</option>
+                <option>Used — good</option>
+                <option>Used — acceptable</option>
+                <option>Refurbished</option>
+              </select></label
+            ><label class="field"
+              >Price (€)<input
+                id="offerPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                placeholder="0.00" /></label
+            ><label class="field"
+              >Product link<input
+                id="offerUrl"
+                type="url"
+                placeholder="https://…"
+            /></label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="secondary" id="cancelOffer">
+              Cancel</button
+            ><button class="primary" type="submit">Save offer</button>
+          </div>
+        </form>
+      </section>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
