@@ -1,5 +1,3 @@
 @echo off
-setlocal
-cd /d "%~dp0"
-start "" "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0run_app.ps1"
-endlocal
+start "" "%SystemRoot%\System32\wscript.exe" "%~dp0run_app.vbs"
+exit /b
