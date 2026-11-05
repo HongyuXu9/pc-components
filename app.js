@@ -174,54 +174,64 @@ function reportActivity(level, message, context = "") {
 }
 function setupActivityLogWindow() {
   const panel = $("activityLogWindow");
-  const handle = $("activityLogDragHandle");
   const reopen = $("reopenActivityLog");
   const stateKey = "partly_activity_log_window";
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(stateKey) || "{}"); } catch {}
+  const normalSize = {
+    width: Number.isFinite(saved.width) ? Math.max(500, saved.width) : 500,
+    height: Number.isFinite(saved.height) ? Math.max(320, saved.height) : 320,
+  };
+  const toggle = $("toggleActivityLog");
+  const maximize = $("maximizeActivityLog");
+  const setCollapsed = (collapsed) => {
+    panel.classList.toggle("collapsed", collapsed);
+    toggle.textContent = collapsed ? "□" : "−";
+    toggle.title = collapsed ? "Expand" : "Collapse";
+    toggle.setAttribute("aria-label", collapsed ? "Expand activity log" : "Collapse activity log");
+    maximize.disabled = collapsed;
+  };
+  const setMaximized = (maximized) => {
+    panel.classList.toggle("maximized", maximized);
+    maximize.textContent = maximized ? "❐" : "⛶";
+    maximize.title = maximized ? "Restore size" : "Maximize";
+    maximize.setAttribute("aria-label", maximized ? "Restore activity log size" : "Maximize activity log");
+    panel.style.right = maximized ? "10px" : "16px";
+    panel.style.bottom = maximized ? "10px" : "16px";
+    panel.style.width = maximized ? "calc(100vw - 20px)" : `${normalSize.width}px`;
+    panel.style.height = maximized ? "calc(100vh - 20px)" : `${normalSize.height}px`;
+  };
   const persist = () => {
     if (panel.hidden) return;
     const rect = panel.getBoundingClientRect();
-    let previous = {};
-    try { previous = JSON.parse(localStorage.getItem(stateKey) || "{}"); } catch {}
-    const collapsed = panel.classList.contains("collapsed");
+    if (!panel.classList.contains("collapsed") && !panel.classList.contains("maximized")) {
+      normalSize.width = Math.round(rect.width);
+      normalSize.height = Math.round(rect.height);
+    }
     try {
       localStorage.setItem(stateKey, JSON.stringify({
-        left: Math.round(rect.left), top: Math.round(rect.top),
-        width: Math.round(collapsed ? previous.width || rect.width : rect.width),
-        height: Math.round(collapsed ? previous.height || rect.height : rect.height),
-        collapsed, hidden: false,
+        width: normalSize.width,
+        height: normalSize.height,
+        collapsed: panel.classList.contains("collapsed"),
+        maximized: panel.classList.contains("maximized"),
+        hidden: false,
       }));
     } catch {}
   };
-  if (Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
-    panel.style.left = `${Math.max(0, Math.min(saved.left, innerWidth - 100))}px`;
-    panel.style.top = `${Math.max(0, Math.min(saved.top, innerHeight - 50))}px`;
-    panel.style.right = "auto";
-    panel.style.bottom = "auto";
-  }
-  if (!saved.collapsed && Number.isFinite(saved.width) && Number.isFinite(saved.height)) {
-    panel.style.width = `${saved.width}px`;
-    panel.style.height = `${saved.height}px`;
-  }
-  panel.classList.toggle("collapsed", Boolean(saved.collapsed));
+  panel.style.left = "auto";
+  panel.style.top = "auto";
+  setCollapsed(Boolean(saved.collapsed));
+  setMaximized(Boolean(saved.maximized) && !saved.collapsed);
   panel.hidden = Boolean(saved.hidden);
   reopen.hidden = !panel.hidden;
-  $("toggleActivityLog").textContent = saved.collapsed ? "□" : "−";
-  $("toggleActivityLog").title = saved.collapsed ? "Expand" : "Collapse";
-  $("toggleActivityLog").setAttribute("aria-label", saved.collapsed ? "Expand activity log" : "Collapse activity log");
-  $("toggleActivityLog").addEventListener("click", () => {
-    if (panel.classList.contains("collapsed")) {
-      let dimensions = {};
-      try { dimensions = JSON.parse(localStorage.getItem(stateKey) || "{}"); } catch {}
-      if (Number.isFinite(dimensions.width)) panel.style.width = `${dimensions.width}px`;
-      if (Number.isFinite(dimensions.height)) panel.style.height = `${dimensions.height}px`;
-    }
-    panel.classList.toggle("collapsed");
-    const collapsed = panel.classList.contains("collapsed");
-    $("toggleActivityLog").textContent = collapsed ? "□" : "−";
-    $("toggleActivityLog").title = collapsed ? "Expand" : "Collapse";
-    $("toggleActivityLog").setAttribute("aria-label", collapsed ? "Expand activity log" : "Collapse activity log");
+  toggle.addEventListener("click", () => {
+    if (panel.classList.contains("maximized")) setMaximized(false);
+    setCollapsed(!panel.classList.contains("collapsed"));
+    persist();
+  });
+  maximize.addEventListener("click", () => {
+    if (panel.classList.contains("collapsed")) setCollapsed(false);
+    setMaximized(!panel.classList.contains("maximized"));
     persist();
   });
   $("hideActivityLog").addEventListener("click", () => {
@@ -238,31 +248,9 @@ function setupActivityLogWindow() {
     reopen.hidden = true;
     persist();
   });
-  let drag = null;
-  handle.addEventListener("pointerdown", (event) => {
-    if (event.target.closest("button")) return;
-    const rect = panel.getBoundingClientRect();
-    drag = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.top}px`;
-    panel.style.right = "auto";
-    panel.style.bottom = "auto";
-    handle.setPointerCapture(event.pointerId);
-  });
-  handle.addEventListener("pointermove", (event) => {
-    if (!drag) return;
-    const rect = panel.getBoundingClientRect();
-    panel.style.left = `${Math.max(0, Math.min(innerWidth - rect.width, event.clientX - drag.x))}px`;
-    panel.style.top = `${Math.max(0, Math.min(innerHeight - rect.height, event.clientY - drag.y))}px`;
-  });
-  const endDrag = () => { if (drag) { drag = null; persist(); } };
-  handle.addEventListener("pointerup", endDrag);
-  handle.addEventListener("pointercancel", endDrag);
   new ResizeObserver(persist).observe(panel);
   window.addEventListener("resize", () => {
-    const rect = panel.getBoundingClientRect();
-    panel.style.left = `${Math.max(0, Math.min(innerWidth - rect.width, rect.left))}px`;
-    panel.style.top = `${Math.max(0, Math.min(innerHeight - rect.height, rect.top))}px`;
+    if (panel.classList.contains("maximized")) setMaximized(true);
     persist();
   });
 }
