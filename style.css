@@ -738,8 +738,10 @@ footer span {
 .primary.danger:hover { background: #8e302b; }
 .toast {
   position: fixed;
-  bottom: 22px;
-  right: 24px;
+  top: 18px;
+  right: 20px;
+  bottom: auto;
+  max-width: calc(100vw - 32px);
   background: #1d2e21;
   color: white;
   padding: 12px 17px;
@@ -747,7 +749,7 @@ footer span {
   font-size: 12px;
   box-shadow: 0 6px 22px #0002;
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(-8px);
   transition: 0.2s;
   pointer-events: none;
   z-index: 10;
