@@ -7,6 +7,7 @@ const money = (n) =>
 let chart = null,
   toastTimer;
 let selectedHistoryOfferId = null;
+let selectedWatchlistOfferId = null;
 function storeNameFromUrl(rawUrl) {
   if (!rawUrl.trim()) return "";
   let hostname;
@@ -505,6 +506,12 @@ function render() {
   ) {
     selectedHistoryOfferId = offers[0]?.o.id ?? null;
   }
+  const watchlistOffers = watchlist.flatMap((part) =>
+    part.offers.map((offer) => ({ part, offer })),
+  );
+  if (!watchlistOffers.some((item) => String(item.offer.id) === String(selectedWatchlistOfferId))) {
+    selectedWatchlistOfferId = watchlistOffers[0]?.offer.id ?? null;
+  }
   const total = components.reduce(
     (s, p) => s + Number(getOffer(p)?.price || 0),
     0,
@@ -612,6 +619,10 @@ function renderSavedCollection(items, list, collection) {
   for (const part of items) {
     const row = document.createElement("article");
     row.className = "component saved-component";
+    row.classList.toggle(
+      "is-selected",
+      collection === "watchlist" && part.offers.some((offer) => String(offer.id) === String(selectedWatchlistOfferId)),
+    );
     const offer = getOffer(part);
     const visual = part.image
       ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(part.image)}" alt="${escapeAttr(part.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
@@ -628,6 +639,7 @@ function renderSavedCollection(items, list, collection) {
       : "";
     row.innerHTML = `<div class="component-top">${visual}<div class="part-title"><strong>${escapeHtml(part.name)}</strong><span>${escapeHtml(part.category)} · ${price} · ${store}${removed}</span></div><div class="component-actions">${buttons}</div></div>`;
     row.dataset.id = part.id;
+    row.dataset.defaultOfferId = offer?.id ?? "";
     list.append(row);
   }
 }
@@ -682,9 +694,17 @@ function storeColor(store) {
 }
 
 function updateChart() {
-  const selected = components
+  const chartParts = activeCollection === "watchlist"
+    ? watchlist
+    : activeCollection === "trash"
+      ? []
+      : components;
+  const chartOfferId = activeCollection === "watchlist"
+    ? selectedWatchlistOfferId
+    : selectedHistoryOfferId;
+  const selected = chartParts
     .flatMap((part) => part.offers.map((offer) => ({ part, offer })))
-    .find((item) => String(item.offer.id) === String(selectedHistoryOfferId));
+    .find((item) => String(item.offer.id) === String(chartOfferId));
   const product = selected?.part || null;
   const offers = product?.offers || [];
   const hasHistory = offers.some((offer) => offer.history.length > 0);
@@ -696,7 +716,11 @@ function updateChart() {
       offers.length +
       " store offer" +
       (offers.length === 1 ? "" : "s")
-    : "Click a component to compare all its store offers";
+    : activeCollection === "watchlist"
+      ? "Click an item in Da valutare to view its price trend"
+      : activeCollection === "trash"
+        ? "Items in the trash are not included in price tracking"
+        : "Click a component to compare all its store offers";
   if (!window.Chart) return;
 
   if (chart) {
@@ -999,7 +1023,15 @@ $("componentList").addEventListener("click", async (e) => {
 });
 $("watchlistList").addEventListener("click", async (event) => {
   const button = event.target.closest("[data-list-act]");
-  if (!button) return;
+  if (!button) {
+    if (event.target.closest("a")) return;
+    const row = event.target.closest(".saved-component");
+    if (row && row.dataset.defaultOfferId) {
+      selectedWatchlistOfferId = row.dataset.defaultOfferId;
+      render();
+    }
+    return;
+  }
   const part = watchlist.find((item) => String(item.id) === button.dataset.id);
   if (!part) return;
   const action = button.dataset.listAct;
