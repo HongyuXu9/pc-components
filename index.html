@@ -110,6 +110,12 @@
               </select>
             </div>
           </div>
+          <div class="collection-tabs" role="tablist" aria-label="Component lists">
+            <button class="collection-tab active" type="button" data-collection="build">Build <b id="buildTabCount">0</b></button>
+            <button class="collection-tab" type="button" data-collection="watchlist">Da valutare <b id="watchlistCount">0</b></button>
+            <button class="collection-tab" type="button" data-collection="trash">Cestino <b id="trashCount">0</b></button>
+          </div>
+          <div id="buildCollection">
           <div id="componentList" class="component-list"></div>
           <div id="emptyState" class="empty-state">
             <div class="empty-icon">▦</div>
@@ -121,6 +127,17 @@
               ＋ Add your first component
             </button>
           </div>
+          </div>
+          <section id="watchlistCollection" hidden>
+            <div class="collection-toolbar"><p>Componenti che stai considerando, fuori dal totale della build.</p><button class="primary" id="addWatchlist">＋ Aggiungi a Da valutare</button></div>
+            <div id="watchlistList" class="component-list"></div>
+            <div id="watchlistEmpty" class="collection-empty">La tua lista “Da valutare” è vuota.</div>
+          </section>
+          <section id="trashCollection" hidden>
+            <div class="collection-toolbar"><p>Gli elementi nel Cestino non fanno più parte della build. Puoi ripristinarli o eliminarli definitivamente.</p></div>
+            <div id="trashList" class="component-list"></div>
+            <div id="trashEmpty" class="collection-empty">Il Cestino è vuoto.</div>
+          </section>
         </div>
         <div class="panel history-panel" id="history">
           <div class="panel-head">

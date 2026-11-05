@@ -150,6 +150,10 @@ function migrate(data) {
   });
 }
 let components = [];
+let watchlist = [];
+let trash = [];
+let activeCollection = "build";
+let editingCollection = "components";
 let dataReady = false;
 let saveQueue = Promise.resolve();
 function reportClientIssue(level, message, context = "") {
@@ -179,6 +183,26 @@ function showActivity(level, message, context = "") {
 }
 function reportActivity(level, message, context = "") {
   reportClientIssue(level, message, context);
+}
+function restoreCollectionSnapshot(snapshot) {
+  const previous = JSON.parse(snapshot);
+  components = migrate(previous.components);
+  watchlist = migrate(previous.watchlist);
+  trash = migrate(previous.trash);
+}
+async function saveCollectionMutation(snapshot) {
+  if (!(await save())) {
+    restoreCollectionSnapshot(snapshot);
+    render();
+    return false;
+  }
+  render();
+  return true;
+}
+function moveToTrash(part, source) {
+  part.deletedFrom = source;
+  part.deletedAt = new Date().toISOString();
+  trash.unshift(part);
 }
 function setupActivityLogWindow() {
   const panel = $("activityLogWindow");
@@ -309,7 +333,7 @@ function save() {
     notify("Start the local app with run_app.bat before saving");
     return Promise.resolve();
   }
-  const snapshot = JSON.stringify(components);
+  const snapshot = JSON.stringify({ components, watchlist, trash });
   reportActivity("INFO", "Saving component data…", "PUT /api/data");
   saveQueue = saveQueue
     .then(async () => {
@@ -362,15 +386,24 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
     label.className = "field wide";
     label.htmlFor = `action-${field.name}`;
     label.textContent = field.label;
-    const input = document.createElement("input");
+    const input = field.options ? document.createElement("select") : document.createElement("input");
     input.id = `action-${field.name}`;
     input.name = field.name;
-    input.type = field.type || "text";
+    if (field.options) {
+      for (const optionData of field.options) {
+        const option = document.createElement("option");
+        option.value = optionData.value;
+        option.textContent = optionData.label;
+        input.append(option);
+      }
+    } else {
+      input.type = field.type || "text";
+      if (field.min !== undefined) input.min = field.min;
+      if (field.step !== undefined) input.step = field.step;
+      if (field.placeholder) input.placeholder = field.placeholder;
+    }
     input.value = field.value ?? "";
     input.required = field.required !== false;
-    if (field.min !== undefined) input.min = field.min;
-    if (field.step !== undefined) input.step = field.step;
-    if (field.placeholder) input.placeholder = field.placeholder;
     label.append(input);
     fieldList.append(label);
   }
@@ -415,12 +448,15 @@ function setComponentEntryMode(mode) {
     control.disabled = !bulk;
   });
 }
-function openModal(part) {
+function openModal(part, collection = "components") {
+  editingCollection = collection;
   $("partForm").reset();
   setComponentEntryMode("single");
   $("ocrStatus").textContent = "";
   $("partId").value = part?.id || "";
-  $("modalTitle").textContent = part ? "Edit component" : "Add a component";
+  const inWatchlist = collection === "watchlist";
+  $("modalTitle").textContent = part ? "Edit component" : inWatchlist ? "Add to Da valutare" : "Add a component";
+  $("partForm").querySelector('[type="submit"]').textContent = part ? "Save component" : inWatchlist ? "Save to Da valutare" : "Save component";
   $("partName").value = part?.name || "";
   $("partCategory").value = part?.category || "CPU";
   $("partImageUrl").value = part?.image || "";
@@ -500,6 +536,9 @@ function render() {
   $("historyCount").textContent = entries;
   $("statParts").textContent = components.length;
   $("partsCount").textContent = components.length;
+  $("buildTabCount").textContent = components.length;
+  $("watchlistCount").textContent = watchlist.length;
+  $("trashCount").textContent = trash.length;
   $("navCount").textContent = components.length;
   $("statStores").textContent = stores.size;
   $("statBest").textContent = historicalLow ? money(historicalLow.price) : "—";
@@ -554,7 +593,43 @@ function render() {
     row.append(offerList);
     list.append(row);
   }
+  $("buildCollection").hidden = activeCollection !== "build";
+  $("watchlistCollection").hidden = activeCollection !== "watchlist";
+  $("trashCollection").hidden = activeCollection !== "trash";
+  $("parts").querySelector(".tools").hidden = activeCollection !== "build";
+  document.querySelectorAll(".collection-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.collection === activeCollection);
+    tab.setAttribute("aria-selected", String(tab.dataset.collection === activeCollection));
+  });
+  renderSavedCollection(watchlist, $("watchlistList"), "watchlist");
+  renderSavedCollection(trash, $("trashList"), "trash");
+  $("watchlistEmpty").hidden = watchlist.length > 0;
+  $("trashEmpty").hidden = trash.length > 0;
   updateChart();
+}
+function renderSavedCollection(items, list, collection) {
+  list.replaceChildren();
+  for (const part of items) {
+    const row = document.createElement("article");
+    row.className = "component saved-component";
+    const offer = getOffer(part);
+    const visual = part.image
+      ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(part.image)}" alt="${escapeAttr(part.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
+      : '<div class="part-visual image-missing"></div>';
+    const price = offer ? money(offer.price) : "No price";
+    const store = offer?.url
+      ? `<a href="${escapeAttr(offer.url)}" target="_blank" rel="noopener">${escapeHtml(offer.store)} ↗</a>`
+      : escapeHtml(offer?.store || "Unknown source");
+    const buttons = collection === "watchlist"
+      ? `<button class="mini-button" data-list-act="add" data-id="${escapeAttr(part.id)}">Add to build</button>${components.length ? `<button class="mini-button" data-list-act="replace" data-id="${escapeAttr(part.id)}">Replace…</button>` : ""}<button class="icon-button" title="Edit" data-list-act="edit" data-id="${escapeAttr(part.id)}">✎</button><button class="icon-button" title="Move to trash" data-list-act="trash" data-id="${escapeAttr(part.id)}">×</button>`
+      : `<button class="mini-button" data-list-act="restore" data-id="${escapeAttr(part.id)}">Restore</button><button class="mini-button danger-text" data-list-act="purge" data-id="${escapeAttr(part.id)}">Delete permanently</button>`;
+    const removed = collection === "trash" && part.deletedAt
+      ? ` · Deleted ${escapeHtml(new Date(part.deletedAt).toLocaleDateString())}`
+      : "";
+    row.innerHTML = `<div class="component-top">${visual}<div class="part-title"><strong>${escapeHtml(part.name)}</strong><span>${escapeHtml(part.category)} · ${price} · ${store}${removed}</span></div><div class="component-actions">${buttons}</div></div>`;
+    row.dataset.id = part.id;
+    list.append(row);
+  }
 }
 function escapeHtml(s = "") {
   return String(s).replace(
@@ -753,14 +828,15 @@ $("partForm").addEventListener("submit", async (e) => {
   const submitButton = e.submitter || $("partForm").querySelector('[type="submit"]');
   if (submitButton) submitButton.disabled = true;
   try {
-  const original = JSON.stringify(components);
+  const original = JSON.stringify({ components, watchlist, trash });
+  const target = editingCollection === "watchlist" ? watchlist : components;
   const name = $("partName").value.trim(),
     price = Number($("partPrice").value),
     date = today(),
     id = $("partId").value;
-  if (!id && componentNameKey(name)) {
-    const duplicate = components.find(
-      (part) => componentNameKey(part.name) === componentNameKey(name),
+  if (componentNameKey(name)) {
+    const duplicate = [...components, ...watchlist].find(
+      (part) => String(part.id) !== String(id) && componentNameKey(part.name) === componentNameKey(name),
     );
     if (duplicate) {
       const message = `“${name}” already exists; component skipped`;
@@ -769,7 +845,7 @@ $("partForm").addEventListener("submit", async (e) => {
       return;
     }
   }
-  let p = id ? components.find((x) => String(x.id) === String(id)) : null;
+  let p = id ? target.find((x) => String(x.id) === String(id)) : null;
   if (p) {
     p.name = name;
     p.category = $("partCategory").value;
@@ -809,17 +885,21 @@ $("partForm").addEventListener("submit", async (e) => {
         },
       ],
     };
-    components.unshift(p);
+    target.unshift(p);
   }
   const saved = await save();
   if (!saved) {
-    components = migrate(JSON.parse(original));
+    const previous = JSON.parse(original);
+    components = migrate(previous.components);
+    watchlist = migrate(previous.watchlist);
+    trash = migrate(previous.trash);
     render();
     return;
   }
   closeModal();
+  if (editingCollection === "components" && !id) activeCollection = "build";
   render();
-  notify(id ? "Component updated" : "Component added");
+  notify(id ? "Component updated" : editingCollection === "watchlist" ? "Added to Da valutare" : "Component added");
   } catch (error) {
     reportClientIssue("error", error?.stack || error, "Save component form");
     notify("Could not save component: " + (error?.message || error));
@@ -827,6 +907,7 @@ $("partForm").addEventListener("submit", async (e) => {
     if (submitButton) submitButton.disabled = false;
   }
 });
+$("addWatchlist").addEventListener("click", () => openModal(null, "watchlist"));
 $("offerForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const p = components.find((x) => String(x.id) === $("offerPartId").value);
@@ -874,16 +955,16 @@ $("componentList").addEventListener("click", async (e) => {
       break;
     case "delete":
       if (await openActionDialog({
-        eyebrow: "DELETE COMPONENT",
-        title: `Delete ${p.name}?`,
-        subtitle: "This also removes all its store offers and price history.",
-        confirmLabel: "Delete component",
+        eyebrow: "MOVE TO TRASH",
+        title: `Move ${p.name} to the trash?`,
+        subtitle: "Its offers and price history stay saved. You can restore or permanently delete it from the trash.",
+        confirmLabel: "Move to trash",
         danger: true,
       })) {
+        const snapshot = JSON.stringify({ components, watchlist, trash });
         components = components.filter((x) => x !== p);
-        save();
-        render();
-        notify("Component deleted");
+        moveToTrash(p, "components");
+        if (await saveCollectionMutation(snapshot)) notify("Component moved to trash");
       }
       break;
     case "remove-offer":
@@ -906,6 +987,95 @@ $("componentList").addEventListener("click", async (e) => {
       }
       break;
   }
+});
+$("watchlistList").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-list-act]");
+  if (!button) return;
+  const part = watchlist.find((item) => String(item.id) === button.dataset.id);
+  if (!part) return;
+  const action = button.dataset.listAct;
+  if (action === "edit") {
+    openModal(part, "watchlist");
+    return;
+  }
+  if (action === "add") {
+    if (components.some((item) => componentNameKey(item.name) === componentNameKey(part.name))) {
+      notify("This component is already in the build", "warning");
+      return;
+    }
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    watchlist = watchlist.filter((item) => item !== part);
+    components.unshift(part);
+    if (await saveCollectionMutation(snapshot)) notify("Added to your build");
+    return;
+  }
+  if (action === "trash") {
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    watchlist = watchlist.filter((item) => item !== part);
+    moveToTrash(part, "watchlist");
+    if (await saveCollectionMutation(snapshot)) notify("Moved to trash");
+    return;
+  }
+  if (action === "replace") {
+    const options = components.map((item) => ({
+      value: String(item.id),
+      label: `${item.name} · ${item.category}`,
+    }));
+    const result = await openActionDialog({
+      eyebrow: "REPLACE COMPONENT",
+      title: `Use ${part.name} instead of…`,
+      subtitle: "The selected component moves to the trash. You can restore it later.",
+      confirmLabel: "Replace component",
+      fields: [{ name: "replacementId", label: "Current build component", options, value: String(components.find((item) => item.category === part.category)?.id || components[0]?.id || "") }],
+    });
+    if (!result?.replacementId) return;
+    const replaced = components.find((item) => String(item.id) === result.replacementId);
+    if (!replaced) return;
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    components = components.filter((item) => item !== replaced);
+    moveToTrash(replaced, "components");
+    watchlist = watchlist.filter((item) => item !== part);
+    components.unshift(part);
+    if (await saveCollectionMutation(snapshot)) notify(`${part.name} replaced ${replaced.name}`);
+  }
+});
+$("trashList").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-list-act]");
+  if (!button) return;
+  const part = trash.find((item) => String(item.id) === button.dataset.id);
+  if (!part) return;
+  if (button.dataset.listAct === "restore") {
+    const target = part.deletedFrom === "watchlist" ? watchlist : components;
+    const exists = [...components, ...watchlist].some((item) => componentNameKey(item.name) === componentNameKey(part.name));
+    if (exists) {
+      notify("A component with this name is already saved", "warning");
+      return;
+    }
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    trash = trash.filter((item) => item !== part);
+    delete part.deletedAt;
+    delete part.deletedFrom;
+    target.unshift(part);
+    if (await saveCollectionMutation(snapshot)) notify("Component restored");
+    return;
+  }
+  if (button.dataset.listAct === "purge" && await openActionDialog({
+    eyebrow: "PERMANENTLY DELETE",
+    title: `Delete ${part.name} forever?`,
+    subtitle: "This permanently removes its offers and price history.",
+    confirmLabel: "Delete permanently",
+    danger: true,
+  })) {
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    trash = trash.filter((item) => item !== part);
+    if (await saveCollectionMutation(snapshot)) notify("Permanently deleted");
+  }
+});
+document.querySelectorAll(".collection-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    activeCollection = tab.dataset.collection;
+    render();
+  });
 });
 ["openAdd", "emptyAdd"].forEach((id) =>
   $(id).addEventListener("click", () => openModal()),
@@ -1280,7 +1450,7 @@ $("addBatchProducts").addEventListener("click", async () => {
     price: Number(row.querySelector(".batch-price").value) || 0,
   }));
   const knownNames = new Set(
-    components.map((part) => componentNameKey(part.name)).filter(Boolean),
+    [...components, ...watchlist].map((part) => componentNameKey(part.name)).filter(Boolean),
   );
   const newProducts = [];
   const duplicates = [];
@@ -1300,7 +1470,8 @@ $("addBatchProducts").addEventListener("click", async () => {
   if (!newProducts.length) return;
   const date = today();
   const firstId = Date.now();
-  components.unshift(
+  const target = editingCollection === "watchlist" ? watchlist : components;
+  target.unshift(
     ...newProducts.map((item, index) => ({
       id: firstId + index,
       name: item.name,
@@ -1320,10 +1491,11 @@ $("addBatchProducts").addEventListener("click", async () => {
   );
   const saved = await save();
   if (!saved) {
-    components.splice(0, newProducts.length);
+    target.splice(0, newProducts.length);
     render();
     return;
   }
+  activeCollection = editingCollection === "watchlist" ? "watchlist" : "build";
   render();
   closeModal();
   notify(
@@ -1341,7 +1513,16 @@ async function initialize() {
   try {
     const response = await fetch("/api/data", { cache: "no-store" });
     if (!response.ok) throw new Error(`Load failed (${response.status})`);
-    components = migrate(await response.json());
+    const savedData = await response.json();
+    if (Array.isArray(savedData)) {
+      components = migrate(savedData);
+      watchlist = [];
+      trash = [];
+    } else {
+      components = migrate(savedData.components || []);
+      watchlist = migrate(savedData.watchlist || []);
+      trash = migrate(savedData.trash || []);
+    }
     let legacy = [];
     try {
       const oldData = localStorage.getItem("pc_components");

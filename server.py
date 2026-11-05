@@ -64,9 +64,15 @@ class PartlyHandler(SimpleHTTPRequestHandler):
                 self._json_response(413, {"error": "Data file is too large"})
                 return
             value = json.loads(self.rfile.read(length))
-            if not isinstance(value, list):
-                self._json_response(400, {"error": "Expected a JSON array"})
+            if isinstance(value, list):
+                value = {"components": value, "watchlist": [], "trash": []}
+            if not isinstance(value, dict) or any(
+                not isinstance(value.get(key, []), list)
+                for key in ("components", "watchlist", "trash")
+            ):
+                self._json_response(400, {"error": "Expected component, watchlist, and trash arrays"})
                 return
+            value = {key: value.get(key, []) for key in ("components", "watchlist", "trash")}
             encoded = json.dumps(value, ensure_ascii=False, indent=2) + "\n"
             temporary = DATA_FILE.with_suffix(".json.tmp")
             with data_lock:
@@ -74,7 +80,7 @@ class PartlyHandler(SimpleHTTPRequestHandler):
                 temporary.replace(DATA_FILE)
             logger.info(
                 "Saved %s components to data.json (%s bytes)",
-                len(value),
+                len(value["components"]),
                 len(encoded.encode("utf-8")),
             )
             self._json_response(200, {"saved": True})

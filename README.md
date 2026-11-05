@@ -18,6 +18,8 @@ Python 3 is required. The server listens only on this PC. Back up `data.json` to
 
 Product images can be set with an image URL when adding or editing a component. The example parts already include a few product images; those images are hosted by their respective product sites.
 
+The component panel keeps the current build, a separate **Da valutare** list, and a **Cestino**. Items in Da valutare do not affect the build total; add one to the build or replace a current part. Replaced and deleted parts go to the trash, where they can be restored or permanently deleted.
+
 To add several items from a screenshot, open **Add component**, paste the screenshot with **Ctrl+V** (or choose an image), review the detected list, and add all rows together. OCR suggestions can be edited before saving.
 
 Screenshot recognition runs locally with Tesseract by default. For optional AI image recognition, create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey), save it in a `.env` file beside `server.py` as `GEMINI_API_KEY=your_key`, then restart Partly and enable **AI assist** before pasting an image. AI assist sends the selected screenshot to Google; leave it off to keep recognition local. Google’s free API tier has usage limits and may use submitted content to improve its products, so review Google’s current terms before enabling it.
