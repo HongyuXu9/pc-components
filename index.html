@@ -343,6 +343,25 @@
         </form>
       </section>
     </div>
+    <div class="modal-backdrop action-backdrop" id="actionModal">
+      <section class="modal small-modal" role="dialog" aria-modal="true" aria-labelledby="actionModalTitle">
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow" id="actionEyebrow">CONFIRM ACTION</span>
+            <h2 id="actionModalTitle">Confirm</h2>
+            <p class="modal-subtitle" id="actionSubtitle"></p>
+          </div>
+          <button class="icon-button" type="button" id="closeActionModal" aria-label="Close">×</button>
+        </div>
+        <form id="actionForm">
+          <div class="form-grid" id="actionFields"></div>
+          <div class="modal-actions">
+            <button type="button" class="secondary" id="cancelAction">Cancel</button>
+            <button type="submit" class="primary" id="confirmAction">Confirm</button>
+          </div>
+        </form>
+      </section>
+    </div>
     <section class="activity-log" id="activityLogWindow" aria-label="Activity log">
       <div class="activity-log-head" id="activityLogDragHandle">
         <strong>Partly server · Activity log</strong>

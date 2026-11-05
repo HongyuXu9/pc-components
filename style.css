@@ -733,6 +733,9 @@ footer span {
   background: #f2f4f0;
   color: #69766b;
 }
+.action-backdrop { z-index: 15; }
+.primary.danger { background: #a83b35; }
+.primary.danger:hover { background: #8e302b; }
 .toast {
   position: fixed;
   bottom: 22px;

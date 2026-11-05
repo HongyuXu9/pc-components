@@ -317,6 +317,64 @@ function notify(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
 }
+function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confirm", danger = false, fields = [] }) {
+  const modal = $("actionModal");
+  const form = $("actionForm");
+  const fieldList = $("actionFields");
+  const confirmButton = $("confirmAction");
+  $("actionEyebrow").textContent = eyebrow;
+  $("actionModalTitle").textContent = title;
+  $("actionSubtitle").textContent = subtitle;
+  confirmButton.textContent = confirmLabel;
+  confirmButton.classList.toggle("danger", danger);
+  fieldList.replaceChildren();
+  for (const field of fields) {
+    const label = document.createElement("label");
+    label.className = "field wide";
+    label.htmlFor = `action-${field.name}`;
+    label.textContent = field.label;
+    const input = document.createElement("input");
+    input.id = `action-${field.name}`;
+    input.name = field.name;
+    input.type = field.type || "text";
+    input.value = field.value ?? "";
+    input.required = field.required !== false;
+    if (field.min !== undefined) input.min = field.min;
+    if (field.step !== undefined) input.step = field.step;
+    if (field.placeholder) input.placeholder = field.placeholder;
+    label.append(input);
+    fieldList.append(label);
+  }
+  modal.classList.add("open");
+  const firstInput = fieldList.querySelector("input");
+  setTimeout(() => (firstInput || confirmButton).focus(), 20);
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      modal.classList.remove("open");
+      form.onsubmit = null;
+      $("cancelAction").onclick = null;
+      $("closeActionModal").onclick = null;
+      modal.onclick = null;
+      document.removeEventListener("keydown", onKeyDown);
+      resolve(value);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") finish(null);
+    };
+    form.onsubmit = (event) => {
+      event.preventDefault();
+      const values = Object.fromEntries(new FormData(form).entries());
+      finish(fields.length ? values : true);
+    };
+    $("cancelAction").onclick = () => finish(null);
+    $("closeActionModal").onclick = () => finish(null);
+    modal.onclick = (event) => { if (event.target === modal) finish(null); };
+    document.addEventListener("keydown", onKeyDown);
+  });
+}
 function openModal(part) {
   $("partForm").reset();
   $("bulkReview").hidden = true;
@@ -609,19 +667,23 @@ function updateChart() {
     },
   });
 }
-function logPrice(partId, offerId) {
+async function logPrice(partId, offerId) {
   const p = components.find((x) => String(x.id) === String(partId)),
     o = p?.offers.find((x) => String(x.id) === String(offerId));
   if (!o) return;
-  const price = prompt(`New price for ${p.name} at ${o.store} (€):`, o.price);
-  if (price === null) return;
-  const n = Number(price.replace(",", "."));
-  if (!Number.isFinite(n) || n < 0) {
-    notify("Enter a valid price");
-    return;
-  }
-  const date = prompt("Date (YYYY-MM-DD):", today());
-  if (!date) return;
+  const values = await openActionDialog({
+    eyebrow: "PRICE HISTORY",
+    title: "Log a price",
+    subtitle: `${p.name} · ${o.store}`,
+    confirmLabel: "Save price",
+    fields: [
+      { name: "price", label: "Price (€)", type: "number", value: o.price, min: "0", step: "0.01" },
+      { name: "date", label: "Date", type: "date", value: today() },
+    ],
+  });
+  if (!values) return;
+  const n = Number(values.price);
+  const date = values.date;
   const old = o.history.find((h) => h.date === date);
   if (old) old.price = n;
   else o.history.push({ date, price: n });
@@ -742,7 +804,7 @@ $("offerForm").addEventListener("submit", (e) => {
   render();
   notify("Store offer added");
 });
-$("componentList").addEventListener("click", (e) => {
+$("componentList").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]");
   if (!b) {
     if (e.target.closest("a")) return;
@@ -770,7 +832,13 @@ $("componentList").addEventListener("click", (e) => {
       logPrice(p.id, b.dataset.offer);
       break;
     case "delete":
-      if (confirm(`Delete ${p.name} and its price history?`)) {
+      if (await openActionDialog({
+        eyebrow: "DELETE COMPONENT",
+        title: `Delete ${p.name}?`,
+        subtitle: "This also removes all its store offers and price history.",
+        confirmLabel: "Delete component",
+        danger: true,
+      })) {
         components = components.filter((x) => x !== p);
         save();
         render();
@@ -782,7 +850,14 @@ $("componentList").addEventListener("click", (e) => {
         notify("A component needs at least one offer");
         return;
       }
-      if (confirm("Remove this store offer and its price history?")) {
+      const offer = p.offers.find((item) => String(item.id) === b.dataset.offer);
+      if (await openActionDialog({
+        eyebrow: "REMOVE STORE OFFER",
+        title: `Remove ${offer?.store || "this offer"}?`,
+        subtitle: "This also removes the price history for this store offer.",
+        confirmLabel: "Remove offer",
+        danger: true,
+      })) {
         p.offers = p.offers.filter((o) => String(o.id) !== b.dataset.offer);
         save();
         render();
