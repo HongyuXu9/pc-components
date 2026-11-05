@@ -1,4 +1,5 @@
 partly.log
+partly.log.*
 data.json
 *.log
 .env
