@@ -1556,6 +1556,18 @@ async function initialize() {
     $("storageTitle").textContent = "Your data stays on this PC";
     $("storageStatus").textContent = "Saved to data.json";
     render();
+    try {
+      const statusResponse = await fetch("/api/status", { cache: "no-store" });
+      if (!statusResponse.ok) throw new Error(`Status unavailable (${statusResponse.status})`);
+      const status = await statusResponse.json();
+      reportActivity(
+        "INFO",
+        "Partly app started",
+        `Server ${status.host}:${status.port} · PID ${status.pid}`,
+      );
+    } catch (error) {
+      reportClientIssue("warning", error?.message || error, "Reading server startup status");
+    }
     if (legacy.length && (await save())) {
       try {
         localStorage.removeItem("pc_components");

@@ -51,6 +51,9 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/version":
             self._json_response(200, {"version": APP_VERSION})
             return
+        if self.path == "/api/status":
+            self._json_response(200, {"host": HOST, "port": PORT, "pid": os.getpid()})
+            return
         if self.path == "/api/data":
             try:
                 with data_lock:
@@ -221,7 +224,7 @@ if __name__ == "__main__":
     if not DATA_FILE.exists():
         DATA_FILE.write_text("[]\n", encoding="utf-8")
     server = ThreadingHTTPServer((HOST, PORT), PartlyHandler)
-    logger.info("Partly is running at http://%s:%s", HOST, PORT)
+    logger.info("Partly is running at http://%s:%s (PID %s)", HOST, PORT, os.getpid())
     logger.info("Data file: %s", DATA_FILE)
     logger.info("Log file: %s", LOG_FILE)
     try:
