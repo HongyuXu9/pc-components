@@ -7,10 +7,45 @@ $serverProcess = $null
 $ownsServer = $false
 $stage = "initialization"
 $logPath = Join-Path $root "partly.log"
+$script:pendingPartlyLogs = @()
 
-function Write-PartlyLog($message) {
-    $line = "{0} [launcher] {1}{2}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $message, [Environment]::NewLine
-    Add-Content -LiteralPath $logPath -Value $line -Encoding UTF8
+function Send-PartlyLogEntry($entry) {
+    $payload = @{
+        level = $entry.level
+        message = $entry.message
+        context = "Partly launcher"
+    } | ConvertTo-Json -Compress
+    Invoke-RestMethod -Uri "$appUrl/api/log" -Method Post -ContentType "application/json" -Body $payload -TimeoutSec 2 | Out-Null
+}
+
+function Write-PartlyLog($message, $level = "INFO") {
+    $entry = @{ level = $level; message = $message }
+    try {
+        if (Test-PartlyServer) {
+            Send-PartlyLogEntry $entry
+            return
+        }
+    } catch { }
+    $script:pendingPartlyLogs += $entry
+}
+
+function Flush-PartlyLogQueue($writeFallbackFile = $false) {
+    $remaining = @()
+    foreach ($entry in $script:pendingPartlyLogs) {
+        try { Send-PartlyLogEntry $entry } catch { $remaining += $entry }
+    }
+    $script:pendingPartlyLogs = $remaining
+    if ($writeFallbackFile -and $script:pendingPartlyLogs.Count -gt 0) {
+        foreach ($entry in $script:pendingPartlyLogs) {
+            $line = "{0} {1} [launcher] {2}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $entry.level, $entry.message
+            try {
+                Add-Content -LiteralPath $logPath -Value $line -Encoding UTF8 -ErrorAction Stop
+            } catch {
+                Add-Content -LiteralPath (Join-Path $root "partly-launcher.log") -Value $line -Encoding UTF8
+            }
+        }
+        $script:pendingPartlyLogs = @()
+    }
 }
 
 function Test-PartlyServer {
@@ -91,6 +126,7 @@ try {
         Start-Sleep -Seconds 1
     }
     if (-not $serverReady) { throw "Partly could not start its local server." }
+    Flush-PartlyLogQueue
 
     $stage = "opening Partly in the browser"
     $browserCandidates = @(
@@ -127,11 +163,13 @@ try {
     }
 } catch {
     $detail = "{0}: {1}" -f $stage, $_.Exception.ToString()
-    try { Write-PartlyLog "ERROR $detail" } catch { }
-    Show-PartlyError ("Partly launcher failed while {0}.`r`n`r`nDetails were written to partly.log.`r`n`r`n{1}" -f $stage, $_.Exception.Message)
+    try { Write-PartlyLog $detail "ERROR" } catch { }
+    Show-PartlyError ("Partly launcher failed while {0}.`r`n`r`nDetails were written to partly.log or partly-launcher.log.`r`n`r`n{1}" -f $stage, $_.Exception.Message)
 } finally {
     if ($ownsServer -and $serverProcess -and -not $serverProcess.HasExited) {
         Write-PartlyLog "INFO Partly window closed; stopping local server (PID $($serverProcess.Id))"
         Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
+        Wait-Process -Id $serverProcess.Id -Timeout 5 -ErrorAction SilentlyContinue
     }
+    Flush-PartlyLogQueue -writeFallbackFile $true
 }
