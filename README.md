@@ -8,9 +8,9 @@ save succeeds.
 
 ## Start the app
 
-1. On Windows, double-click `Partly.lnk` to open the app in its own Edge window.
+1. On Windows, double-click `Partly.lnk` to open the app in its own Edge window. The local server runs without a console window and stops when you close the Partly window.
 2. Copy `Partly.lnk` to your Desktop if you want a desktop icon.
-3. Keep the minimized server window open while using Partly. Close it to stop the local server.
+3. Close the Partly window to stop the local server.
 
 You can also start the server and app with `run_app.bat`.
 
@@ -22,4 +22,4 @@ To add several items from a screenshot, open **Add component**, paste the screen
 
 Screenshot recognition runs locally with Tesseract by default. For optional AI image recognition, create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey), save it in a `.env` file beside `server.py` as `GEMINI_API_KEY=your_key`, then restart Partly and enable **AI assist** before pasting an image. AI assist sends the selected screenshot to Google; leave it off to keep recognition local. Google’s free API tier has usage limits and may use submitted content to improve its products, so review Google’s current terms before enabling it.
 
-If saving fails, check partly.log beside data.json. The Save component dialog stays open when the server rejects a save. The minimized server window also shows request and error messages.
+If saving fails, check partly.log beside data.json. The Save component dialog stays open when the server rejects a save. Browser errors and save activity also appear in the in-app Activity log.
