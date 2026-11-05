@@ -19,6 +19,7 @@ ENV_FILE = ROOT / ".env"
 GEMINI_MODEL = "gemini-3.1-flash-lite"
 HOST = "127.0.0.1"
 PORT = 8766
+APP_VERSION = "2026.11.05.collections-2"
 data_lock = Lock()
 
 logger = logging.getLogger("partly")
@@ -40,6 +41,9 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         path_parts = [part for part in unquote(urlsplit(self.path).path).split("/") if part]
         if any(part.startswith(".") for part in path_parts):
             self.send_error(404)
+            return
+        if self.path == "/api/version":
+            self._json_response(200, {"version": APP_VERSION})
             return
         if self.path == "/api/data":
             try:
@@ -196,12 +200,15 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
     def log_message(self, format_string, *args):
         logger.info("%s %s", self.address_string(), format_string % args)
+
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
 
 
 if __name__ == "__main__":

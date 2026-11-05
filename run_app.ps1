@@ -2,6 +2,8 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $appUrl = "http://127.0.0.1:8766"
 $dataUrl = "$appUrl/api/data"
+$versionUrl = "$appUrl/api/version"
+$requiredVersion = "2026.11.05.collections-2"
 $serverScript = Join-Path $root "server.py"
 $serverProcess = $null
 $ownsServer = $false
@@ -22,6 +24,28 @@ function Test-PartlyServer {
     }
 }
 
+function Get-PartlyServerVersion {
+    try {
+        $response = Invoke-WebRequest -Uri $versionUrl -UseBasicParsing -TimeoutSec 2
+        return ($response.Content | ConvertFrom-Json).version
+    } catch {
+        return $null
+    }
+}
+
+function Stop-StalePartlyServer {
+    $connections = Get-NetTCPConnection -LocalPort 8766 -State Listen -ErrorAction SilentlyContinue
+    foreach ($connection in $connections) {
+        $process = Get-CimInstance Win32_Process -Filter "ProcessId = $($connection.OwningProcess)" -ErrorAction SilentlyContinue
+        if (-not $process -or -not $process.CommandLine) { continue }
+        if ($process.CommandLine.IndexOf($serverScript, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
+        Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
+        Start-Sleep -Milliseconds 500
+        return $true
+    }
+    return $false
+}
+
 function Show-PartlyError($message) {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show($message, "Partly") | Out-Null
@@ -29,7 +53,16 @@ function Show-PartlyError($message) {
 
 try {
     $stage = "checking local server"
-    if (-not (Test-PartlyServer)) {
+    $existingServer = Test-PartlyServer
+    if ($existingServer -and (Get-PartlyServerVersion) -ne $requiredVersion) {
+        $stage = "updating the existing Partly server"
+        if (-not (Stop-StalePartlyServer)) {
+            throw "An older Partly server is running, but its process could not be safely identified. Close it and reopen Partly."
+        }
+        $existingServer = $false
+        Write-PartlyLog "INFO Replaced an older local server with $requiredVersion"
+    }
+    if (-not $existingServer) {
         $stage = "finding Python 3"
         $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
         if ($launcher) {
