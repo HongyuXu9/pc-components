@@ -187,8 +187,8 @@ function setupActivityLogWindow() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(stateKey) || "{}"); } catch {}
   const normalSize = {
-    width: Number.isFinite(saved.width) ? Math.max(500, saved.width) : 500,
-    height: Number.isFinite(saved.height) ? Math.max(320, saved.height) : 320,
+    width: Number.isFinite(saved.width) ? Math.max(320, saved.width) : 500,
+    height: Number.isFinite(saved.height) ? Math.max(180, saved.height) : 320,
   };
   const toggle = $("toggleActivityLog");
   const maximize = $("maximizeActivityLog");
@@ -230,8 +230,9 @@ function setupActivityLogWindow() {
   panel.style.top = "auto";
   setCollapsed(Boolean(saved.collapsed));
   setMaximized(Boolean(saved.maximized) && !saved.collapsed);
-  panel.hidden = Boolean(saved.hidden);
-  reopen.hidden = !panel.hidden;
+  // Start with the small launcher button every time; the user opens the panel on demand.
+  panel.hidden = true;
+  reopen.hidden = false;
   toggle.addEventListener("click", () => {
     if (panel.classList.contains("maximized")) setMaximized(false);
     setCollapsed(!panel.classList.contains("collapsed"));

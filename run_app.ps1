@@ -61,7 +61,19 @@ try {
     }
 
     $stage = "opening Partly in the browser"
-    Start-Process -FilePath $appUrl
+    $browserCandidates = @(
+        (Join-Path $env:ProgramFiles "Google\Chrome\Application\chrome.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Google\Chrome\Application\chrome.exe"),
+        (Join-Path $env:LOCALAPPDATA "Google\Chrome\Application\chrome.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Microsoft\Edge\Application\msedge.exe"),
+        (Join-Path $env:ProgramFiles "Microsoft\Edge\Application\msedge.exe"),
+        (Join-Path $env:LOCALAPPDATA "Microsoft\Edge\Application\msedge.exe")
+    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+    if ($browserCandidates.Count -gt 0) {
+        Start-Process -FilePath $browserCandidates[0] -ArgumentList "--app=$appUrl"
+    } else {
+        Start-Process -FilePath $appUrl
+    }
 
     $windowSeen = $false
     $stage = "waiting for the Partly window to close"
