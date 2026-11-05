@@ -172,11 +172,12 @@
           <div class="screenshot-box" id="screenshotPasteZone">
             <div>
               <strong>Paste a screenshot with Ctrl+V</strong>
-              <span
-                >We’ll detect every product and price. Review the full list
-                before adding it.</span
-              >
+              <span>Review the detected products before adding them. Local OCR stays on this PC.</span>
             </div>
+            <label class="ai-recognition-toggle">
+              <input type="checkbox" id="useAiRecognition" />
+              <span><strong>AI assist</strong><small>Sends image to Google if configured</small></span>
+            </label>
             <label class="upload-button"
               >Choose image
               <input type="file" id="screenshotInput" accept="image/*" hidden />

@@ -925,6 +925,7 @@ footer span {
 }
 .screenshot-box {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -934,6 +935,7 @@ footer span {
   padding: 12px;
   margin: -3px 0 13px;
 }
+.screenshot-box > div:first-child { flex: 1 1 200px; }
 .screenshot-box strong,
 .screenshot-box span {
   display: block;
@@ -942,6 +944,11 @@ footer span {
   font-size: 11px;
   color: #3c4f3d;
 }
+.ai-recognition-toggle { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; cursor: pointer; }
+.ai-recognition-toggle input { accent-color: #6f9b47; }
+.ai-recognition-toggle strong, .ai-recognition-toggle small { display: block; }
+.ai-recognition-toggle strong { color: #4e7133; font-size: 10px; }
+.ai-recognition-toggle small { color: #89958b; font-size: 8px; margin-top: 3px; }
 .screenshot-box span {
   font-size: 9px;
   color: #89958b;

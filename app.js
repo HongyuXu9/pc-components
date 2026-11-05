@@ -899,6 +899,8 @@ $("logPriceBtn").addEventListener("click", () => {
 });
 function guessCategory(name) {
   const value = name.toLowerCase();
+  if (/\b(cavo|cable|displayport|adapter|adattatore|hdmi lead)\b/.test(value))
+    return "Accessories";
   if (/\b(cpu|processor|ryzen|intel core|core i[3579])\b/.test(value))
     return "CPU";
   if (/\b(gpu|graphics|geforce|rtx|gtx|radeon)\b/.test(value)) return "GPU";
@@ -929,21 +931,35 @@ function parsePrice(raw) {
 
 function extractProducts(ocrLines) {
   const ignored =
-    /\b(add to cart|buy now|in stock|out of stock|delivery|shipping|reviews?|ratings?|subtotal|total|discount|monthly|per month|quantity|sponsored|advertisement)\b/i;
+    /\b(add to cart|buy now|in stock|out of stock|delivery|shipping|reviews?|ratings?|subtotal|total|discount|monthly|per month|quantity|sponsored|advertisement|disponibilit[aà]|spedizione|gratuita|regala|ulteriori informazioni|acquista articoli|salva per dopo|condividi|rimuovi|item length|numeric|centimetri|risparmia|ogni\s+\d+|eligible)\b/i;
   const pricePattern =
     /\b(\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d{1,4}[.,]\d{2})\b\s*€?/g;
+  const productSignal =
+    /\b(cpu|processor|ryzen|geforce|rtx|gtx|radeon|intel core|core i[3579]|ddr[345]|ram|ssd|nvme|m\.2|motherboard|mainboard|power supply|psu|80\+|monitor|display|screen|displayport|hdmi|usb|cavo|cable|adattatore|adapter|keyboard|mouse|case|chassis|cooler|cooling|fan|noctua|corsair|ugreen|logitech|samsung|kingston| crucial|seasonic|be quiet|western digital|wd black|asus|msi|gigabyte|asrock|nzxt|lian li|fractal)\b/i;
+  const cleanProductName = (text) =>
+    text
+      .split(/\s*\|\s*/)[0]
+      .replace(/\b(disponibilit[aà]|spedizione|gratuita|regala|ulteriori informazioni|acquista articoli|salva per dopo|condividi|rimuovi|item length|numeric|centimetri|risparmia|ogni\s+\d+|add to cart|buy now|in stock)\b[\s\S]*$/i, "")
+      .replace(/[.…]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const normalizeSuperscriptPrice = (text) =>
+    text.replace(/(\d{1,4})\s*([⁰¹²³⁴⁵⁶⁷⁸⁹]{2})\s*€/g, (_, whole, cents) => {
+      const digits = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9" };
+      return `${whole}.${[...cents].map((digit) => digits[digit]).join("")}€`;
+    });
   const lines = (ocrLines || [])
     .map((line, index) => ({
-      text: String(line.text || "").trim(),
+      text: normalizeSuperscriptPrice(String(line.text || "").trim()),
       y: line.bbox ? (line.bbox.y0 + line.bbox.y1) / 2 : index * 36,
     }))
     .filter((line) => line.text.length > 2);
   const titleCandidates = lines.filter((line) => {
     pricePattern.lastIndex = 0;
     return (
-      /[a-z]/i.test(line.text) &&
+      productSignal.test(line.text) &&
+      line.text.length >= 9 &&
       !pricePattern.test(line.text) &&
-      !ignored.test(line.text) &&
       !/^https?:/i.test(line.text)
     );
   });
@@ -951,7 +967,7 @@ function extractProducts(ocrLines) {
   const products = [];
 
   for (const line of lines) {
-    if (ignored.test(line.text)) continue;
+    if (ignored.test(line.text) && !productSignal.test(line.text)) continue;
     pricePattern.lastIndex = 0;
     const matches = [...line.text.matchAll(pricePattern)];
     if (!matches.length) continue;
@@ -961,11 +977,11 @@ function extractProducts(ocrLines) {
     if (!prices.length) continue;
 
     pricePattern.lastIndex = 0;
-    const inlineName = line.text
+    const inlineName = cleanProductName(line.text
       .replace(pricePattern, " ")
       .replace(/[€$£]/g, " ")
       .replace(/\s+/g, " ")
-      .trim();
+      .trim());
     pricePattern.lastIndex = 0;
     let name =
       /[a-z]{2,}/i.test(inlineName) && !ignored.test(inlineName)
@@ -995,18 +1011,27 @@ function extractProducts(ocrLines) {
       });
   }
 
-  for (const [index, line] of titleCandidates.entries()) {
-    if (usedTitles.has(index)) continue;
-    const plausible =
-      line.text.length >= 8 &&
-      /[a-z]{2,}/i.test(line.text) &&
-      (/\d/.test(line.text) || line.text.length >= 18);
-    if (plausible)
+  const titleGroups = [];
+  titleCandidates.forEach((line, index) => {
+    const previous = titleGroups.at(-1);
+    if (previous && line.y - previous.lastY <= 42) {
+      previous.parts.push({ line, index });
+      previous.lastY = line.y;
+    } else {
+      titleGroups.push({ parts: [{ line, index }], lastY: line.y });
+    }
+  });
+  for (const group of titleGroups) {
+    if (group.parts.some(({ index }) => usedTitles.has(index))) continue;
+    const combined = group.parts.map(({ line }) => line.text).join(" ");
+    const name = cleanProductName(combined);
+    if (name.length >= 9) {
       products.push({
-        name: line.text.slice(0, 140),
+        name: name.slice(0, 140),
         price: "",
-        category: guessCategory(line.text),
+        category: guessCategory(name),
       });
+    }
   }
 
   const seen = new Set();
@@ -1018,7 +1043,7 @@ function extractProducts(ocrLines) {
   });
 }
 
-function renderBatchReview(items, detectedStore = "") {
+function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
   const rows = $("batchRows");
   rows.replaceChildren();
   $("batchCount").textContent =
@@ -1075,7 +1100,7 @@ function renderBatchReview(items, detectedStore = "") {
     priceInput.step = "0.01";
     priceInput.required = true;
     priceInput.placeholder = "0.00";
-    priceInput.value = item.price;
+    priceInput.value = String(item.price ?? "").replace(/[^\d.,]/g, "").replace(",", ".");
     priceLabel.append(priceInput);
 
     const remove = document.createElement("button");
@@ -1093,13 +1118,57 @@ function renderBatchReview(items, detectedStore = "") {
 
   setComponentEntryMode("bulk");
   $("ocrStatus").textContent =
-    "Check the detected products, correct anything needed, then add the whole list.";
+    `${method}: check the detected products, correct anything needed, then add the whole list.`;
+}
+
+async function extractScreenshotWithGemini(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Could not read screenshot"));
+    reader.readAsDataURL(file);
+  });
+  const response = await fetch("/api/extract-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mimeType: file.type, data: dataUrl }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || `Gemini request failed (${response.status})`);
+  const items = Array.isArray(result.items) ? result.items : [];
+  return {
+    store: String(result.store || ""),
+    items: items
+      .filter((item) => item && String(item.name || "").trim())
+      .map((item) => ({
+        name: String(item.name).trim().slice(0, 140),
+        price: String(item.price ?? "").trim(),
+        category: ["CPU", "GPU", "RAM", "Motherboard", "Storage", "Power supply", "Case", "Cooling", "Monitor", "Accessories", "Other"].includes(item.category)
+          ? item.category
+          : guessCategory(String(item.name)),
+      })),
+  };
 }
 
 async function recognizeScreenshot(file) {
   if (!file) return;
   $("ocrStatus").textContent = "Reading screenshot and looking for products…";
+  let localMethod = "Local OCR";
   try {
+    if ($("useAiRecognition").checked) {
+      $("ocrStatus").textContent = "Sending screenshot to Gemini for product recognition…";
+      try {
+        const aiResult = await extractScreenshotWithGemini(file);
+        if (aiResult.items.length) {
+          renderBatchReview(aiResult.items, aiResult.store, "Gemini AI");
+          return;
+        }
+        throw new Error("Gemini did not find any products");
+      } catch (error) {
+        localMethod = "Local OCR · Gemini unavailable; check its API key or connection";
+        reportClientIssue("warning", error?.message || error, "Gemini image extraction; using local OCR");
+      }
+    }
     if (!window.Tesseract) {
       await new Promise((resolve, reject) => {
         const script = document.createElement("script");
@@ -1134,7 +1203,7 @@ async function recognizeScreenshot(file) {
       stores.find((store) =>
         allText.toLowerCase().includes(store.toLowerCase()),
       ) || "";
-    renderBatchReview(items, detectedStore);
+    renderBatchReview(items, detectedStore, localMethod);
   } catch (error) {
     $("ocrStatus").textContent =
       "Screenshot reading failed. Check your connection, or enter the products manually.";
