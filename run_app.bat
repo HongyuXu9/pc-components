@@ -1,5 +1,5 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-start "" powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0run_app.ps1"
+start "" "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0run_app.ps1"
 endlocal
