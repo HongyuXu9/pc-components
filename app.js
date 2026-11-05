@@ -718,15 +718,6 @@ bindStoreUrl("offerUrl", "offerStore");
 $("partForm").querySelector('[type="submit"]').addEventListener("click", () => {
   reportActivity("INFO", "Save component button clicked", "Form submission starting");
 });
-$("partForm").addEventListener("invalid", (event) => {
-  const field = event.target;
-  reportClientIssue(
-    "error",
-    field.validationMessage || "Invalid form field",
-    `Save component · ${field.id || field.name || field.tagName}`,
-  );
-}, true);
-
 $("partForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   reportActivity("INFO", "Save component clicked", "Component form");
@@ -1072,7 +1063,6 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
     nameLabel.textContent = "Product name";
     const nameInput = document.createElement("input");
     nameInput.className = "batch-name";
-    nameInput.required = true;
     nameInput.value = item.name;
     nameLabel.append(nameInput);
 
@@ -1098,7 +1088,6 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
     priceInput.type = "number";
     priceInput.min = "0";
     priceInput.step = "0.01";
-    priceInput.required = true;
     priceInput.placeholder = "0.00";
     priceInput.value = String(item.price ?? "").replace(/[^\d.,]/g, "").replace(",", ".");
     priceLabel.append(priceInput);
@@ -1245,27 +1234,11 @@ $("addBatchProducts").addEventListener("click", async () => {
     return;
   }
   const store = $("batchStore").value.trim();
-  if (!store) {
-    $("batchStore").focus();
-    notify("Enter the store shown in the screenshot");
-    return;
-  }
   const products = rows.map((row) => ({
     name: row.querySelector(".batch-name").value.trim(),
     category: row.querySelector(".batch-category").value,
-    price:
-      row.querySelector(".batch-price").value.trim() === ""
-        ? NaN
-        : Number(row.querySelector(".batch-price").value),
+    price: Number(row.querySelector(".batch-price").value) || 0,
   }));
-  if (
-    products.some(
-      (item) => !item.name || !Number.isFinite(item.price) || item.price < 0,
-    )
-  ) {
-    notify("Review every product name and price first");
-    return;
-  }
   const date = today();
   const firstId = Date.now();
   components.unshift(
