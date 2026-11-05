@@ -87,7 +87,7 @@
         <article class="stat-card">
           <span class="stat-icon amber">↘</span>
           <div>
-            <small>BEST CURRENT PRICE</small><strong id="statBest">—</strong
+            <small>BEST HISTORICAL PRICE</small><strong id="statBest">—</strong
             ><span id="bestName">Add your first offer</span>
           </div>
         </article>
@@ -256,7 +256,8 @@
             </div>
             <div class="form-grid">
               <label class="field"
-                >Store name<input
+                >Store name <span class="optional">Auto-detected from link</span
+                ><input
                   id="partStore"
                   required
                   placeholder="e.g. Amazon" /></label
@@ -306,7 +307,8 @@
           <input type="hidden" id="offerPartId" />
           <div class="form-grid">
             <label class="field"
-              >Store name<input
+              >Store name <span class="optional">Auto-detected from link</span
+              ><input
                 id="offerStore"
                 required
                 placeholder="e.g. MediaWorld" /></label

@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-set "APP_URL=http://127.0.0.1:8765"
+set "APP_URL=http://127.0.0.1:8766"
 
 curl.exe -fsS "%APP_URL%/api/data" >nul 2>&1
 if errorlevel 1 start "Partly server" /min py -3 "%~dp0server.py"

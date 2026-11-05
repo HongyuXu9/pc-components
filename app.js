@@ -7,6 +7,94 @@ const money = (n) =>
 let chart = null,
   toastTimer;
 let selectedHistoryOfferId = null;
+function storeNameFromUrl(rawUrl) {
+  if (!rawUrl.trim()) return "";
+  let hostname;
+  try {
+    const normalized = /^[a-z][a-z\d+.-]*:\/\//i.test(rawUrl)
+      ? rawUrl
+      : "https://" + rawUrl;
+    hostname = new URL(normalized).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+
+  const known = [
+    [/(^|\.)amazon\./, "Amazon"],
+    [/(^|\.)aliexpress\./, "AliExpress"],
+    [/(^|\.)pccomponentes\./, "PcComponentes"],
+    [/(^|\.)ebay\./, "eBay"],
+    [/(^|\.)(mediamarkt|mediaworld)\./, "MediaMarkt"],
+    [/(^|\.)unieuro\./, "Unieuro"],
+    [/(^|\.)euronics\./, "Euronics"],
+    [/(^|\.)eprice\./, "ePrice"],
+    [/(^|\.)ldlc\./, "LDLC"],
+    [/(^|\.)newegg\./, "Newegg"],
+    [/(^|\.)bestbuy\./, "Best Buy"],
+    [/(^|\.)coolblue\./, "Coolblue"],
+    [/(^|\.)proshop\./, "Proshop"],
+    [/(^|\.)caseking\./, "Caseking"],
+    [/(^|\.)alternate\./, "Alternate"],
+    [/(^|\.)mindfactory\./, "Mindfactory"],
+    [/(^|\.)galaxus\./, "Galaxus"],
+    [/(^|\.)globaldata\./, "Globaldata"],
+    [/(^|\.)fnac\./, "Fnac"],
+    [/(^|\.)cdiscount\./, "Cdiscount"],
+    [/(^|\.)overclockers\./, "Overclockers"],
+    [/(^|\.)scan\./, "Scan"],
+    [/(^|\.)walmart\./, "Walmart"],
+  ];
+  const match = known.find(([pattern]) => pattern.test(hostname));
+  if (match) return match[1];
+
+  const labels = hostname.split(".");
+  const compoundSuffixes = [
+    "co.uk",
+    "com.au",
+    "com.br",
+    "co.jp",
+    "com.cn",
+    "co.in",
+    "com.mx",
+    "co.nz",
+    "co.za",
+  ];
+  const suffixLength = compoundSuffixes.some((suffix) =>
+    hostname.endsWith("." + suffix),
+  )
+    ? 2
+    : 1;
+  const label = labels[Math.max(0, labels.length - suffixLength - 1)];
+  return label
+    .replace(/[-_]+/g, " ")
+    .replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+}
+
+function syncStoreName(urlId, storeId) {
+  const store = $(storeId);
+  const inferred = storeNameFromUrl($(urlId).value);
+  if (!inferred) return;
+  const manuallyEdited =
+    store.dataset.userEdited === "true" &&
+    store.value.trim() !== "" &&
+    store.value.trim() !== (store.dataset.autoStore || "");
+  if (manuallyEdited) return;
+  store.value = inferred;
+  store.dataset.autoStore = inferred;
+  store.dataset.userEdited = "false";
+}
+
+function bindStoreUrl(urlId, storeId) {
+  const url = $(urlId);
+  const store = $(storeId);
+  store.addEventListener("input", () => {
+    store.dataset.userEdited =
+      store.value.trim() !== (store.dataset.autoStore || "") ? "true" : "false";
+  });
+  url.addEventListener("input", () => syncStoreName(urlId, storeId));
+  url.addEventListener("change", () => syncStoreName(urlId, storeId));
+}
+
 function migrate(data) {
   const categories = {
     "Scheda Video (GPU)": "GPU",
@@ -49,6 +137,30 @@ function migrate(data) {
 let components = [];
 let dataReady = false;
 let saveQueue = Promise.resolve();
+function reportClientIssue(level, message, context = "") {
+  fetch("/api/log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ level, message: String(message), context }),
+  }).catch((error) =>
+    console.error("[Partly] Could not write partly.log", error),
+  );
+}
+window.addEventListener("error", (event) => {
+  reportClientIssue(
+    "error",
+    event.error?.stack || event.message,
+    "window error",
+  );
+});
+window.addEventListener("unhandledrejection", (event) => {
+  reportClientIssue(
+    "error",
+    event.reason?.stack || event.reason,
+    "unhandled rejection",
+  );
+});
+
 function save() {
   if (!dataReady) {
     notify("Start the local app with run_app.bat before saving");
@@ -70,10 +182,12 @@ function save() {
       return true;
     })
     .catch((error) => {
+      const detail = error?.message || String(error);
       $("storageStatus").textContent =
-        "Could not save — check the local server";
-      notify("Could not save changes to data.json");
-      console.error(error);
+        "Save failed: " + detail + " · partly.log";
+      notify("Save failed: " + detail);
+      console.error("[Partly] Save failed:", error);
+      reportClientIssue("error", error?.stack || error, "PUT /api/data");
       return false;
     });
   return saveQueue;
@@ -99,6 +213,9 @@ function openModal(part) {
   $("partPrice").value = part?.offers?.[0]?.price ?? "";
   $("partCondition").value = part?.offers?.[0]?.condition || "New";
   $("partUrl").value = part?.offers?.[0]?.url || "";
+  $("partStore").dataset.autoStore = $("partStore").value;
+  $("partStore").dataset.userEdited = "false";
+  syncStoreName("partUrl", "partStore");
   $("ocrStatus").textContent = "";
   $("modal").classList.add("open");
   setTimeout(() => $("partName").focus(), 30);
@@ -145,8 +262,20 @@ function render() {
     offers.map((x) => x.o.store.trim().toLowerCase()).filter(Boolean),
   );
   const entries = offers.reduce((s, x) => s + x.o.history.length, 0);
-  const best = offers.reduce(
-    (a, x) => (!a || Number(x.o.price) < Number(a.o.price) ? x : a),
+  const selectedProduct =
+    offers.find((item) => String(item.o.id) === String(selectedHistoryOfferId))
+      ?.p || null;
+  const historicalPrices = selectedProduct
+    ? selectedProduct.offers.flatMap((offer) =>
+        offer.history.map((entry) => ({
+          ...entry,
+          store: offer.store,
+        })),
+      )
+    : [];
+  const historicalLow = historicalPrices.reduce(
+    (low, entry) =>
+      !low || Number(entry.price) < Number(low.price) ? entry : low,
     null,
   );
   $("grandTotal").textContent = money(total);
@@ -158,8 +287,14 @@ function render() {
   $("partsCount").textContent = components.length;
   $("navCount").textContent = components.length;
   $("statStores").textContent = stores.size;
-  $("statBest").textContent = best ? money(best.o.price) : "—";
-  $("bestName").textContent = best ? best.p.name : "Add your first offer";
+  $("statBest").textContent = historicalLow ? money(historicalLow.price) : "—";
+  $("bestName").textContent = historicalLow
+    ? selectedProduct.name +
+      " · " +
+      historicalLow.store +
+      " · " +
+      new Date(historicalLow.date + "T12:00:00").toLocaleDateString("en-GB")
+    : selectedProduct?.name || "Select a component";
   const cats = [...new Set(components.map((p) => p.category))].sort(),
     cur = $("categoryFilter").value;
   $("categoryFilter").innerHTML =
@@ -218,61 +353,133 @@ function escapeHtml(s = "") {
 function escapeAttr(s = "") {
   return escapeHtml(s);
 }
+function storeColor(store) {
+  const key = String(store || "")
+    .trim()
+    .toLowerCase();
+  const known = {
+    amazon: "#3B82F6",
+    aliexpress: "#EF4444",
+    mediamarkt: "#22C55E",
+    mediaworld: "#22C55E",
+    pccomponentes: "#8B5CF6",
+    ebay: "#F59E0B",
+    unieuro: "#06B6D4",
+    euronics: "#EC4899",
+    eprice: "#14B8A6",
+    ldlc: "#F97316",
+  };
+  if (known[key]) return known[key];
+  const palette = [
+    "#3B82F6",
+    "#EF4444",
+    "#22C55E",
+    "#8B5CF6",
+    "#F59E0B",
+    "#06B6D4",
+    "#EC4899",
+    "#14B8A6",
+    "#F97316",
+    "#6366F1",
+    "#84CC16",
+    "#D946EF",
+  ];
+  let hash = 0;
+  for (const character of key) {
+    hash = (hash * 31 + character.charCodeAt(0)) | 0;
+  }
+  return palette[Math.abs(hash) % palette.length];
+}
+
 function updateChart() {
-  const selected = selectedHistoryOfferId;
-  const target = components
-    .flatMap((p) => p.offers.map((o) => ({ p, o })))
-    .find((x) => String(x.o.id) === String(selected));
-  $("chartEmpty").style.display =
-    target && target.o.history.length ? "none" : "grid";
-  $("chartLabel").textContent = target
-    ? `${target.p.name} · ${target.o.store} · ${target.o.condition}`
-    : "Click a product or store offer to view its price trend";
+  const selected = components
+    .flatMap((part) => part.offers.map((offer) => ({ part, offer })))
+    .find((item) => String(item.offer.id) === String(selectedHistoryOfferId));
+  const product = selected?.part || null;
+  const offers = product?.offers || [];
+  const hasHistory = offers.some((offer) => offer.history.length > 0);
+
+  $("chartEmpty").style.display = hasHistory ? "none" : "grid";
+  $("chartLabel").textContent = product
+    ? product.name +
+      " · " +
+      offers.length +
+      " store offer" +
+      (offers.length === 1 ? "" : "s")
+    : "Click a component to compare all its store offers";
   if (!window.Chart) return;
-  const canvas = $("priceChart");
+
   if (chart) {
     chart.destroy();
     chart = null;
   }
-  if (!target || !target.o.history.length) return;
-  const entries = [...target.o.history].sort((a, b) =>
-    a.date.localeCompare(b.date),
+  if (!product || !hasHistory) return;
+
+  const dates = [
+    ...new Set(
+      offers.flatMap((offer) => offer.history.map((entry) => entry.date)),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  const labels = dates.map((date) =>
+    new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "2-digit",
+    }),
   );
-  chart = new Chart(canvas, {
-    type: "line",
-    data: {
-      labels: entries.map((x) =>
-        new Date(`${x.date}T12:00:00`).toLocaleDateString("en-GB", {
-          day: "numeric",
-          month: "short",
-          year: "2-digit",
-        }),
+  const datasets = offers.map((offer) => {
+    const color = storeColor(offer.store);
+    return {
+      label: offer.store + " · " + (offer.condition || "New"),
+      data: dates.map(
+        (date) =>
+          offer.history.find((entry) => entry.date === date)?.price ?? null,
       ),
-      datasets: [
-        {
-          data: entries.map((x) => Number(x.price)),
-          borderColor: "#83ae4e",
-          backgroundColor: "#e8f4db",
-          fill: true,
-          tension: 0.32,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          pointBackgroundColor: "#83ae4e",
-          borderWidth: 2,
-        },
-      ],
-    },
+      borderColor: color,
+      backgroundColor: color,
+      pointBackgroundColor: color,
+      pointBorderColor: "#ffffff",
+      pointBorderWidth: 2,
+      fill: false,
+      tension: 0.25,
+      spanGaps: true,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2,
+    };
+  });
+
+  chart = new Chart($("priceChart"), {
+    type: "line",
+    data: { labels, datasets },
     options: {
       maintainAspectRatio: false,
       responsive: true,
+      interaction: { mode: "nearest", intersect: false },
       plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (c) => money(c.parsed.y) } },
+        legend: {
+          display: true,
+          position: "bottom",
+          labels: {
+            usePointStyle: true,
+            pointStyle: "circle",
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 14,
+            font: { size: 10 },
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) =>
+              context.dataset.label + ": " + money(context.parsed.y),
+          },
+        },
       },
       scales: {
         y: {
           grid: { color: "#eff2ed" },
-          ticks: { font: { size: 9 }, callback: (v) => `€${v}` },
+          ticks: { font: { size: 9 }, callback: (value) => "€" + value },
           border: { display: false },
         },
         x: {
@@ -310,12 +517,18 @@ function addOffer(partId) {
   const p = components.find((x) => String(x.id) === String(partId));
   if (!p) return;
   $("offerForm").reset();
+  $("offerStore").dataset.autoStore = "";
+  $("offerStore").dataset.userEdited = "false";
   $("offerPartId").value = p.id;
   $("offerProductName").textContent = p.name;
   $("offerModal").classList.add("open");
 }
-$("partForm").addEventListener("submit", (e) => {
+bindStoreUrl("partUrl", "partStore");
+bindStoreUrl("offerUrl", "offerStore");
+
+$("partForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const original = JSON.stringify(components);
   const name = $("partName").value.trim(),
     price = Number($("partPrice").value),
     date = today(),
@@ -362,7 +575,12 @@ $("partForm").addEventListener("submit", (e) => {
     };
     components.unshift(p);
   }
-  save();
+  const saved = await save();
+  if (!saved) {
+    components = migrate(JSON.parse(original));
+    render();
+    return;
+  }
   closeModal();
   render();
   notify(id ? "Component updated" : "Component added");
