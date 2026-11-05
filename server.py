@@ -11,6 +11,7 @@ import base64
 import urllib.error
 import urllib.request
 from urllib.parse import unquote, urlsplit
+import time
 
 
 ROOT = Path(__file__).resolve().parent
@@ -22,6 +23,9 @@ HOST = "127.0.0.1"
 PORT = 8766
 APP_VERSION = "2026.11.05.collections-2"
 data_lock = Lock()
+heartbeat_lock = Lock()
+last_client_heartbeat = None
+HEARTBEAT_TIMEOUT_SECONDS = 30
 
 logger = logging.getLogger("partly")
 logger.setLevel(logging.INFO)
@@ -47,6 +51,11 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         path_parts = [part for part in unquote(urlsplit(self.path).path).split("/") if part]
         if any(part.startswith(".") for part in path_parts):
             self.send_error(404)
+            return
+        if self.path == "/api/heartbeat":
+            with heartbeat_lock:
+                active = last_client_heartbeat is not None and time.monotonic() - last_client_heartbeat < HEARTBEAT_TIMEOUT_SECONDS
+            self._json_response(200, {"active": active})
             return
         if self.path == "/api/version":
             self._json_response(200, {"version": APP_VERSION})
@@ -105,6 +114,12 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             self._json_response(500, {"error": str(error)})
 
     def do_POST(self):
+        if self.path == "/api/heartbeat":
+            global last_client_heartbeat
+            with heartbeat_lock:
+                last_client_heartbeat = time.monotonic()
+            self._json_response(200, {"active": True})
+            return
         if self.path == "/api/extract-image":
             self._extract_image_with_gemini()
             return
@@ -213,6 +228,8 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, format_string, *args):
+        if self.path == "/api/heartbeat":
+            return
         logger.info("%s %s", self.address_string(), format_string % args)
 
     def end_headers(self):

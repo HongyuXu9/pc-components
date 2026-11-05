@@ -57,6 +57,15 @@ function Test-PartlyServer {
     }
 }
 
+function Test-PartlyAppHeartbeat {
+    try {
+        $response = Invoke-RestMethod -Uri "$appUrl/api/heartbeat" -TimeoutSec 2
+        return [bool]$response.active
+    } catch {
+        return $false
+    }
+}
+
 function Get-PartlyListenerProcessId {
     $netstat = Join-Path $env:SystemRoot "System32\netstat.exe"
     $lines = & $netstat -ano -p tcp 2>$null
@@ -143,23 +152,20 @@ try {
         Start-Process -FilePath $appUrl
     }
 
-    $windowSeen = $false
-    $stage = "waiting for the Partly window to close"
-    $windowDeadline = (Get-Date).AddSeconds(45)
-    while ($true) {
-        $partlyWindow = Get-Process -ErrorAction SilentlyContinue | Where-Object {
-            $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -match "Partly"
-        }
-        if ($partlyWindow) {
-            $windowSeen = $true
-        } elseif ($windowSeen) {
-            break
-        } elseif ((Get-Date) -gt $windowDeadline) {
-            throw "The Partly app window did not open."
-        }
-
+    $stage = "waiting for the Partly app to connect"
+    $heartbeatSeen = $false
+    $heartbeatDeadline = (Get-Date).AddSeconds(45)
+    while (-not $heartbeatSeen -and (Get-Date) -lt $heartbeatDeadline) {
+        $heartbeatSeen = Test-PartlyAppHeartbeat
         if ($ownsServer -and $serverProcess.HasExited) { break }
-        Start-Sleep -Milliseconds 500
+        if (-not $heartbeatSeen) { Start-Sleep -Milliseconds 500 }
+    }
+    if (-not $heartbeatSeen) { throw "The Partly app did not connect to its local server." }
+
+    $stage = "waiting for the Partly app to close"
+    while (Test-PartlyAppHeartbeat) {
+        if ($ownsServer -and $serverProcess.HasExited) { break }
+        Start-Sleep -Seconds 1
     }
 } catch {
     $detail = "{0}: {1}" -f $stage, $_.Exception.ToString()
@@ -167,7 +173,7 @@ try {
     Show-PartlyError ("Partly launcher failed while {0}.`r`n`r`nDetails were written to partly.log or partly-launcher.log.`r`n`r`n{1}" -f $stage, $_.Exception.Message)
 } finally {
     if ($ownsServer -and $serverProcess -and -not $serverProcess.HasExited) {
-        Write-PartlyLog "INFO Partly window closed; stopping local server (PID $($serverProcess.Id))"
+        Write-PartlyLog "INFO Partly app heartbeat ended; stopping local server (PID $($serverProcess.Id))"
         Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
         Wait-Process -Id $serverProcess.Id -Timeout 5 -ErrorAction SilentlyContinue
     }

@@ -315,6 +315,11 @@ function setupActivityLogWindow() {
   });
 }
 setupActivityLogWindow();
+const sendAppHeartbeat = () => {
+  fetch("/api/heartbeat", { method: "POST", cache: "no-store" }).catch(() => {});
+};
+sendAppHeartbeat();
+window.setInterval(sendAppHeartbeat, 5000);
 window.addEventListener("error", (event) => {
   reportClientIssue(
     "error",
