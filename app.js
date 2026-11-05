@@ -69,6 +69,14 @@ function storeNameFromUrl(rawUrl) {
     .replace(/[-_]+/g, " ")
     .replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
 }
+function componentNameKey(name) {
+  return String(name || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ");
+}
 
 function syncStoreName(urlId, storeId) {
   const store = $(storeId);
@@ -305,9 +313,10 @@ function save() {
     });
   return saveQueue;
 }
-function notify(message) {
+function notify(message, kind = "info") {
   const t = $("toast");
   t.textContent = message;
+  t.classList.toggle("warning", kind === "warning");
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
@@ -724,6 +733,17 @@ $("partForm").addEventListener("submit", async (e) => {
     price = Number($("partPrice").value),
     date = today(),
     id = $("partId").value;
+  if (!id && componentNameKey(name)) {
+    const duplicate = components.find(
+      (part) => componentNameKey(part.name) === componentNameKey(name),
+    );
+    if (duplicate) {
+      const message = `“${name}” already exists; component skipped`;
+      reportClientIssue("warning", message, "Duplicate component");
+      notify(message, "warning");
+      return;
+    }
+  }
   let p = id ? components.find((x) => String(x.id) === String(id)) : null;
   if (p) {
     p.name = name;
@@ -1234,10 +1254,29 @@ $("addBatchProducts").addEventListener("click", async () => {
     category: row.querySelector(".batch-category").value,
     price: Number(row.querySelector(".batch-price").value) || 0,
   }));
+  const knownNames = new Set(
+    components.map((part) => componentNameKey(part.name)).filter(Boolean),
+  );
+  const newProducts = [];
+  const duplicates = [];
+  for (const product of products) {
+    const key = componentNameKey(product.name);
+    if (key && knownNames.has(key)) duplicates.push(product.name);
+    else {
+      newProducts.push(product);
+      if (key) knownNames.add(key);
+    }
+  }
+  if (duplicates.length) {
+    const message = `Skipped ${duplicates.length} duplicate component${duplicates.length === 1 ? "" : "s"}: ${duplicates.join(", ")}`;
+    reportClientIssue("warning", message, "Duplicate components");
+    notify(message, "warning");
+  }
+  if (!newProducts.length) return;
   const date = today();
   const firstId = Date.now();
   components.unshift(
-    ...products.map((item, index) => ({
+    ...newProducts.map((item, index) => ({
       id: firstId + index,
       name: item.name,
       category: item.category,
@@ -1256,17 +1295,20 @@ $("addBatchProducts").addEventListener("click", async () => {
   );
   const saved = await save();
   if (!saved) {
-    components.splice(0, products.length);
+    components.splice(0, newProducts.length);
     render();
     return;
   }
   render();
   closeModal();
   notify(
-    products.length +
+    duplicates.length
+      ? `Added ${newProducts.length}; skipped ${duplicates.length} duplicate${duplicates.length === 1 ? "" : "s"}`
+      : newProducts.length +
       " product" +
-      (products.length === 1 ? "" : "s") +
+      (newProducts.length === 1 ? "" : "s") +
       " added",
+    duplicates.length ? "warning" : "info",
   );
 });
 

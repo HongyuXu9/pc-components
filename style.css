@@ -758,6 +758,7 @@ footer span {
   opacity: 1;
   transform: none;
 }
+.toast.warning { background: #765512; color: #fff5d6; box-shadow: 0 6px 22px #76551233; }
 @media (max-width: 1100px) {
   .main {
     padding-left: 26px;
