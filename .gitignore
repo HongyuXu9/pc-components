@@ -2,3 +2,5 @@ partly.log
 data.json
 *.log
 .env
+# JetBrains IDE project files
+.idea/
