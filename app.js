@@ -371,20 +371,25 @@ function notify(message, kind = "info") {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
 }
-function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confirm", danger = false, fields = [] }) {
+function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confirm", danger = false, deleteLabel = "", closeOnBackdrop = true, closeOnEscape = true, fields = [] }) {
   const modal = $("actionModal");
   const form = $("actionForm");
   const fieldList = $("actionFields");
   const confirmButton = $("confirmAction");
+  const deleteButton = $("deleteAction");
   $("actionEyebrow").textContent = eyebrow;
   $("actionModalTitle").textContent = title;
   $("actionSubtitle").textContent = subtitle;
   confirmButton.textContent = confirmLabel;
   confirmButton.classList.toggle("danger", danger);
+  deleteButton.hidden = !deleteLabel;
+  deleteButton.textContent = deleteLabel || "Delete";
+  modal.classList.toggle("price-edit", Boolean(deleteLabel));
+  fieldList.classList.toggle("price-history-fields", eyebrow === "PRICE HISTORY");
   fieldList.replaceChildren();
   for (const field of fields) {
     const label = document.createElement("label");
-    label.className = "field wide";
+    label.className = field.wide === false ? "field" : "field wide";
     label.htmlFor = `action-${field.name}`;
     label.textContent = field.label;
     const input = field.options ? document.createElement("select") : document.createElement("input");
@@ -400,7 +405,9 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
     } else {
       input.type = field.type || "text";
       if (field.min !== undefined) input.min = field.min;
+      if (field.max !== undefined) input.max = field.max;
       if (field.step !== undefined) input.step = field.step;
+      if (field.inputMode) input.inputMode = field.inputMode;
       if (field.placeholder) input.placeholder = field.placeholder;
     }
     input.value = field.value ?? "";
@@ -417,24 +424,28 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
       if (settled) return;
       settled = true;
       modal.classList.remove("open");
+      modal.classList.remove("price-edit");
+      fieldList.classList.remove("price-history-fields");
       form.onsubmit = null;
       $("cancelAction").onclick = null;
       $("closeActionModal").onclick = null;
+      deleteButton.onclick = null;
       modal.onclick = null;
       document.removeEventListener("keydown", onKeyDown);
       resolve(value);
     };
     const onKeyDown = (event) => {
-      if (event.key === "Escape") finish(null);
+      if (event.key === "Escape" && closeOnEscape) finish(null);
     };
     form.onsubmit = (event) => {
       event.preventDefault();
       const values = Object.fromEntries(new FormData(form).entries());
-      finish(fields.length ? values : true);
+      finish(deleteLabel ? { action: "save", values } : fields.length ? values : true);
     };
     $("cancelAction").onclick = () => finish(null);
     $("closeActionModal").onclick = () => finish(null);
-    modal.onclick = (event) => { if (event.target === modal) finish(null); };
+    deleteButton.onclick = () => finish({ action: "delete" });
+    modal.onclick = (event) => { if (closeOnBackdrop && event.target === modal) finish(null); };
     document.addEventListener("keydown", onKeyDown);
   });
 }
@@ -604,6 +615,7 @@ function render() {
   $("watchlistCollection").hidden = activeCollection !== "watchlist";
   $("trashCollection").hidden = activeCollection !== "trash";
   $("parts").querySelector(".tools").hidden = activeCollection !== "build";
+  $("logPriceBtn").hidden = activeCollection === "trash";
   document.querySelectorAll(".collection-tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.collection === activeCollection);
     tab.setAttribute("aria-selected", String(tab.dataset.collection === activeCollection));
@@ -758,7 +770,8 @@ function updateChart() {
       tension: 0.25,
       spanGaps: true,
       pointRadius: 4,
-      pointHoverRadius: 6,
+      pointHoverRadius: 8,
+      pointHitRadius: 12,
       borderWidth: 2,
     };
   });
@@ -769,6 +782,21 @@ function updateChart() {
     options: {
       maintainAspectRatio: false,
       responsive: true,
+      onClick: (event, _activeElements, instance) => {
+        const points = instance.getElementsAtEventForMode(
+          event,
+          "nearest",
+          { intersect: true },
+          true,
+        );
+        const point = points[0];
+        if (!point) return;
+        const offer = offers[point.datasetIndex];
+        const date = dates[point.index];
+        if (offer?.history.some((entry) => entry.date === date)) {
+          logPrice(product.id, offer.id, date);
+        }
+      },
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: {
@@ -805,31 +833,56 @@ function updateChart() {
     },
   });
 }
-async function logPrice(partId, offerId) {
-  const p = components.find((x) => String(x.id) === String(partId)),
-    o = p?.offers.find((x) => String(x.id) === String(offerId));
+async function logPrice(partId, offerId, entryDate = null) {
+  const source = activeCollection === "watchlist" ? watchlist : components;
+  const p = source.find((x) => String(x.id) === String(partId));
+  const o = p?.offers.find((x) => String(x.id) === String(offerId));
   if (!o) return;
-  const values = await openActionDialog({
+  const initialDate = entryDate || today();
+  const existingEntry = o.history.find((entry) => entry.date === initialDate);
+  const result = await openActionDialog({
     eyebrow: "PRICE HISTORY",
-    title: "Log a price",
-    subtitle: `${p.name} · ${o.store}`,
-    confirmLabel: "Save price",
+    title: existingEntry ? "Edit price point" : "Log a price",
+    subtitle: `${p.name} · ${o.store}${existingEntry ? ` · ${new Date(existingEntry.date + "T12:00:00").toLocaleDateString()}` : ""}`,
+    confirmLabel: existingEntry ? "Save changes" : "Save price",
+    deleteLabel: existingEntry ? "Delete point" : "",
+    closeOnBackdrop: false,
+    closeOnEscape: false,
     fields: [
-      { name: "price", label: "Price (€)", type: "number", value: o.price, min: "0", step: "0.01" },
-      { name: "date", label: "Date", type: "date", value: today() },
+      { name: "price", label: "Price (€)", type: "number", value: existingEntry?.price ?? o.price, min: "0", step: "0.01", inputMode: "decimal", wide: false },
+      { name: "date", label: "Date", type: "date", value: initialDate, wide: false },
     ],
   });
-  if (!values) return;
+  if (!result) return;
+  const snapshot = JSON.stringify({ components, watchlist, trash });
+  if (result.action === "delete" && existingEntry) {
+    o.history = o.history.filter((entry) => entry !== existingEntry);
+    if (!(await save())) {
+      restoreCollectionSnapshot(snapshot);
+      render();
+      return;
+    }
+    render();
+    notify("Price point deleted");
+    return;
+  }
+  const values = result.action === "save" ? result.values : result;
   const n = Number(values.price);
   const date = values.date;
-  const old = o.history.find((h) => h.date === date);
-  if (old) old.price = n;
+  if (!Number.isFinite(n) || n < 0 || !date) return;
+  if (existingEntry) o.history = o.history.filter((entry) => entry !== existingEntry);
+  const sameDate = o.history.find((entry) => entry.date === date);
+  if (sameDate) sameDate.price = n;
   else o.history.push({ date, price: n });
   o.history.sort((a, b) => a.date.localeCompare(b.date));
   if (date === today()) o.price = n;
-  save();
+  if (!(await save())) {
+    restoreCollectionSnapshot(snapshot);
+    render();
+    return;
+  }
   render();
-  notify("Price history updated");
+  notify(existingEntry ? "Price point updated" : "Price history updated");
 }
 function addOffer(partId) {
   const p = components.find((x) => String(x.id) === String(partId));
@@ -1133,9 +1186,13 @@ $("offerModal").addEventListener("click", (e) => {
 $("search").addEventListener("input", render);
 $("categoryFilter").addEventListener("change", render);
 $("logPriceBtn").addEventListener("click", () => {
-  const p = components
+  const priceList = activeCollection === "watchlist" ? watchlist : components;
+  const selectedOfferId = activeCollection === "watchlist"
+    ? selectedWatchlistOfferId
+    : selectedHistoryOfferId;
+  const p = priceList
     .flatMap((p) => p.offers.map((o) => ({ p, o })))
-    .find((x) => String(x.o.id) === String(selectedHistoryOfferId));
+    .find((x) => String(x.o.id) === String(selectedOfferId));
   if (p) logPrice(p.p.id, p.o.id);
   else notify("Add an offer first");
 });

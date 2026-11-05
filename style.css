@@ -655,6 +655,9 @@ body {
   position: relative;
   padding: 8px 15px;
 }
+.chart-wrap canvas {
+  cursor: crosshair;
+}
 .chart-empty {
   position: absolute;
   inset: 0;
@@ -772,6 +775,23 @@ footer span {
 }
 .field input::placeholder {
   color: #b2bbb3;
+}
+.price-history-fields {
+  gap: 15px;
+}
+.price-history-fields .field input {
+  height: 44px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.price-history-fields input[type="date"] {
+  color-scheme: light;
+  padding-right: 8px;
+}
+.price-edit .modal-actions #deleteAction {
+  margin-right: auto;
+  border: 1px solid #f0d9d7;
+  color: #a83b35;
 }
 .optional {
   font-size: 9px;
