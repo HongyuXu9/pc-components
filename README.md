@@ -17,3 +17,5 @@ You can also start the server and app with `run_app.bat`.
 Python 3 is required. The server listens only on this PC. Back up `data.json` to keep a copy of your components and price history.
 
 Product images can be set with an image URL when adding or editing a component. The example parts already include a few product images; those images are hosted by their respective product sites.
+
+To add several items from a screenshot, open **Add component**, paste the screenshot with **Ctrl+V** (or choose an image), review the detected list, and add all rows together. OCR suggestions can be edited before saving.

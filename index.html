@@ -128,14 +128,11 @@
               <span class="eyebrow">PRICE WATCH</span>
               <h2>Price history</h2>
             </div>
-            <select id="chartOffer" aria-label="Select offer">
-              <option value="">Select an offer</option>
-            </select>
           </div>
           <div class="chart-caption">
             <span class="legend-dot"></span
             ><span id="chartLabel"
-              >Choose an offer to view its price trend</span
+              >Click a product or store offer to view its price trend</span
             >
           </div>
           <div class="chart-wrap">
@@ -172,83 +169,123 @@
         </div>
         <form id="partForm">
           <input type="hidden" id="partId" />
-          <div class="screenshot-box">
+          <div class="screenshot-box" id="screenshotPasteZone">
             <div>
-              <strong>Quick add from screenshot</strong
-              ><span
-                >We’ll read visible product text and price. Review before
-                saving.</span
+              <strong>Paste a screenshot with Ctrl+V</strong>
+              <span
+                >We’ll detect every product and price. Review the full list
+                before adding it.</span
               >
             </div>
             <label class="upload-button"
-              >Choose image<input
-                type="file"
-                id="screenshotInput"
-                accept="image/*"
-                hidden
-            /></label>
+              >Choose image
+              <input type="file" id="screenshotInput" accept="image/*" hidden />
+            </label>
           </div>
           <div id="ocrStatus" class="ocr-status"></div>
-          <div class="form-grid">
-            <label class="field wide"
-              >Component name<input
-                id="partName"
-                required
-                placeholder="e.g. AMD Ryzen 7 9800X3D" /></label
-            ><label class="field"
-              >Category<select id="partCategory">
-                <option>CPU</option>
-                <option>GPU</option>
-                <option>RAM</option>
-                <option>Motherboard</option>
-                <option>Storage</option>
-                <option>Power supply</option>
-                <option>Case</option>
-                <option>Cooling</option>
-                <option>Monitor</option>
-                <option>Accessories</option>
-                <option>Other</option>
-              </select></label
-            ><label class="field"
-              >Product image URL <span class="optional">optional</span
-              ><input id="partImageUrl" type="url" placeholder="https://…"
-            /></label>
-          </div>
-          <div class="section-divider">
-            <span>STORE OFFER</span><span class="divider-line"></span
-            ><span class="optional">Add more stores after saving</span>
-          </div>
-          <div class="form-grid">
-            <label class="field"
-              >Store name<input
-                id="partStore"
-                required
-                placeholder="e.g. Amazon" /></label
-            ><label class="field"
-              >Product condition<select id="partCondition">
-                <option>New</option>
-                <option>Used — like new</option>
-                <option>Used — good</option>
-                <option>Used — acceptable</option>
-                <option>Refurbished</option>
-              </select></label
-            ><label class="field"
-              >Price (€)<input
-                id="partPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                placeholder="0.00" /></label
-            ><label class="field"
-              >Product link <span class="optional">optional</span
-              ><input id="partUrl" type="url" placeholder="https://…"
-            /></label>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="secondary" id="cancelModal">
-              Cancel</button
-            ><button class="primary" type="submit">Save component</button>
+          <section id="bulkReview" class="bulk-review" hidden>
+            <div class="bulk-head">
+              <div>
+                <strong>Review detected products</strong
+                ><span id="batchCount">0 products found</span>
+              </div>
+              <button type="button" class="text-button" id="backFromBatch">
+                Back to single add
+              </button>
+            </div>
+            <div class="form-grid batch-settings">
+              <label class="field"
+                >Store for these products<input
+                  id="batchStore"
+                  required
+                  placeholder="e.g. Amazon"
+              /></label>
+              <label class="field"
+                >Condition<select id="batchCondition">
+                  <option>New</option>
+                  <option>Used — like new</option>
+                  <option>Used — good</option>
+                  <option>Used — acceptable</option>
+                  <option>Refurbished</option>
+                </select></label
+              >
+            </div>
+            <div class="batch-columns">
+              <span>Product name</span><span>Category</span
+              ><span>Price (€)</span><span></span>
+            </div>
+            <div id="batchRows" class="batch-rows"></div>
+            <div class="modal-actions">
+              <button type="button" class="secondary" id="cancelBatch">
+                Cancel
+              </button>
+              <button type="button" class="primary" id="addBatchProducts">
+                Add all products
+              </button>
+            </div>
+          </section>
+          <div id="singleFields">
+            <div class="form-grid">
+              <label class="field wide"
+                >Component name<input
+                  id="partName"
+                  required
+                  placeholder="e.g. AMD Ryzen 7 9800X3D" /></label
+              ><label class="field"
+                >Category<select id="partCategory">
+                  <option>CPU</option>
+                  <option>GPU</option>
+                  <option>RAM</option>
+                  <option>Motherboard</option>
+                  <option>Storage</option>
+                  <option>Power supply</option>
+                  <option>Case</option>
+                  <option>Cooling</option>
+                  <option>Monitor</option>
+                  <option>Accessories</option>
+                  <option>Other</option>
+                </select></label
+              ><label class="field"
+                >Product image URL <span class="optional">optional</span
+                ><input id="partImageUrl" type="url" placeholder="https://…"
+              /></label>
+            </div>
+            <div class="section-divider">
+              <span>STORE OFFER</span><span class="divider-line"></span
+              ><span class="optional">Add more stores after saving</span>
+            </div>
+            <div class="form-grid">
+              <label class="field"
+                >Store name<input
+                  id="partStore"
+                  required
+                  placeholder="e.g. Amazon" /></label
+              ><label class="field"
+                >Product condition<select id="partCondition">
+                  <option>New</option>
+                  <option>Used — like new</option>
+                  <option>Used — good</option>
+                  <option>Used — acceptable</option>
+                  <option>Refurbished</option>
+                </select></label
+              ><label class="field"
+                >Price (€)<input
+                  id="partPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  placeholder="0.00" /></label
+              ><label class="field"
+                >Product link <span class="optional">optional</span
+                ><input id="partUrl" type="url" placeholder="https://…"
+              /></label>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="secondary" id="cancelModal">
+                Cancel</button
+              ><button class="primary" type="submit">Save component</button>
+            </div>
           </div>
         </form>
       </section>

@@ -24,18 +24,18 @@
     "id": 2,
     "name": "UGREEN Cavo DisplayPort 2.1 2M",
     "category": "Accessories",
-    "image": "",
+    "image": "https://m.media-amazon.com/images/I/71He1mrL7NL._SL1500_.jpg",
     "offers": [
       {
         "id": "2-legacy",
         "store": "Amazon",
-        "price": 11.49,
+        "price": 12,
         "condition": "New",
-        "url": "",
+        "url": "https://www.amazon.it/gp/product/B0DL59ZSBB/ref=ox_sc_act_title_2?smid=AXZ3JQ1GVFPIF&psc=1",
         "history": [
           {
             "date": "2026-11-05",
-            "price": 11.49
+            "price": 12
           }
         ]
       }
@@ -66,14 +66,14 @@
     "id": 4,
     "name": "ASUS TUF GAMING 850W GOLD Alimentatore",
     "category": "Power supply",
-    "image": "",
+    "image": "https://m.media-amazon.com/images/I/71vHJrdANDL._AC_SL1500_.jpg",
     "offers": [
       {
         "id": "4-legacy",
         "store": "Amazon",
         "price": 119,
         "condition": "New",
-        "url": "",
+        "url": "https://www.amazon.it/gp/product/B0BK541686/ref=ox_sc_act_title_4?smid=A11IL2PNWYJU7H&psc=1",
         "history": [
           {
             "date": "2026-11-05",
@@ -87,14 +87,14 @@
     "id": 5,
     "name": "ASUS TUF GAMING GT502 HORIZON Case",
     "category": "Case",
-    "image": "https://www.elnekhelytechnology.com/image/cache/catalog/case/GT502%20Horizon/asus-tuf-gaming-gt502-horizon-black-atx-mid-tower-gaming-case-boundless-panoramic-design-dual-chamber-independent-cpu-and-gpu-cooling-zones-tool-free-side-panels-2400x2400.jpg",
+    "image": "https://m.media-amazon.com/images/I/81d1rgtW5vL._AC_SL1500_.jpg",
     "offers": [
       {
         "id": "5-legacy",
         "store": "Amazon",
         "price": 174.2,
         "condition": "New",
-        "url": "",
+        "url": "https://www.amazon.it/gp/product/B08H4YXF3L/ref=ox_sc_act_title_5?smid=A28HRNOY28Q669&psc=1",
         "history": [
           {
             "date": "2026-11-05",
@@ -113,13 +113,13 @@
       {
         "id": "6-legacy",
         "store": "PcComponentes",
-        "price": 93.15,
+        "price": 87.39,
         "condition": "New",
-        "url": "",
+        "url": "https://www.amazon.it/gp/product/B0DLWGG85P/ref=ox_sc_act_title_6?smid=A239JPI0V71LBC&psc=1",
         "history": [
           {
             "date": "2026-11-05",
-            "price": 93.15
+            "price": 87.39
           }
         ]
       }
@@ -178,7 +178,7 @@
         "store": "AliExpress",
         "price": 195.14,
         "condition": "New",
-        "url": "",
+        "url": "https://it.aliexpress.com/item/1005012030281288.html?spm=a2g0o.cart.0.0.562618fcuwyZMx&mp=1&sourceType=562&pdp_npi=6%40dis%21EUR%21EUR+516.94%21EUR+195.14%21%21EUR+195.14%21%21%21%402103877917939093756407572e10be%2112000057341940186%21ct%21IT%218419787465%21%211%210%21&gatewayAdapt=glo2ita",
         "history": [
           {
             "date": "2026-11-05",
