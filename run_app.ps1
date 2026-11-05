@@ -2,8 +2,6 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $appUrl = "http://127.0.0.1:8766"
 $dataUrl = "$appUrl/api/data"
-$versionUrl = "$appUrl/api/version"
-$requiredVersion = "2026.11.05.collections-2"
 $serverScript = Join-Path $root "server.py"
 $serverProcess = $null
 $ownsServer = $false
@@ -24,26 +22,15 @@ function Test-PartlyServer {
     }
 }
 
-function Get-PartlyServerVersion {
-    try {
-        $response = Invoke-WebRequest -Uri $versionUrl -UseBasicParsing -TimeoutSec 2
-        return ($response.Content | ConvertFrom-Json).version
-    } catch {
-        return $null
+function Get-PartlyListenerProcessId {
+    $netstat = Join-Path $env:SystemRoot "System32\netstat.exe"
+    $lines = & $netstat -ano -p tcp 2>$null
+    foreach ($line in $lines) {
+        if ($line -match '^\s*TCP\s+\S+:8766\s+\S+\s+LISTENING\s+(\d+)\s*$') {
+            return [int]$Matches[1]
+        }
     }
-}
-
-function Stop-StalePartlyServer {
-    $connections = Get-NetTCPConnection -LocalPort 8766 -State Listen -ErrorAction SilentlyContinue
-    foreach ($connection in $connections) {
-        $process = Get-CimInstance Win32_Process -Filter "ProcessId = $($connection.OwningProcess)" -ErrorAction SilentlyContinue
-        if (-not $process -or -not $process.CommandLine) { continue }
-        if ($process.CommandLine.IndexOf($serverScript, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
-        Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
-        Start-Sleep -Milliseconds 500
-        return $true
-    }
-    return $false
+    return $null
 }
 
 function Show-PartlyError($message) {
@@ -52,46 +39,58 @@ function Show-PartlyError($message) {
 }
 
 try {
-    $stage = "checking local server"
-    $existingServer = Test-PartlyServer
-    if ($existingServer -and (Get-PartlyServerVersion) -ne $requiredVersion) {
-        $stage = "updating the existing Partly server"
-        if (-not (Stop-StalePartlyServer)) {
-            throw "An older Partly server is running, but its process could not be safely identified. Close it and reopen Partly."
-        }
-        $existingServer = $false
-        Write-PartlyLog "INFO Replaced an older local server with $requiredVersion"
-    }
-    if (-not $existingServer) {
-        $stage = "finding Python 3"
-        $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
-        if ($launcher) {
-            $pythonPath = (& $launcher.Source -3 -c "import sys; print(sys.executable)" | Select-Object -Last 1).Trim()
-        } else {
-            $pythonPath = (Get-Command python.exe -ErrorAction Stop).Source
-        }
-        if (-not $pythonPath) { throw "Python 3 was not found." }
-
-        $stage = "starting local server"
-        $serverProcess = Start-Process `
-            -FilePath $pythonPath `
-            -ArgumentList ('"{0}"' -f $serverScript) `
-            -WorkingDirectory $root `
-            -WindowStyle Hidden `
-            -PassThru
-        $ownsServer = $true
-
-        $serverReady = $false
-        for ($attempt = 0; $attempt -lt 30; $attempt++) {
-            if (Test-PartlyServer) {
-                $serverReady = $true
+    $stage = "checking for an existing Partly server"
+    $existingPid = Get-PartlyListenerProcessId
+    if ($existingPid) {
+        Write-PartlyLog "INFO Existing Partly server detected on port 8766 (PID $existingPid); stopping it before restart"
+        if ($existingPid -eq $PID) { throw "The Partly launcher itself is unexpectedly bound to port 8766." }
+        Stop-Process -Id $existingPid -Force -ErrorAction Stop
+        $serverStopped = $false
+        for ($attempt = 0; $attempt -lt 20; $attempt++) {
+            if (-not (Get-PartlyListenerProcessId)) {
+                $serverStopped = $true
                 break
             }
-            if ($serverProcess.HasExited) { break }
-            Start-Sleep -Seconds 1
+            Start-Sleep -Milliseconds 250
         }
-        if (-not $serverReady) { throw "Partly could not start its local server." }
+        if (-not $serverStopped) { throw "The existing Partly server did not release port 8766." }
+        Write-PartlyLog "INFO Existing Partly server stopped; starting a fresh server"
+    } elseif (Test-PartlyServer) {
+        Write-PartlyLog "ERROR Partly responds on port 8766, but netstat did not return its listener PID"
+        throw "Partly responds on port 8766, but its listener process could not be found."
+    } else {
+        Write-PartlyLog "INFO No existing Partly server found; starting a fresh server"
     }
+
+    $stage = "finding Python 3"
+    $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
+    if ($launcher) {
+        $pythonPath = (& $launcher.Source -3 -c "import sys; print(sys.executable)" | Select-Object -Last 1).Trim()
+    } else {
+        $pythonPath = (Get-Command python.exe -ErrorAction Stop).Source
+    }
+    if (-not $pythonPath) { throw "Python 3 was not found." }
+
+    $stage = "starting local server"
+    $serverProcess = Start-Process `
+        -FilePath $pythonPath `
+        -ArgumentList ('"{0}"' -f $serverScript) `
+        -WorkingDirectory $root `
+        -WindowStyle Hidden `
+        -PassThru
+    $ownsServer = $true
+    Write-PartlyLog "INFO Fresh Partly server started (PID $($serverProcess.Id))"
+
+    $serverReady = $false
+    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        if (Test-PartlyServer) {
+            $serverReady = $true
+            break
+        }
+        if ($serverProcess.HasExited) { break }
+        Start-Sleep -Seconds 1
+    }
+    if (-not $serverReady) { throw "Partly could not start its local server." }
 
     $stage = "opening Partly in the browser"
     $browserCandidates = @(
@@ -132,6 +131,7 @@ try {
     Show-PartlyError ("Partly launcher failed while {0}.`r`n`r`nDetails were written to partly.log.`r`n`r`n{1}" -f $stage, $_.Exception.Message)
 } finally {
     if ($ownsServer -and $serverProcess -and -not $serverProcess.HasExited) {
+        Write-PartlyLog "INFO Partly window closed; stopping local server (PID $($serverProcess.Id))"
         Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
     }
 }
