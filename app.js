@@ -138,13 +138,32 @@ let components = [];
 let dataReady = false;
 let saveQueue = Promise.resolve();
 function reportClientIssue(level, message, context = "") {
-  fetch("/api/log", {
+  const safeMessage = String(message?.message || message || "Unknown error");
+  showActivity(level.toUpperCase(), safeMessage, context);
+  return fetch("/api/log", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ level, message: String(message), context }),
-  }).catch((error) =>
-    console.error("[Partly] Could not write partly.log", error),
-  );
+    body: JSON.stringify({ level, message: safeMessage, context }),
+  }).then((response) => {
+    if (!response.ok) throw new Error(`Log endpoint returned ${response.status}`);
+    $("logConnection").textContent = "Connected · partly.log";
+  }).catch((error) => {
+    $("logConnection").textContent = "Server log unavailable";
+    console.error("[Partly] Could not write partly.log", error);
+  });
+}
+function showActivity(level, message, context = "") {
+  const list = $("activityLog");
+  if (!list) return;
+  if (list.querySelector(".log-empty")) list.replaceChildren();
+  const item = document.createElement("li");
+  item.className = level === "ERROR" ? "log-error" : "";
+  item.textContent = `${new Date().toLocaleTimeString()} · ${level} · ${message}${context ? ` · ${context}` : ""}`;
+  list.prepend(item);
+  while (list.children.length > 40) list.lastElementChild.remove();
+}
+function reportActivity(level, message, context = "") {
+  reportClientIssue(level, message, context);
 }
 window.addEventListener("error", (event) => {
   reportClientIssue(
@@ -163,10 +182,12 @@ window.addEventListener("unhandledrejection", (event) => {
 
 function save() {
   if (!dataReady) {
+    reportActivity("ERROR", "Save blocked: app data is not ready", "Save component");
     notify("Start the local app with run_app.bat before saving");
     return Promise.resolve();
   }
   const snapshot = JSON.stringify(components);
+  reportActivity("INFO", "Saving component data…", "PUT /api/data");
   saveQueue = saveQueue
     .then(async () => {
       const response = await fetch("/api/data", {
@@ -174,11 +195,13 @@ function save() {
         headers: { "Content-Type": "application/json" },
         body: snapshot,
       });
-      if (!response.ok) throw new Error(`Save failed (${response.status})`);
-      return response.json();
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || `Save failed (${response.status})`);
+      return result;
     })
     .then(() => {
       $("storageStatus").textContent = "Saved to data.json";
+      reportActivity("INFO", "Save completed successfully", "data.json");
       return true;
     })
     .catch((error) => {
@@ -525,9 +548,24 @@ function addOffer(partId) {
 }
 bindStoreUrl("partUrl", "partStore");
 bindStoreUrl("offerUrl", "offerStore");
+$("partForm").querySelector('[type="submit"]').addEventListener("click", () => {
+  reportActivity("INFO", "Save component button clicked", "Form submission starting");
+});
+$("partForm").addEventListener("invalid", (event) => {
+  const field = event.target;
+  reportClientIssue(
+    "error",
+    field.validationMessage || "Invalid form field",
+    `Save component · ${field.id || field.name || field.tagName}`,
+  );
+}, true);
 
 $("partForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  reportActivity("INFO", "Save component clicked", "Component form");
+  const submitButton = e.submitter || $("partForm").querySelector('[type="submit"]');
+  if (submitButton) submitButton.disabled = true;
+  try {
   const original = JSON.stringify(components);
   const name = $("partName").value.trim(),
     price = Number($("partPrice").value),
@@ -584,6 +622,12 @@ $("partForm").addEventListener("submit", async (e) => {
   closeModal();
   render();
   notify(id ? "Component updated" : "Component added");
+  } catch (error) {
+    reportClientIssue("error", error?.stack || error, "Save component form");
+    notify("Could not save component: " + (error?.message || error));
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
 });
 $("offerForm").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -996,7 +1040,12 @@ $("addBatchProducts").addEventListener("click", async () => {
       ],
     })),
   );
-  await save();
+  const saved = await save();
+  if (!saved) {
+    components.splice(0, products.length);
+    render();
+    return;
+  }
   render();
   closeModal();
   notify(
@@ -1017,6 +1066,7 @@ async function initialize() {
       const oldData = localStorage.getItem("pc_components");
       if (oldData) legacy = migrate(JSON.parse(oldData));
     } catch (error) {
+      reportClientIssue("error", error?.stack || error, "Reading previous browser data");
       console.warn("Could not read previous browser data", error);
     }
     if (legacy.length) {
@@ -1039,11 +1089,13 @@ async function initialize() {
       try {
         localStorage.removeItem("pc_components");
       } catch (error) {
+        reportClientIssue("error", error?.stack || error, "Clearing previous browser data");
         console.warn("Could not clear previous browser data", error);
       }
       $("storageStatus").textContent = "Previous data moved to data.json";
     }
   } catch (error) {
+    reportClientIssue("error", error?.stack || error, "Loading /api/data");
     $("storageTitle").textContent = "Local server is not running";
     $("storageStatus").textContent = "Start the app with run_app.bat";
     $("emptyState").style.display = "block";
