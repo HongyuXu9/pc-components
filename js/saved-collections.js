@@ -14,7 +14,7 @@ export function renderSavedCollection(
     );
     const offer = getOffer(part);
     const visual = part.image
-      ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(part.image)}" alt="${escapeAttr(part.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
+      ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(part.image)}" alt="${escapeAttr(part.name)}" loading="lazy" decoding="async" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
       : '<div class="part-visual image-missing"></div>';
     const buttons = collection === "watchlist"
       ? `<button class="mini-button" data-list-act="add-offer" data-id="${escapeAttr(part.id)}">${escapeHtml(t("＋ Store"))}</button><button class="mini-button" data-list-act="add" data-id="${escapeAttr(part.id)}">${escapeHtml(t("Add to build"))}</button>${components.length ? `<button class="mini-button" data-list-act="replace" data-id="${escapeAttr(part.id)}">${escapeHtml(t("Replace…"))}</button>` : ""}<button class="icon-button" title="${escapeAttr(t("Edit"))}" data-list-act="edit" data-id="${escapeAttr(part.id)}">✎</button><button class="icon-button" title="${escapeAttr(t("Move to trash"))}" data-list-act="trash" data-id="${escapeAttr(part.id)}">×</button>`

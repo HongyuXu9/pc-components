@@ -324,7 +324,7 @@ function render() {
     const top = document.createElement("div");
     top.className = "component-top";
     const visual = p.image
-      ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(p.image)}" alt="${escapeAttr(p.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
+      ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(p.image)}" alt="${escapeAttr(p.name)}" loading="lazy" decoding="async" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
       : '<div class="part-visual image-missing"></div>';
     const offerCountLabel = t(p.offers.length === 1 ? "store offer" : "store offers");
     top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(t(p.category))} · ${p.offers.length} ${escapeHtml(offerCountLabel)}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">${escapeHtml(t("＋ Store"))}</button><button class="mini-button" title="${escapeAttr(t("Move to watchlist"))}" data-act="watchlist" data-id="${escapeAttr(p.id)}">☆ ${escapeHtml(t("Watchlist"))}</button><button class="icon-button" title="${escapeAttr(t("Edit"))}" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="${escapeAttr(t("Delete"))}" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
