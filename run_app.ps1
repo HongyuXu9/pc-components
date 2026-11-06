@@ -66,6 +66,15 @@ function Test-PartlyAppHeartbeat {
     }
 }
 
+function Test-PartlyAppCloseRequested {
+    try {
+        $response = Invoke-RestMethod -Uri "$appUrl/api/close" -TimeoutSec 2
+        return [bool]$response.requested
+    } catch {
+        return $false
+    }
+}
+
 function Get-PartlyListenerProcessId {
     $netstat = Join-Path $env:SystemRoot "System32\netstat.exe"
     $lines = & $netstat -ano -p tcp 2>$null
@@ -163,7 +172,7 @@ try {
     if (-not $heartbeatSeen) { throw "The Partly app did not connect to its local server." }
 
     $stage = "waiting for the Partly app to close"
-    while (Test-PartlyAppHeartbeat) {
+    while ((Test-PartlyAppHeartbeat) -and -not (Test-PartlyAppCloseRequested)) {
         if ($ownsServer -and $serverProcess.HasExited) { break }
         Start-Sleep -Seconds 1
     }

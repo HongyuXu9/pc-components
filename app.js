@@ -320,6 +320,9 @@ const sendAppHeartbeat = () => {
 };
 sendAppHeartbeat();
 window.setInterval(sendAppHeartbeat, 5000);
+window.addEventListener("pagehide", () => {
+  navigator.sendBeacon("/api/close", "");
+});
 window.addEventListener("error", (event) => {
   reportClientIssue(
     "error",

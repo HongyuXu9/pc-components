@@ -25,6 +25,7 @@ APP_VERSION = "2026.11.05.collections-2"
 data_lock = Lock()
 heartbeat_lock = Lock()
 last_client_heartbeat = None
+close_requested = False
 HEARTBEAT_TIMEOUT_SECONDS = 30
 
 logger = logging.getLogger("partly")
@@ -56,6 +57,11 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             with heartbeat_lock:
                 active = last_client_heartbeat is not None and time.monotonic() - last_client_heartbeat < HEARTBEAT_TIMEOUT_SECONDS
             self._json_response(200, {"active": active})
+            return
+        if self.path == "/api/close":
+            with heartbeat_lock:
+                requested = close_requested
+            self._json_response(200, {"requested": requested})
             return
         if self.path == "/api/version":
             self._json_response(200, {"version": APP_VERSION})
@@ -114,6 +120,12 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             self._json_response(500, {"error": str(error)})
 
     def do_POST(self):
+        if self.path == "/api/close":
+            global close_requested
+            with heartbeat_lock:
+                close_requested = True
+            self._json_response(200, {"requested": True})
+            return
         if self.path == "/api/heartbeat":
             global last_client_heartbeat
             with heartbeat_lock:
@@ -228,7 +240,7 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, format_string, *args):
-        if self.path == "/api/heartbeat":
+        if self.path in {"/api/heartbeat", "/api/close"}:
             return
         logger.info("%s %s", self.address_string(), format_string % args)
 
