@@ -1,138 +1,137 @@
-# Server Python e avvio su Windows
+# Python Server and Windows Launcher
 
-Questa guida descrive il percorso completo dall’icona Partly al server locale,
-e i punti da modificare quando si vuole studiare o cambiare la configurazione.
+**English** · [Italiano](python-and-windows-launcher.it.md) · [简体中文](python-and-windows-launcher.zh-CN.md)
 
-## Avvio: dall’icona al server
+This guide follows the complete path from the Partly icon to the local server,
+and explains the settings to study or change when maintaining the app.
 
-Sia `Partly.lnk` sia `run_app.bat` avviano la stessa catena. Il collegamento
-`.lnk` punta direttamente a `wscript.exe` con `run_app.vbs` come argomento.
+## Startup: from the icon to the server
+
+Both `Partly.lnk` and `run_app.bat` start the same chain. The `.lnk` shortcut
+points directly to `wscript.exe` with `run_app.vbs` as its argument.
 
 ```text
 Partly.lnk ─┐
-            ├─> run_app.vbs ─> PowerShell nascosta ─> run_app.ps1 ─> python server.py
+            ├─> run_app.vbs ─> hidden PowerShell ─> run_app.ps1 ─> python server.py
 run_app.bat ┘
 ```
 
-1. **`run_app.bat`** avvia Windows Script Host (`wscript.exe`) passando il
-   percorso di `run_app.vbs`. Usa `%~dp0`, quindi funziona anche se la cartella
-   del progetto viene spostata. Il batch termina subito: non è il processo che
-   serve le pagine.
-2. **`run_app.vbs`** costruisce il comando per Windows PowerShell con
-   `-NoProfile`, `-WindowStyle Hidden` e `-ExecutionPolicy Bypass`, poi lo avvia
-   senza finestra. `-NoProfile` evita che le preferenze personali di PowerShell
-   interferiscano; `-ExecutionPolicy Bypass` vale solo per questo avvio e non
-   cambia l’impostazione permanente di Windows.
-3. **`run_app.ps1`** trova la cartella dell’app a partire dal percorso dello
-   script, controlla la porta, individua Python, avvia `server.py` nascosto,
-   attende che risponda e apre Partly in una finestra app di Chrome o Edge.
-4. Il launcher resta in attesa mentre la pagina Partly è attiva. Alla chiusura
-   della finestra, il browser invia `/api/close`; il launcher ferma il processo
-   Python che ha avviato. Un heartbeat periodico copre il caso in cui il browser
-   si chiuda senza riuscire a inviare il segnale.
+1. **`run_app.bat`** starts Windows Script Host (`wscript.exe`) and passes it
+   the path to `run_app.vbs`. It uses `%~dp0`, so it still works if the project
+   folder is moved. The batch file exits immediately; it does not serve pages.
+2. **`run_app.vbs`** builds a Windows PowerShell command with `-NoProfile`,
+   `-WindowStyle Hidden`, and `-ExecutionPolicy Bypass`, then starts it without
+   a visible window. `-NoProfile` prevents personal PowerShell settings from
+   interfering. `-ExecutionPolicy Bypass` applies to this process only and does
+   not permanently change Windows policy.
+3. **`run_app.ps1`** finds the app folder from the script location, checks the
+   port, locates Python, starts `server.py` hidden, waits for it to respond, and
+   opens Partly in a Chrome or Edge app window.
+4. The launcher stays alive while the Partly page is active. When the window
+   closes, the browser sends `/api/close` and the launcher stops the Python
+   process it started. A periodic heartbeat is the fallback if the browser
+   closes without sending that signal.
 
-In Gestione attività quindi il processo che tiene aperto il server è
-`python.exe`; `run_app.bat` e `wscript.exe` non sono il server. PowerShell
-rimane nascosta per coordinare l’avvio e la chiusura.
+In Task Manager, the process serving the app is therefore `python.exe`;
+`run_app.bat` and `wscript.exe` are not the server. PowerShell stays hidden to
+coordinate startup and shutdown.
 
-Se Chrome o Edge non vengono trovati nei percorsi controllati dal launcher,
-`run_app.ps1` apre l’URL con il browser predefinito di Windows.
+If Chrome and Edge are not found in the locations checked by the launcher,
+`run_app.ps1` opens the URL with the Windows default browser.
 
-## Configurazione Python
+## Python configuration
 
-La configurazione è in `partly_server/config.py`:
+Settings live in `partly_server/config.py`:
 
-| Costante | Cosa controlla |
+| Constant | What it controls |
 | --- | --- |
-| `ROOT` | Cartella principale del progetto, calcolata dalla posizione del pacchetto Python |
-| `DATA_FILE` | Percorso di `data.json`, dove sono salvate Build, Da valutare e Cestino |
-| `LOG_FILE` | Percorso di `partly.log` |
-| `ENV_FILE` | Percorso del `.env` locale, usato per la chiave Gemini |
-| `HOST` | Interfaccia di rete su cui ascolta il server; `127.0.0.1` lo limita a questo PC |
-| `PORT` | Porta HTTP locale, attualmente `8766` |
-| `APP_VERSION` | Versione riportata dall’endpoint `/api/version` |
-| `GEMINI_MODEL` | Modello usato per il riconoscimento AI delle immagini |
-| `HEARTBEAT_TIMEOUT_SECONDS` | Tempo senza heartbeat oltre il quale il launcher considera l’app non più attiva |
+| `ROOT` | Project root, calculated from the location of the Python package |
+| `DATA_FILE` | Path to `data.json`, which stores Build, Da valutare, and Cestino |
+| `LOG_FILE` | Path to `partly.log` |
+| `ENV_FILE` | Path to the local `.env` file used for the Gemini key |
+| `HOST` | Network interface for the server; `127.0.0.1` limits it to this PC |
+| `PORT` | Local HTTP port, currently `8766` |
+| `APP_VERSION` | Version returned by `/api/version` |
+| `GEMINI_MODEL` | Model used for AI image recognition |
+| `HEARTBEAT_TIMEOUT_SECONDS` | How long without a heartbeat before the launcher considers the app inactive |
 
-Se cambi `PORT`, aggiorna anche `$appUrl` in `run_app.ps1`. L’interfaccia usa
-percorsi API relativi, quindi non ha un numero di porta da modificare. Il server
-si lega all’indirizzo locale e non è configurato per servire richieste da altri
-dispositivi della rete.
+If you change `PORT`, update `$appUrl` in `run_app.ps1` as well. The frontend
+uses relative API paths, so it has no port number to update. The server binds to
+the local loopback address and is not configured to serve other devices on the
+network.
 
-## Cartelle del server
+## Server files
 
-- **`server.py`** è l’entry point mantenuto stabile per il launcher. Prepara
-  `data.json` se manca, crea il server HTTP, scrive le informazioni iniziali
-  nel log e avvia `serve_forever()`.
-- **`partly_server/config.py`** contiene percorsi e impostazioni.
-- **`partly_server/handler.py`** implementa gli endpoint HTTP e serve i file
-  statici dell’app.
-- **`partly_server/runtime_state.py`** custodisce i lock per l’accesso ai dati,
-  l’ultimo heartbeat ricevuto e la richiesta di chiusura. I lock evitano che
-  richieste simultanee leggano o scrivano quello stato nello stesso momento.
-- **`partly_server/logging_config.py`** configura il logger `partly` per scrivere
-  sia su file sia sul flusso console.
+- **`server.py`** is the stable launcher entry point. It creates `data.json` if
+  needed, creates the HTTP server, logs startup details, and runs
+  `serve_forever()`.
+- **`partly_server/config.py`** contains paths and settings.
+- **`partly_server/handler.py`** implements HTTP endpoints and serves static app
+  files.
+- **`partly_server/runtime_state.py`** holds locks for data access, the last
+  heartbeat, and the close request. Locks keep concurrent requests from reading
+  or writing shared state at the same time.
+- **`partly_server/logging_config.py`** configures the `partly` logger to write
+  to both a file and the console stream.
 
-Il server usa solo moduli inclusi in Python: non c’è un `pip install` richiesto.
+The server uses only modules included with Python; no `pip install` is needed.
 
-## Endpoint principali
+## Main endpoints
 
-| Metodo e percorso | Funzione |
+| Method and path | Purpose |
 | --- | --- |
-| `GET /api/status` | Restituisce host, porta e PID del server |
-| `GET /api/version` | Restituisce la versione configurata |
-| `GET /api/data` | Legge il file JSON salvato |
-| `PUT /api/data` | Salva le tre liste in modo atomico |
-| `POST /api/log` | Aggiunge al log gli eventi e gli errori comunicati dal browser |
-| `POST /api/heartbeat` e `GET /api/heartbeat` | Aggiorna e controlla la presenza della pagina Partly |
-| `POST /api/close` e `GET /api/close` | Segnala al launcher la chiusura intenzionale della pagina |
-| `POST /api/extract-image` | Inoltra uno screenshot a Gemini quando AI assist è attivo |
+| `GET /api/status` | Returns the server host, port, and PID |
+| `GET /api/version` | Returns the configured app version |
+| `GET /api/data` | Reads the saved JSON file |
+| `PUT /api/data` | Atomically saves the three collections |
+| `POST /api/log` | Appends browser activity and errors to the log |
+| `POST /api/heartbeat` and `GET /api/heartbeat` | Updates and checks whether the Partly page is active |
+| `POST /api/close` and `GET /api/close` | Signals an intentional app-window close to the launcher |
+| `POST /api/extract-image` | Sends a screenshot to Gemini when AI assist is enabled |
 
-Per salvare i dati, il server serializza il JSON in un file temporaneo nella
-stessa cartella e poi lo rinomina su `data.json`. La sostituzione atomica riduce
-il rischio di lasciare un file a metà se il processo si interrompe durante la
-scrittura. `data_lock` serializza gli accessi concorrenti nel processo locale.
+To save data, the server serializes JSON to a temporary file in the same folder,
+then renames it over `data.json`. This atomic replacement reduces the chance of
+leaving a partial file if the process stops during a write. `data_lock`
+serializes concurrent access inside the local server process.
 
-## Log e chiave Gemini
+## Logs and the Gemini key
 
-`partly_server/logging_config.py` usa `RotatingFileHandler`: `partly.log` ruota
-quando raggiunge 1 MB e conserva fino a tre copie precedenti. Il log include sia
-le richieste HTTP sia gli eventi inviati dall’Activity log del browser. Il
-launcher accoda gli eventi se il server non è ancora disponibile; in caso di
-errore di avvio li scrive su `partly.log` o, se il file è occupato, su
-`partly-launcher.log`.
+`partly_server/logging_config.py` uses `RotatingFileHandler`: `partly.log` rolls
+over at 1 MB and keeps up to three previous files. The log includes HTTP
+requests and events sent by the browser Activity log. If the server is not
+ready, the launcher queues its messages; on startup failure it writes them to
+`partly.log`, or to `partly-launcher.log` if the first file is locked.
 
-Per abilitare Gemini, crea `.env` nella cartella principale, accanto a
-`server.py`, con questa sola riga e la tua chiave personale:
+To enable Gemini, create `.env` in the project root beside `server.py`, with one
+line containing your own key:
 
 ```dotenv
-GEMINI_API_KEY=incolla_la_tua_chiave_qui
+GEMINI_API_KEY=paste_your_key_here
 ```
 
-Il file `.env` è escluso da Git. Il server controlla prima la variabile
-d’ambiente `GEMINI_API_KEY`; se non è definita, legge la stessa impostazione da
-`.env`. Non inserire la chiave in `config.py`, nei documenti o in un commit.
-Riavvia Partly dopo aver cambiato la chiave. Con AI assist disattivato, il
-riconoscimento continua a usare l’OCR locale.
+`.env` is excluded from Git. The server checks the `GEMINI_API_KEY` environment
+variable first, then reads the same setting from `.env` if the environment
+variable is absent. Do not put the key in `config.py`, documentation, or a Git
+commit. Restart Partly after changing it. With AI assist off, recognition keeps
+using local OCR.
 
-## Avvio manuale per imparare o diagnosticare
+## Manual startup for learning or diagnosis
 
-Apri PowerShell nella cartella del progetto e avvia:
+Open PowerShell in the project folder and run:
 
 ```powershell
 py -3 server.py
 ```
 
-Se il comando `py` non è installato ma `python` è disponibile, usa
-`python server.py`. In questo modo il server resta visibile nel terminale; per
-fermarlo premi `Ctrl+C`. Per aprire l’interfaccia, visita
-`http://127.0.0.1:8766` nel browser.
+If the `py` launcher is unavailable but `python` is installed, run
+`python server.py`. The server stays visible in that terminal; press `Ctrl+C` to
+stop it. Open `http://127.0.0.1:8766` in a browser to view the app.
 
-Quando avvii il server manualmente, non c’è il processo `run_app.ps1` che ne
-segue il ciclo di vita: chiudere la scheda non ferma automaticamente Python.
-Per l’uso normale, avvia `Partly.lnk` o `run_app.bat`, così il launcher può
-gestire apertura, log e chiusura insieme.
+When the server is started manually, `run_app.ps1` is not supervising it, so
+closing the browser page does not stop Python automatically. For normal use,
+start `Partly.lnk` or `run_app.bat` so the launcher can manage the browser, logs,
+and shutdown together.
 
-Il launcher controlla la porta `8766` prima di partire. Se trova un processo in
-ascolto su quella porta, lo termina e avvia una nuova istanza; perciò evita di
-usare quella porta per un altro servizio mentre avvii Partly.
+Before starting, the launcher checks port `8766`. If it finds a listening
+process, it terminates that process and starts a fresh instance. Avoid using
+that port for another service when launching Partly.

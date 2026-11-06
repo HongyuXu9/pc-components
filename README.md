@@ -1,5 +1,7 @@
 # Partly
 
+**English** · [Italiano](README.it.md) · [简体中文](README.zh-CN.md)
+
 Partly is a local PC component and price tracker. It stores its data in the
 readable `data.json` file beside the app; it does not keep data in browser
 storage or use a database. If the previous version left data in this browser,
@@ -20,9 +22,9 @@ Python 3 is required. The server listens only on this PC. Back up `data.json` to
 
 The frontend uses native JavaScript modules, so no Node.js build step is needed. `app.js` coordinates the interface; focused modules under `js/` handle product rules, image recognition, price history, activity logging, and saved-list rendering. `style.css` is the stylesheet entry point and imports the grouped files in `styles/`.
 
-The Python entry point remains `server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `partly_server/` package. See [docs/architecture.md](docs/architecture.md) for module boundaries and API responsibilities.
+The Python entry point remains `server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `partly_server/` package. See [docs/architecture.md](docs/architecture.md) for module boundaries and API responsibilities ([Italiano](docs/architecture.it.md), [简体中文](docs/architecture.zh-CN.md)).
 
-For a walkthrough of the Python settings, `.env`, and the Windows launcher chain (`.lnk` / `.bat` → `.vbs` → PowerShell → Python), see [docs/python-and-windows-launcher.md](docs/python-and-windows-launcher.md).
+For a walkthrough of the Python settings, `.env`, and the Windows launcher chain (`.lnk` / `.bat` → `.vbs` → PowerShell → Python), see [docs/python-and-windows-launcher.md](docs/python-and-windows-launcher.md) ([Italiano](docs/python-and-windows-launcher.it.md), [简体中文](docs/python-and-windows-launcher.zh-CN.md)).
 
 Product images can be set with an image URL when adding or editing a component. The example parts already include a few product images; those images are hosted by their respective product sites.
 
