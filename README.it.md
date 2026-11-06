@@ -61,3 +61,5 @@ Se un salvataggio non riesce, controlla `partly.log` accanto a `data.json`. Il
 modulo **Save component** resta aperto quando il server rifiuta il salvataggio.
 Gli errori del browser e le operazioni di salvataggio compaiono anche
 nell’Activity log dell’app.
+
+Le immagini condivise si trovano in `assets/images/`; vedi le [convenzioni per gli asset](assets/README.md).

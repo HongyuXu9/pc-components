@@ -53,3 +53,5 @@ Partly。在粘贴截图前启用 **AI assist**。启用后，截图会发送给
 保存失败时，请查看 `data.json` 旁边的 `partly.log`。如果服务器拒绝保存，
 **Save component** 对话框会保持打开。浏览器错误和保存活动也会显示在应用的
 Activity log 中。
+
+共享图片位于 `assets/images/`；请参阅[资源约定](assets/README.md)。

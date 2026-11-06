@@ -35,3 +35,5 @@ To add several items from a screenshot, open **Add component**, paste the screen
 Screenshot recognition runs locally with Tesseract by default. For optional AI image recognition, create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey), save it in a `.env` file beside `server.py` as `GEMINI_API_KEY=your_key`, then restart Partly and enable **AI assist** before pasting an image. AI assist sends the selected screenshot to Google; leave it off to keep recognition local. Google’s free API tier has usage limits and may use submitted content to improve its products, so review Google’s current terms before enabling it.
 
 If saving fails, check partly.log beside data.json. The Save component dialog stays open when the server rejects a save. Browser errors and save activity also appear in the in-app Activity log.
+
+Shared images live in `assets/images/`; see [asset conventions](assets/README.md).

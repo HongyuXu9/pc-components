@@ -18,6 +18,7 @@ and the native ES module entry point in `app.js`.
 | `js/activity-log.js` | Browser activity reporting, log window behavior, and lifecycle signals |
 | `js/image-recognition.js` | Screenshot preview, Gemini request, and local OCR orchestration |
 | `js/price-chart.js` | Price chart rendering and price-history editing |
+| `js/action-dialog.js` | Shared confirmation and field-editing dialog, cancellation, and event cleanup |
 | `js/saved-collections.js` | Watchlist and trash card rendering |
 | `app.js` | Application state, page rendering, form submission, and event coordination |
 
