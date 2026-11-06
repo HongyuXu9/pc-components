@@ -181,8 +181,10 @@ function showActivity(level, message, context = "") {
   const item = document.createElement("li");
   item.className = level === "ERROR" ? "log-error" : "";
   item.textContent = `${new Date().toLocaleTimeString()} · ${level} · ${message}${context ? ` · ${context}` : ""}`;
-  list.prepend(item);
-  while (list.children.length > 40) list.lastElementChild.remove();
+  const wasAtBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
+  list.append(item);
+  while (list.children.length > 40) list.firstElementChild.remove();
+  if (wasAtBottom) list.scrollTop = list.scrollHeight;
 }
 function reportActivity(level, message, context = "") {
   reportClientIssue(level, message, context);
@@ -473,6 +475,7 @@ function setComponentEntryMode(mode) {
 function openModal(part, collection = "components") {
   editingCollection = collection;
   $("partForm").reset();
+  clearScreenshotPreview();
   setComponentEntryMode("single");
   $("ocrStatus").textContent = "";
   $("partId").value = part?.id || "";
@@ -495,6 +498,7 @@ function openModal(part, collection = "components") {
 }
 function closeModal() {
   $("modal").classList.remove("open");
+  clearScreenshotPreview();
 }
 function getOffer(part) {
   return part.offers.reduce(
@@ -1537,6 +1541,7 @@ async function extractScreenshotWithGemini(file) {
 
 async function recognizeScreenshot(file) {
   if (!file) return;
+  showScreenshotPreview(file);
   $("ocrStatus").textContent = "Reading screenshot and looking for products…";
   let localMethod = "Local OCR";
   try {
@@ -1596,6 +1601,22 @@ async function recognizeScreenshot(file) {
   }
 }
 
+let screenshotPreviewUrl = "";
+function clearScreenshotPreview() {
+  if (screenshotPreviewUrl) URL.revokeObjectURL(screenshotPreviewUrl);
+  screenshotPreviewUrl = "";
+  $("screenshotPreview").hidden = true;
+  $("screenshotPreviewImage").removeAttribute("src");
+  $("screenshotPreviewName").textContent = "";
+}
+function showScreenshotPreview(file) {
+  clearScreenshotPreview();
+  screenshotPreviewUrl = URL.createObjectURL(file);
+  const preview = $("screenshotPreviewImage");
+  preview.src = screenshotPreviewUrl;
+  $("screenshotPreviewName").textContent = `${file.name || "Pasted image"} · ${(file.size / 1024).toFixed(0)} KB`;
+  $("screenshotPreview").hidden = false;
+}
 $("screenshotInput").addEventListener("change", async (event) => {
   await recognizeScreenshot(event.target.files[0]);
   event.target.value = "";

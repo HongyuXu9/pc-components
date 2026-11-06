@@ -1131,6 +1131,39 @@ footer span {
 .upload-button:hover {
   background: #ddecce;
 }
+.screenshot-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px;
+  margin: -3px 0 13px;
+  border: 1px solid #e1e9dc;
+  border-radius: 9px;
+  background: #fbfcfa;
+}
+.screenshot-preview[hidden] { display: none; }
+.screenshot-preview img {
+  display: block;
+  width: 112px;
+  height: 68px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  border: 1px solid #e7ebe4;
+  border-radius: 6px;
+  background: #fff;
+}
+.screenshot-preview > div { min-width: 0; }
+.screenshot-preview strong,
+.screenshot-preview span { display: block; }
+.screenshot-preview strong { color: #4c5d4e; font-size: 10px; }
+.screenshot-preview span {
+  overflow: hidden;
+  color: #89958b;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .ocr-status {
   font-size: 10px;
   color: #6e8c51;
