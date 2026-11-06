@@ -1,0 +1,24 @@
+:root {
+  --ink: #17211a;
+  --muted: #778279;
+  --line: #e7ebe6;
+  --paper: #f6f8f4;
+  --white: #fff;
+  --green: #b9ee62;
+  --deep: #16251b;
+  --font: "DM Sans", sans-serif;
+  --display: "Space Grotesk", sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 14px;
+}

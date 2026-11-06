@@ -16,6 +16,12 @@ You can also start the server and app with `run_app.bat`.
 
 Python 3 is required. The server listens only on this PC. Back up `data.json` to keep a copy of your components and price history.
 
+## Project structure
+
+The frontend uses native JavaScript modules, so no Node.js build step is needed. `app.js` coordinates the interface; focused modules under `js/` handle product rules, image recognition, price history, activity logging, and saved-list rendering. `style.css` is the stylesheet entry point and imports the grouped files in `styles/`.
+
+The Python entry point remains `server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `partly_server/` package. See [docs/architecture.md](docs/architecture.md) for module boundaries and API responsibilities.
+
 Product images can be set with an image URL when adding or editing a component. The example parts already include a few product images; those images are hosted by their respective product sites.
 
 The component panel keeps the current build, a separate **Da valutare** list, and a **Cestino**. Items in Da valutare do not affect the build total; add one to the build or replace a current part. Replaced and deleted parts go to the trash, where they can be restored or permanently deleted.

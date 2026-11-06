@@ -5,3 +5,9 @@ data.json
 .env
 # JetBrains IDE project files
 .idea/
+
+# Python caches and optional local tooling
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/

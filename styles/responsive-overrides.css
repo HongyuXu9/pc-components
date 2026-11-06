@@ -1,0 +1,36 @@
+@media (max-width: 620px) {
+  .batch-columns {
+    display: none;
+  }
+  .batch-row {
+    grid-template-columns: minmax(0, 1fr) minmax(90px, 0.55fr);
+    align-items: end;
+  }
+  .batch-row .field:first-child {
+    grid-column: 1 / -1;
+  }
+  .batch-remove {
+    grid-column: 2;
+    justify-self: end;
+    margin-top: -37px;
+    margin-right: 34px;
+  }
+  .bulk-head {
+    align-items: flex-start;
+  }
+}
+
+.component-top,
+.offer-row {
+  cursor: pointer;
+}
+.component.is-selected {
+  background: #f8fbf5;
+  box-shadow: inset 3px 0 #b9ee62;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 9px;
+}
+.offer-row.is-selected {
+  background: #f3f8ed;
+}
