@@ -36,6 +36,9 @@ collections; writes use a temporary file followed by an atomic replace.
 recovery, and `/api/close` signals an intentional app-window close. Screenshot
 recognition uses `/api/extract-image` only when AI assist is enabled.
 
+For the detailed Python configuration, API behavior, `.env` setup, and Windows
+launcher chain, see [Python server and Windows launcher](python-and-windows-launcher.md).
+
 ## Change boundaries
 
 - Keep persisted shape changes compatible with `migrate()` and document them.

@@ -22,6 +22,8 @@ The frontend uses native JavaScript modules, so no Node.js build step is needed.
 
 The Python entry point remains `server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `partly_server/` package. See [docs/architecture.md](docs/architecture.md) for module boundaries and API responsibilities.
 
+For a walkthrough of the Python settings, `.env`, and the Windows launcher chain (`.lnk` / `.bat` → `.vbs` → PowerShell → Python), see [docs/python-and-windows-launcher.md](docs/python-and-windows-launcher.md).
+
 Product images can be set with an image URL when adding or editing a component. The example parts already include a few product images; those images are hosted by their respective product sites.
 
 The component panel keeps the current build, a separate **Da valutare** list, and a **Cestino**. Items in Da valutare do not affect the build total; add one to the build or replace a current part. Replaced and deleted parts go to the trash, where they can be restored or permanently deleted.
