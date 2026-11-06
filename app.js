@@ -199,8 +199,8 @@ function openModal(part, collection = "components") {
   $("ocrStatus").textContent = "";
   $("partId").value = part?.id || "";
   const inWatchlist = collection === "watchlist";
-  $("modalTitle").textContent = t(part ? "Edit component" : inWatchlist ? "Add to Da valutare" : "Add a component");
-  $("partForm").querySelector('[type="submit"]').textContent = t(part ? "Save component" : inWatchlist ? "Save to Da valutare" : "Save component");
+  $("modalTitle").textContent = t(part ? "Edit component" : inWatchlist ? "Add to Watchlist" : "Add a component");
+  $("partForm").querySelector('[type="submit"]').textContent = t(part ? "Save component" : inWatchlist ? "Save to Watchlist" : "Save component");
   $("partName").value = part?.name || "";
   $("partCategory").value = part?.category || "CPU";
   $("partImageUrl").value = part?.image || "";
@@ -499,7 +499,7 @@ $("partForm").addEventListener("submit", async (e) => {
   closeModal();
   if (editingCollection === "components" && !id) activeCollection = "build";
   render();
-  notify(id ? "Component updated" : editingCollection === "watchlist" ? "Added to Da valutare" : "Component added");
+  notify(id ? "Component updated" : editingCollection === "watchlist" ? "Added to watchlist" : "Component added");
   } catch (error) {
     reportClientIssue("error", error?.stack || error, "Save component form");
     notify("Could not save component: " + (error?.message || error));
@@ -556,7 +556,7 @@ $("componentList").addEventListener("click", async (e) => {
       components = components.filter((item) => item !== p);
       watchlist.unshift(p);
       if (await saveCollectionMutation(snapshot)) {
-        notify("Moved to Da valutare");
+        notify("Moved to watchlist");
       }
       break;
     }

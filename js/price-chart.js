@@ -74,7 +74,7 @@ export function createPriceChart({
     $("chartLabel").textContent = product
       ? `${product.name} · ${offers.length} ${t(offers.length === 1 ? "store offer" : "store offers")}`
       : t(activeCollection === "watchlist"
-        ? "Click an item in Da valutare to view its price trend"
+        ? "Click an item in the watchlist to view its price trend"
         : activeCollection === "trash"
           ? "Items in the trash are not included in price tracking"
           : "Click a component to compare all its store offers");

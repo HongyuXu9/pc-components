@@ -230,9 +230,20 @@ const translations = {
     "Click a component in the build to view its price trend": "Seleziona un componente della build per vedere l’andamento dei prezzi",
     "Click a component in Da valutare to view its price trend": "Seleziona un componente Da valutare per vedere l’andamento dei prezzi",
     Watchlist: "Da valutare",
+    Trash: "Cestino",
     "Move to watchlist": "Sposta in Da valutare",
     Delete: "Elimina",
     "Deleted {date}": "Eliminato il {date}",
+    "Components you're considering, excluded from your build total.": "Componenti che stai valutando, esclusi dal totale della build.",
+    "＋ Add to Watchlist": "＋ Aggiungi a Da valutare",
+    "Add to Watchlist": "Aggiungi a Da valutare",
+    "Save to Watchlist": "Salva in Da valutare",
+    "Added to watchlist": "Aggiunto a Da valutare",
+    "Moved to watchlist": "Spostato in Da valutare",
+    "Your watchlist is empty.": "La lista Da valutare è vuota.",
+    "Items in the trash are no longer part of your build. You can restore them or permanently delete them.": "Gli elementi nel cestino non fanno più parte della build. Puoi ripristinarli o eliminarli definitivamente.",
+    "The trash is empty.": "Il cestino è vuoto.",
+    "Click an item in the watchlist to view its price trend": "Seleziona un elemento Da valutare per vedere l’andamento dei prezzi",
   },
   zh: {
     "Partly — PC build & price tracker": "Partly — PC 配件与价格追踪",
@@ -450,15 +461,28 @@ const translations = {
     "Click a component in the build to view its price trend": "选择配置中的配件以查看价格趋势",
     "Click a component in Da valutare to view its price trend": "选择待考虑列表中的配件以查看价格趋势",
     Watchlist: "待考虑",
+    Trash: "回收站",
     "Move to watchlist": "移至待考虑",
     Delete: "删除",
     "Deleted {date}": "删除于 {date}",
+    "Components you're considering, excluded from your build total.": "正在考虑的配件，不计入配置总价。",
+    "＋ Add to Watchlist": "＋ 添加到待考虑",
+    "Add to Watchlist": "添加到待考虑",
+    "Save to Watchlist": "保存到待考虑",
+    "Added to watchlist": "已添加到待考虑",
+    "Moved to watchlist": "已移至待考虑",
+    "Your watchlist is empty.": "待考虑列表为空。",
+    "Items in the trash are no longer part of your build. You can restore them or permanently delete them.": "回收站中的项目已不属于当前配置。你可以恢复或永久删除它们。",
+    "The trash is empty.": "回收站为空。",
+    "Click an item in the watchlist to view its price trend": "选择待考虑列表中的项目以查看价格趋势",
   },
 };
 
 let activeLanguage = "en";
 const originalText = new WeakMap();
 const originalAttributes = new WeakMap();
+const lastTranslatedText = new WeakMap();
+const lastTranslatedAttributes = new WeakMap();
 
 export function getLanguage() {
   return activeLanguage;
@@ -490,31 +514,51 @@ export function formatDate(value, options = {}) {
   return date.toLocaleDateString(getLocale(), options);
 }
 
-function translateStaticContent() {
+function translateStaticContent(captureOriginals = false) {
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   let node;
   while ((node = walker.nextNode())) {
-    if (!originalText.has(node)) originalText.set(node, node.nodeValue);
-    const source = originalText.get(node);
+    if (!originalText.has(node)) {
+      if (!captureOriginals) continue;
+      originalText.set(node, node.nodeValue);
+    }
+    let source = originalText.get(node);
+    const lastTranslation = lastTranslatedText.get(node);
+    if (lastTranslation !== undefined && node.nodeValue !== lastTranslation) {
+      source = node.nodeValue;
+      originalText.set(node, source);
+    }
     const normalized = source.replace(/\s+/g, " ").trim();
     const translated = t(normalized);
-    if (translated === normalized) continue;
     const leading = source.match(/^\s*/)?.[0] || "";
     const trailing = source.match(/\s*$/)?.[0] || "";
     node.nodeValue = `${leading}${translated}${trailing}`;
+    lastTranslatedText.set(node, node.nodeValue);
   }
 
   for (const element of document.querySelectorAll("[placeholder], [title], [aria-label]")) {
     let attributes = originalAttributes.get(element);
     if (!attributes) {
+      if (!captureOriginals) continue;
       attributes = {};
       for (const name of ["placeholder", "title", "aria-label"]) {
         if (element.hasAttribute(name)) attributes[name] = element.getAttribute(name);
       }
       originalAttributes.set(element, attributes);
     }
+    let lastAttributes = lastTranslatedAttributes.get(element);
+    if (!lastAttributes) {
+      lastAttributes = {};
+      lastTranslatedAttributes.set(element, lastAttributes);
+    }
     for (const [name, value] of Object.entries(attributes)) {
-      element.setAttribute(name, t(value));
+      const current = element.getAttribute(name);
+      if (lastAttributes[name] !== undefined && current !== lastAttributes[name]) {
+        attributes[name] = current;
+      }
+      const translated = t(attributes[name]);
+      element.setAttribute(name, translated);
+      lastAttributes[name] = translated;
     }
   }
 
@@ -540,5 +584,5 @@ export function initializeI18n() {
       }));
     });
   }
-  translateStaticContent();
+  translateStaticContent(true);
 }

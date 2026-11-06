@@ -28,10 +28,10 @@
       <a class="nav active" href="#overview" data-sidebar-view="overview"><span>◫</span> Overview</a>
       <div class="nav-label">YOUR PC</div>
       <button class="nav" type="button" data-sidebar-view="build" data-collection="build"><span>▦</span> Build <b id="navCount">0</b></button>
-      <button class="nav" type="button" data-sidebar-view="watchlist" data-collection="watchlist"><span>☆</span> Da valutare <b id="sidebarWatchCount">0</b></button>
+      <button class="nav" type="button" data-sidebar-view="watchlist" data-collection="watchlist"><span>☆</span> Watchlist <b id="sidebarWatchCount">0</b></button>
       <div class="nav-label">TOOLS</div>
       <a class="nav" href="#history" data-sidebar-view="history"><span>⌁</span> Price history</a>
-      <button class="nav" type="button" data-sidebar-view="trash" data-collection="trash"><span>▤</span> Cestino <b id="sidebarTrashCount">0</b></button>
+      <button class="nav" type="button" data-sidebar-view="trash" data-collection="trash"><span>▤</span> Trash <b id="sidebarTrashCount">0</b></button>
       <div class="sidebar-bottom">
         <div class="local-note">
           <span class="live-dot"></span>
@@ -122,8 +122,8 @@
           </div>
           <div class="collection-tabs" role="tablist" aria-label="Component lists">
             <button class="collection-tab active" type="button" data-collection="build">Build <b id="buildTabCount">0</b></button>
-            <button class="collection-tab" type="button" data-collection="watchlist">Da valutare <b id="watchlistCount">0</b></button>
-            <button class="collection-tab" type="button" data-collection="trash">Cestino <b id="trashCount">0</b></button>
+            <button class="collection-tab" type="button" data-collection="watchlist">Watchlist <b id="watchlistCount">0</b></button>
+            <button class="collection-tab" type="button" data-collection="trash">Trash <b id="trashCount">0</b></button>
           </div>
           <div id="buildCollection">
           <div class="collection-toolbar"><p>Parts currently in your build and included in the total.</p><button class="primary" id="openAdd">＋ Add component</button></div>
@@ -140,14 +140,14 @@
           </div>
           </div>
           <section id="watchlistCollection" hidden>
-            <div class="collection-toolbar"><p>Componenti che stai considerando, fuori dal totale della build.</p><button class="primary" id="addWatchlist">＋ Aggiungi a Da valutare</button></div>
+            <div class="collection-toolbar"><p>Components you're considering, excluded from your build total.</p><button class="primary" id="addWatchlist">＋ Add to Watchlist</button></div>
             <div id="watchlistList" class="component-list"></div>
-            <div id="watchlistEmpty" class="collection-empty">La tua lista “Da valutare” è vuota.</div>
+            <div id="watchlistEmpty" class="collection-empty">Your watchlist is empty.</div>
           </section>
           <section id="trashCollection" hidden>
-            <div class="collection-toolbar"><p>Gli elementi nel Cestino non fanno più parte della build. Puoi ripristinarli o eliminarli definitivamente.</p></div>
+            <div class="collection-toolbar"><p>Items in the trash are no longer part of your build. You can restore them or permanently delete them.</p></div>
             <div id="trashList" class="component-list"></div>
-            <div id="trashEmpty" class="collection-empty">Il Cestino è vuoto.</div>
+            <div id="trashEmpty" class="collection-empty">The trash is empty.</div>
           </section>
         </div>
         <div class="panel history-panel" id="history">
