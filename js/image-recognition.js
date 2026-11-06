@@ -93,7 +93,7 @@ export function createImageRecognition({
       onResults(items, detectedStore, localMethod);
     } catch (error) {
       $("ocrStatus").textContent = t("Screenshot reading failed. Check your connection, or enter the products manually.");
-      console.error(error);
+      reportClientIssue("error", error?.stack || error, "Local screenshot OCR");
     }
   }
 

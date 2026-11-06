@@ -61,6 +61,7 @@ class PartlyHandler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length > 10_000_000:
+                logger.warning("Rejected data save: payload too large (%s bytes)", length)
                 self._json_response(413, {"error": "Data file is too large"})
                 return
             value = json.loads(self.rfile.read(length))
@@ -70,6 +71,7 @@ class PartlyHandler(SimpleHTTPRequestHandler):
                 not isinstance(value.get(key, []), list)
                 for key in ("components", "watchlist", "trash")
             ):
+                logger.warning("Rejected data save: expected components, watchlist, and trash arrays")
                 self._json_response(400, {"error": "Expected component, watchlist, and trash arrays"})
                 return
             value = {key: value.get(key, []) for key in ("components", "watchlist", "trash")}
@@ -79,8 +81,10 @@ class PartlyHandler(SimpleHTTPRequestHandler):
                 temporary.write_text(encoded, encoding="utf-8")
                 temporary.replace(DATA_FILE)
             logger.info(
-                "Saved %s components to data.json (%s bytes)",
+                "Saved collections to data.json: %s components, %s watchlist, %s trash (%s bytes)",
                 len(value["components"]),
+                len(value["watchlist"]),
+                len(value["trash"]),
                 len(encoded.encode("utf-8")),
             )
             self._json_response(200, {"saved": True})
@@ -132,12 +136,14 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             mime_type = str(request_data.get("mimeType", ""))
             image_data = str(request_data.get("data", ""))
             if mime_type not in {"image/png", "image/jpeg", "image/webp"}:
+                logger.warning("Rejected image extraction: unsupported image type %s", mime_type or "(missing)")
                 self._json_response(415, {"error": "Use a PNG, JPEG, or WebP image"})
                 return
             if image_data.startswith("data:"):
                 image_data = image_data.split(",", 1)[-1]
             image_bytes = base64.b64decode(image_data, validate=True)
             if not image_bytes or len(image_bytes) > 8_000_000:
+                logger.warning("Rejected image extraction: decoded image size %s bytes", len(image_bytes))
                 self._json_response(413, {"error": "Image must be under 8 MB"})
                 return
 
@@ -148,6 +154,7 @@ class PartlyHandler(SimpleHTTPRequestHandler):
                         api_key = line.split("=", 1)[1].strip().strip("\"'")
                         break
             if not api_key:
+                logger.warning("Gemini image extraction unavailable: API key is not configured")
                 self._json_response(503, {"error": "Gemini is not configured. Add GEMINI_API_KEY to .env."})
                 return
 
@@ -190,7 +197,9 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             with urllib.request.urlopen(api_request, timeout=45) as response:
                 api_result = json.loads(response.read().decode("utf-8"))
             result_text = api_result["candidates"][0]["content"]["parts"][0]["text"]
-            self._json_response(200, json.loads(result_text))
+            result = json.loads(result_text)
+            logger.info("Gemini image extraction completed: %s products returned", len(result.get("items", [])))
+            self._json_response(200, result)
         except urllib.error.HTTPError as error:
             details = error.read().decode("utf-8", errors="replace")[:1000]
             logger.error("Gemini extraction failed with HTTP %s: %s", error.code, details)

@@ -63,7 +63,11 @@ function save() {
     return Promise.resolve();
   }
   const snapshot = JSON.stringify({ components, watchlist, trash });
-  reportActivity("INFO", "Saving component data…", "PUT /api/data");
+  reportActivity(
+    "INFO",
+    "Saving component data…",
+    `PUT /api/data · build ${components.length}, watchlist ${watchlist.length}, trash ${trash.length}`,
+  );
   saveQueue = saveQueue
     .then(async () => {
       const response = await fetch("/api/data", {
@@ -419,12 +423,8 @@ const { updateChart, logPrice } = createPriceChart({
 
 bindStoreUrl("partUrl", "partStore");
 bindStoreUrl("offerUrl", "offerStore");
-$("partForm").querySelector('[type="submit"]').addEventListener("click", () => {
-  reportActivity("INFO", "Save component button clicked", "Form submission starting");
-});
 $("partForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  reportActivity("INFO", "Save component clicked", "Component form");
   const submitButton = e.submitter || $("partForm").querySelector('[type="submit"]');
   if (submitButton) submitButton.disabled = true;
   try {
