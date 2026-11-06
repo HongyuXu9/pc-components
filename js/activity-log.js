@@ -19,9 +19,34 @@ export function showActivity(level, message, context = "") {
   const list = $("activityLog");
   if (!list) return;
   if (list.querySelector(".log-empty")) list.replaceChildren();
+  const normalizedLevel = String(level || "INFO").toUpperCase();
+  const now = new Date();
   const item = document.createElement("li");
-  item.className = level === "ERROR" ? "log-error" : "";
-  item.textContent = `${new Date().toLocaleTimeString()} · ${level} · ${message}${context ? ` · ${context}` : ""}`;
+  item.className = `activity-entry activity-entry-${normalizedLevel.toLowerCase()}`;
+
+  const timestamp = document.createElement("time");
+  timestamp.className = "activity-time";
+  timestamp.dateTime = now.toISOString();
+  timestamp.textContent = now.toLocaleTimeString();
+
+  const badge = document.createElement("span");
+  badge.className = `activity-level activity-level-${normalizedLevel.toLowerCase()}`;
+  badge.textContent = normalizedLevel;
+
+  const details = document.createElement("span");
+  details.className = "activity-details";
+  const description = document.createElement("span");
+  description.className = "activity-message";
+  description.textContent = String(message || "");
+  details.append(description);
+  if (context) {
+    const note = document.createElement("span");
+    note.className = "activity-context";
+    note.textContent = String(context);
+    details.append(note);
+  }
+  item.append(timestamp, badge, details);
+
   const wasAtBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
   list.append(item);
   while (list.children.length > 40) list.firstElementChild.remove();
