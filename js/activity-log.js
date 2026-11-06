@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+import { t } from "./i18n.js";
 
 export function reportClientIssue(level, message, context = "") {
   const safeMessage = String(message?.message || message || "Unknown error");
@@ -9,9 +10,11 @@ export function reportClientIssue(level, message, context = "") {
     body: JSON.stringify({ level, message: safeMessage, context }),
   }).then((response) => {
     if (!response.ok) throw new Error(`Log endpoint returned ${response.status}`);
-    $("logConnection").textContent = "Connected · partly.log";
+    $("logConnection").dataset.source = "Connected · partly.log";
+    $("logConnection").textContent = t($("logConnection").dataset.source);
   }).catch((error) => {
-    $("logConnection").textContent = "Server log unavailable";
+    $("logConnection").dataset.source = "Server log unavailable";
+    $("logConnection").textContent = t($("logConnection").dataset.source);
     console.error("[Partly] Could not write partly.log", error);
   });
 }
@@ -37,12 +40,14 @@ export function showActivity(level, message, context = "") {
   details.className = "activity-details";
   const description = document.createElement("span");
   description.className = "activity-message";
-  description.textContent = String(message || "");
+  description.dataset.source = String(message || "");
+  description.textContent = t(description.dataset.source);
   details.append(description);
   if (context) {
     const note = document.createElement("span");
     note.className = "activity-context";
-    note.textContent = String(context);
+    note.dataset.source = String(context);
+    note.textContent = t(note.dataset.source);
     details.append(note);
   }
   item.append(timestamp, badge, details);
@@ -52,6 +57,13 @@ export function showActivity(level, message, context = "") {
   while (list.children.length > 40) list.firstElementChild.remove();
   if (wasAtBottom) list.scrollTop = list.scrollHeight;
 }
+window.addEventListener("partly:languagechange", () => {
+  document.querySelectorAll(".activity-message, .activity-context").forEach((element) => {
+    element.textContent = t(element.dataset.source || element.textContent);
+  });
+  const connection = $("logConnection");
+  if (connection?.dataset.source) connection.textContent = t(connection.dataset.source);
+});
 export function reportActivity(level, message, context = "") {
   reportClientIssue(level, message, context);
 }
@@ -70,8 +82,8 @@ export function reportActivity(level, message, context = "") {
     const setMaximized = (maximized) => {
       panel.classList.toggle("maximized", maximized);
       maximize.textContent = maximized ? "❐" : "⛶";
-      maximize.title = maximized ? "Restore size" : "Maximize";
-      maximize.setAttribute("aria-label", maximized ? "Restore activity log size" : "Maximize activity log");
+      maximize.title = t(maximized ? "Restore size" : "Maximize");
+      maximize.setAttribute("aria-label", t(maximized ? "Restore activity log size" : "Maximize activity log"));
       panel.style.right = maximized ? "10px" : "16px";
       panel.style.bottom = maximized ? "10px" : "16px";
       panel.style.width = maximized ? "calc(100vw - 20px)" : `${normalSize.width}px`;

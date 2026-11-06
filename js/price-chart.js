@@ -1,3 +1,5 @@
+import { formatDate, t } from "./i18n.js";
+
 const $ = (id) => document.getElementById(id);
 
 export function createPriceChart({
@@ -70,16 +72,12 @@ export function createPriceChart({
 
     $("chartEmpty").style.display = hasHistory ? "none" : "grid";
     $("chartLabel").textContent = product
-      ? product.name +
-        " · " +
-        offers.length +
-        " store offer" +
-        (offers.length === 1 ? "" : "s")
-      : activeCollection === "watchlist"
+      ? `${product.name} · ${offers.length} ${t(offers.length === 1 ? "store offer" : "store offers")}`
+      : t(activeCollection === "watchlist"
         ? "Click an item in Da valutare to view its price trend"
         : activeCollection === "trash"
           ? "Items in the trash are not included in price tracking"
-          : "Click a component to compare all its store offers";
+          : "Click a component to compare all its store offers");
     if (!window.Chart) return;
 
     if (chart) {
@@ -94,7 +92,7 @@ export function createPriceChart({
       ),
     ].sort((a, b) => a.localeCompare(b));
     const labels = dates.map((date) =>
-      new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
+      formatDate(date, {
         day: "numeric",
         month: "short",
         year: "2-digit",
@@ -103,7 +101,7 @@ export function createPriceChart({
     const datasets = offers.map((offer) => {
       const color = storeColor(offer.store);
       return {
-        label: offer.store + " · " + (offer.condition || "New"),
+        label: offer.store + " · " + t(offer.condition || "New"),
         data: dates.map(
           (date) =>
             offer.history.find((entry) => entry.date === date)?.price ?? null,
@@ -190,8 +188,8 @@ export function createPriceChart({
     const existingEntry = o.history.find((entry) => entry.date === initialDate);
     const result = await openActionDialog({
       eyebrow: "PRICE HISTORY",
-      title: existingEntry ? "Edit price point" : "Log a price",
-      subtitle: `${p.name} · ${o.store}${existingEntry ? ` · ${new Date(existingEntry.date + "T12:00:00").toLocaleDateString()}` : ""}`,
+      title: t(existingEntry ? "Edit price point" : "Log a price"),
+      subtitle: `${p.name} · ${o.store}${existingEntry ? ` · ${formatDate(existingEntry.date)}` : ""}`,
       confirmLabel: existingEntry ? "Save changes" : "Save price",
       deleteLabel: existingEntry ? "Delete point" : "",
       closeOnBackdrop: false,

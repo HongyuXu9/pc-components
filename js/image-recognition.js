@@ -1,4 +1,5 @@
 import { extractProducts, guessCategory } from "./domain.js";
+import { t } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -39,20 +40,20 @@ export function createImageRecognition({
   async function recognizeScreenshot(file) {
     if (!file) return;
     showScreenshotPreview(file);
-    $("ocrStatus").textContent = "Reading screenshot and looking for products…";
+    $("ocrStatus").textContent = t("Reading screenshot and looking for products…");
     let localMethod = "Local OCR";
     try {
       if (isAiEnabled()) {
-        $("ocrStatus").textContent = "Sending screenshot to Gemini for product recognition…";
+        $("ocrStatus").textContent = t("Sending screenshot to Gemini for product recognition…");
         try {
           const aiResult = await extractScreenshotWithGemini(file);
           if (aiResult.items.length) {
-            onResults(aiResult.items, aiResult.store, "Gemini AI");
+            onResults(aiResult.items, aiResult.store, t("Gemini AI"));
             return;
           }
           throw new Error("Gemini did not find any products");
         } catch (error) {
-          localMethod = "Local OCR · Gemini unavailable; check its API key or connection";
+          localMethod = t("Local OCR · Gemini unavailable; check its API key or connection");
           reportClientIssue("warning", error?.message || error, "Gemini image extraction; using local OCR");
         }
       }
@@ -72,8 +73,7 @@ export function createImageRecognition({
         (result.data.text || "").split(/\n/).map((text) => ({ text }));
       const items = extractProducts(lines);
       if (!items.length) {
-        $("ocrStatus").textContent =
-          "No products detected. Try a clearer screenshot or enter one manually.";
+        $("ocrStatus").textContent = t("No products detected. Try a clearer screenshot or enter one manually.");
         return;
       }
       const allText = result.data.text || "";
@@ -92,8 +92,7 @@ export function createImageRecognition({
         ) || "";
       onResults(items, detectedStore, localMethod);
     } catch (error) {
-      $("ocrStatus").textContent =
-        "Screenshot reading failed. Check your connection, or enter the products manually.";
+      $("ocrStatus").textContent = t("Screenshot reading failed. Check your connection, or enter the products manually.");
       console.error(error);
     }
   }

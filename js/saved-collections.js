@@ -2,7 +2,7 @@ export function renderSavedCollection(
   items,
   list,
   collection,
-  { components, selectedWatchlistOfferId, getOffer, money, escapeHtml, escapeAttr },
+  { components, selectedWatchlistOfferId, getOffer, money, t, formatDate, escapeHtml, escapeAttr },
 ) {
   list.replaceChildren();
   for (const part of items) {
@@ -17,12 +17,12 @@ export function renderSavedCollection(
       ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(part.image)}" alt="${escapeAttr(part.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
       : '<div class="part-visual image-missing"></div>';
     const buttons = collection === "watchlist"
-      ? `<button class="mini-button" data-list-act="add-offer" data-id="${escapeAttr(part.id)}">＋ Store</button><button class="mini-button" data-list-act="add" data-id="${escapeAttr(part.id)}">Add to build</button>${components.length ? `<button class="mini-button" data-list-act="replace" data-id="${escapeAttr(part.id)}">Replace…</button>` : ""}<button class="icon-button" title="Edit" data-list-act="edit" data-id="${escapeAttr(part.id)}">✎</button><button class="icon-button" title="Move to trash" data-list-act="trash" data-id="${escapeAttr(part.id)}">×</button>`
-      : `<button class="mini-button" data-list-act="restore" data-id="${escapeAttr(part.id)}">Restore</button><button class="mini-button danger-text" data-list-act="purge" data-id="${escapeAttr(part.id)}">Delete permanently</button>`;
+      ? `<button class="mini-button" data-list-act="add-offer" data-id="${escapeAttr(part.id)}">${escapeHtml(t("＋ Store"))}</button><button class="mini-button" data-list-act="add" data-id="${escapeAttr(part.id)}">${escapeHtml(t("Add to build"))}</button>${components.length ? `<button class="mini-button" data-list-act="replace" data-id="${escapeAttr(part.id)}">${escapeHtml(t("Replace…"))}</button>` : ""}<button class="icon-button" title="${escapeAttr(t("Edit"))}" data-list-act="edit" data-id="${escapeAttr(part.id)}">✎</button><button class="icon-button" title="${escapeAttr(t("Move to trash"))}" data-list-act="trash" data-id="${escapeAttr(part.id)}">×</button>`
+      : `<button class="mini-button" data-list-act="restore" data-id="${escapeAttr(part.id)}">${escapeHtml(t("Restore"))}</button><button class="mini-button danger-text" data-list-act="purge" data-id="${escapeAttr(part.id)}">${escapeHtml(t("Delete permanently"))}</button>`;
     const removed = collection === "trash" && part.deletedAt
-      ? ` · Deleted ${escapeHtml(new Date(part.deletedAt).toLocaleDateString())}`
+      ? ` · ${escapeHtml(t("Deleted {date}", { date: formatDate(part.deletedAt) }))}`
       : "";
-    row.innerHTML = `<div class="component-top">${visual}<div class="part-title"><strong>${escapeHtml(part.name)}${collection === "watchlist" ? '<em class="watchlist-tag">Considering</em>' : ""}</strong><span>${escapeHtml(part.category)}${removed}</span></div><div class="component-actions">${buttons}</div></div>`;
+    row.innerHTML = `<div class="component-top">${visual}<div class="part-title"><strong>${escapeHtml(part.name)}${collection === "watchlist" ? `<em class="watchlist-tag">${escapeHtml(t("Considering"))}</em>` : ""}</strong><span>${escapeHtml(t(part.category))}${removed}</span></div><div class="component-actions">${buttons}</div></div>`;
     row.dataset.id = part.id;
     row.dataset.defaultOfferId = offer?.id ?? "";
     if (collection === "watchlist") {
@@ -36,16 +36,17 @@ export function renderSavedCollection(
         line.classList.toggle("is-selected", String(item.id) === String(selectedWatchlistOfferId));
         const name = item.url
           ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.store)} ↗</a>`
-          : escapeHtml(item.store || "Unknown source");
+          : escapeHtml(item.store || t("Unknown source"));
         const removeButton = part.offers.length > 1
-          ? `<button data-list-act="remove-offer" data-id="${escapeAttr(part.id)}" data-offer="${escapeAttr(item.id)}" title="Remove offer">×</button>`
+          ? `<button data-list-act="remove-offer" data-id="${escapeAttr(part.id)}" data-offer="${escapeAttr(item.id)}" title="${escapeAttr(t("Remove offer"))}">×</button>`
           : "";
-        line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(item.condition || "New")}</span></span><span class="offer-meta">${item.history.length} price record${item.history.length === 1 ? "" : "s"}${bestOffer ? " · Best price" : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${money(item.price)}</div><div class="offer-controls"><button data-list-act="log" data-id="${escapeAttr(part.id)}" data-offer="${escapeAttr(item.id)}">Log price</button>${removeButton}</div>`;
+        const recordLabel = t(item.history.length === 1 ? "price record" : "price records");
+        line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(t(item.condition || "New"))}</span></span><span class="offer-meta">${item.history.length} ${escapeHtml(recordLabel)}${bestOffer ? ` · ${escapeHtml(t("Best price"))}` : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${money(item.price)}</div><div class="offer-controls"><button data-list-act="log" data-id="${escapeAttr(part.id)}" data-offer="${escapeAttr(item.id)}">${escapeHtml(t("Log price"))}</button>${removeButton}</div>`;
         offerList.append(line);
       });
       row.append(offerList);
     } else {
-      const bestLabel = offer ? `${money(offer.price)} · ${offer.store || "Unknown source"}` : "No price saved";
+      const bestLabel = offer ? `${money(offer.price)} · ${offer.store || t("Unknown source")}` : t("No price saved");
       row.querySelector(".part-title span").textContent += ` · ${bestLabel}`;
     }
     list.append(row);

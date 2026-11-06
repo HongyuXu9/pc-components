@@ -49,6 +49,14 @@
           <span class="eyebrow">YOUR PC BUILD, AT A GLANCE</span>
           <h1>Build overview</h1>
         </div>
+        <label class="language-picker">
+          <span class="language-globe" aria-hidden="true">◎</span>
+          <select id="languageSelect" aria-label="Language">
+            <option value="en">English</option>
+            <option value="it">Italiano</option>
+            <option value="zh">中文</option>
+          </select>
+        </label>
       </header>
       <section class="hero">
         <div class="hero-copy">
@@ -226,11 +234,11 @@
               /></label>
               <label class="field"
                 >Condition<select id="batchCondition">
-                  <option>New</option>
-                  <option>Used — like new</option>
-                  <option>Used — good</option>
-                  <option>Used — acceptable</option>
-                  <option>Refurbished</option>
+                  <option value="New">New</option>
+                  <option value="Used — like new">Used — like new</option>
+                  <option value="Used — good">Used — good</option>
+                  <option value="Used — acceptable">Used — acceptable</option>
+                  <option value="Refurbished">Refurbished</option>
                 </select></label
               >
             </div>
@@ -256,17 +264,17 @@
                   placeholder="e.g. AMD Ryzen 7 9800X3D" /></label
               ><label class="field"
                 >Category<select id="partCategory">
-                  <option>CPU</option>
-                  <option>GPU</option>
-                  <option>RAM</option>
-                  <option>Motherboard</option>
-                  <option>Storage</option>
-                  <option>Power supply</option>
-                  <option>Case</option>
-                  <option>Cooling</option>
-                  <option>Monitor</option>
-                  <option>Accessories</option>
-                  <option>Other</option>
+                  <option value="CPU">CPU</option>
+                  <option value="GPU">GPU</option>
+                  <option value="RAM">RAM</option>
+                  <option value="Motherboard">Motherboard</option>
+                  <option value="Storage">Storage</option>
+                  <option value="Power supply">Power supply</option>
+                  <option value="Case">Case</option>
+                  <option value="Cooling">Cooling</option>
+                  <option value="Monitor">Monitor</option>
+                  <option value="Accessories">Accessories</option>
+                  <option value="Other">Other</option>
                 </select></label
               ><label class="field"
                 >Product image URL <span class="optional">optional</span
@@ -285,11 +293,11 @@
                   placeholder="e.g. Amazon" /></label
               ><label class="field"
                 >Product condition<select id="partCondition">
-                  <option>New</option>
-                  <option>Used — like new</option>
-                  <option>Used — good</option>
-                  <option>Used — acceptable</option>
-                  <option>Refurbished</option>
+                  <option value="New">New</option>
+                  <option value="Used — like new">Used — like new</option>
+                  <option value="Used — good">Used — good</option>
+                  <option value="Used — acceptable">Used — acceptable</option>
+                  <option value="Refurbished">Refurbished</option>
                 </select></label
               ><label class="field"
                 >Price (€)<input
@@ -334,11 +342,11 @@
                 placeholder="e.g. MediaWorld" /></label
             ><label class="field"
               >Condition<select id="offerCondition">
-                <option>New</option>
-                <option>Used — like new</option>
-                <option>Used — good</option>
-                <option>Used — acceptable</option>
-                <option>Refurbished</option>
+                <option value="New">New</option>
+                <option value="Used — like new">Used — like new</option>
+                <option value="Used — good">Used — good</option>
+                <option value="Used — acceptable">Used — acceptable</option>
+                <option value="Refurbished">Refurbished</option>
               </select></label
             ><label class="field"
               >Price (€)<input

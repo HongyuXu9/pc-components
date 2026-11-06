@@ -148,6 +148,26 @@
   letter-spacing: -0.8px;
   margin: 5px 0 0;
 }
+.language-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: #758078;
+}
+.language-globe { font-size: 14px; }
+.language-picker select {
+  max-width: 115px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #46534a;
+  font: 600 10px var(--font);
+  cursor: pointer;
+}
 .primary,
 .secondary {
   border: 0;

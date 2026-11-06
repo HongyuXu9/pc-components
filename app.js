@@ -13,13 +13,17 @@ import {
 import { createImageRecognition } from "./js/image-recognition.js";
 import { createPriceChart } from "./js/price-chart.js";
 import { renderSavedCollection } from "./js/saved-collections.js";
+import {
+  formatCurrency,
+  formatDate,
+  initializeI18n,
+  t,
+} from "./js/i18n.js";
 
 const $ = (id) => document.getElementById(id);
+initializeI18n();
 const today = () => new Date().toLocaleDateString("en-CA");
-const money = (n) =>
-  new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(
-    Number(n) || 0,
-  );
+const money = formatCurrency;
 let toastTimer;
 let selectedHistoryOfferId = null;
 let selectedWatchlistOfferId = null;
@@ -72,15 +76,14 @@ function save() {
       return result;
     })
     .then(() => {
-      $("storageStatus").textContent = "Saved to data.json";
+      $("storageStatus").textContent = t("Saved to data.json");
       reportActivity("INFO", "Save completed successfully", "data.json");
       return true;
     })
     .catch((error) => {
       const detail = error?.message || String(error);
-      $("storageStatus").textContent =
-        "Save failed: " + detail + " · partly.log";
-      notify("Save failed: " + detail);
+      $("storageStatus").textContent = `${t("Save failed: {detail}", { detail })} · partly.log`;
+      notify(t("Save failed: {detail}", { detail }));
       console.error("[Partly] Save failed:", error);
       reportClientIssue("error", error?.stack || error, "PUT /api/data");
       return false;
@@ -88,12 +91,12 @@ function save() {
   return saveQueue;
 }
 function notify(message, kind = "info") {
-  const t = $("toast");
-  t.textContent = message;
-  t.classList.toggle("warning", kind === "warning");
-  t.classList.add("show");
+  const toast = $("toast");
+  toast.textContent = t(message);
+  toast.classList.toggle("warning", kind === "warning");
+  toast.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
 }
 function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confirm", danger = false, deleteLabel = "", closeOnBackdrop = true, closeOnEscape = true, fields = [] }) {
   const modal = $("actionModal");
@@ -101,13 +104,13 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
   const fieldList = $("actionFields");
   const confirmButton = $("confirmAction");
   const deleteButton = $("deleteAction");
-  $("actionEyebrow").textContent = eyebrow;
-  $("actionModalTitle").textContent = title;
-  $("actionSubtitle").textContent = subtitle;
-  confirmButton.textContent = confirmLabel;
+  $("actionEyebrow").textContent = t(eyebrow);
+  $("actionModalTitle").textContent = t(title);
+  $("actionSubtitle").textContent = t(subtitle);
+  confirmButton.textContent = t(confirmLabel);
   confirmButton.classList.toggle("danger", danger);
   deleteButton.hidden = !deleteLabel;
-  deleteButton.textContent = deleteLabel || "Delete";
+  deleteButton.textContent = t(deleteLabel || "Delete");
   modal.classList.toggle("price-edit", Boolean(deleteLabel));
   fieldList.classList.toggle("price-history-fields", eyebrow === "PRICE HISTORY");
   fieldList.replaceChildren();
@@ -115,7 +118,7 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
     const label = document.createElement("label");
     label.className = field.wide === false ? "field" : "field wide";
     label.htmlFor = `action-${field.name}`;
-    label.textContent = field.label;
+    label.textContent = t(field.label);
     const input = field.options ? document.createElement("select") : document.createElement("input");
     input.id = `action-${field.name}`;
     input.name = field.name;
@@ -123,7 +126,7 @@ function openActionDialog({ eyebrow, title, subtitle = "", confirmLabel = "Confi
       for (const optionData of field.options) {
         const option = document.createElement("option");
         option.value = optionData.value;
-        option.textContent = optionData.label;
+        option.textContent = t(optionData.label);
         input.append(option);
       }
     } else {
@@ -192,8 +195,8 @@ function openModal(part, collection = "components") {
   $("ocrStatus").textContent = "";
   $("partId").value = part?.id || "";
   const inWatchlist = collection === "watchlist";
-  $("modalTitle").textContent = part ? "Edit component" : inWatchlist ? "Add to Da valutare" : "Add a component";
-  $("partForm").querySelector('[type="submit"]').textContent = part ? "Save component" : inWatchlist ? "Save to Da valutare" : "Save component";
+  $("modalTitle").textContent = t(part ? "Edit component" : inWatchlist ? "Add to Da valutare" : "Add a component");
+  $("partForm").querySelector('[type="submit"]').textContent = t(part ? "Save component" : inWatchlist ? "Save to Da valutare" : "Save component");
   $("partName").value = part?.name || "";
   $("partCategory").value = part?.category || "CPU";
   $("partImageUrl").value = part?.image || "";
@@ -233,7 +236,7 @@ function render() {
   if (components.length && !filtered.length) {
     const e = document.createElement("div");
     e.className = "no-results";
-    e.textContent = "No components match your search.";
+    e.textContent = t("No components match your search.");
     list.append(e);
   }
   const offers = [];
@@ -274,8 +277,10 @@ function render() {
     null,
   );
   $("grandTotal").textContent = money(total);
-  $("totalFoot").textContent =
-    `Across ${components.length} component${components.length === 1 ? "" : "s"}`;
+  $("totalFoot").textContent = t(
+    components.length === 1 ? "Across {count} component" : "Across {count} components",
+    { count: components.length },
+  );
   $("offerCount").textContent = offers.length;
   $("historyCount").textContent = entries;
   $("statParts").textContent = components.length;
@@ -293,13 +298,13 @@ function render() {
       " · " +
       historicalLow.store +
       " · " +
-      new Date(historicalLow.date + "T12:00:00").toLocaleDateString("en-GB")
-    : selectedProduct?.name || "Select a component";
+      formatDate(historicalLow.date)
+    : selectedProduct?.name || t("Select a component");
   const cats = [...new Set(components.map((p) => p.category))].sort(),
     cur = $("categoryFilter").value;
   $("categoryFilter").innerHTML =
-    '<option value="">All categories</option>' +
-    cats.map((c) => `<option>${escapeHtml(c)}</option>`).join("");
+    `<option value="">${escapeHtml(t("All categories"))}</option>` +
+    cats.map((c) => `<option value="${escapeAttr(c)}">${escapeHtml(t(c))}</option>`).join("");
   $("categoryFilter").value = cats.includes(cur) ? cur : "";
   for (const p of filtered) {
     const row = document.createElement("article");
@@ -317,7 +322,8 @@ function render() {
     const visual = p.image
       ? `<div class="part-visual"><img class="part-image" src="${escapeAttr(p.image)}" alt="${escapeAttr(p.name)}" onerror="this.parentElement.classList.add('image-missing');this.remove()"></div>`
       : '<div class="part-visual image-missing"></div>';
-    top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(p.category)} · ${p.offers.length} offer${p.offers.length === 1 ? "" : "s"}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">＋ Store</button><button class="mini-button" title="Move to Da valutare" data-act="watchlist" data-id="${escapeAttr(p.id)}">☆ Da valutare</button><button class="icon-button" title="Edit" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="Delete" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
+    const offerCountLabel = t(p.offers.length === 1 ? "store offer" : "store offers");
+    top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(t(p.category))} · ${p.offers.length} ${escapeHtml(offerCountLabel)}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">${escapeHtml(t("＋ Store"))}</button><button class="mini-button" title="${escapeAttr(t("Move to watchlist"))}" data-act="watchlist" data-id="${escapeAttr(p.id)}">☆ ${escapeHtml(t("Watchlist"))}</button><button class="icon-button" title="${escapeAttr(t("Edit"))}" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="${escapeAttr(t("Delete"))}" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
     row.append(top);
     const offerList = document.createElement("div");
     offerList.className = "offer-list";
@@ -332,8 +338,9 @@ function render() {
       );
       const name = o.url
         ? `<a href="${escapeAttr(o.url)}" target="_blank" rel="noopener">${escapeHtml(o.store)} ↗</a>`
-        : escapeHtml(o.store);
-      line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(o.condition || "New")}</span></span><span class="offer-meta">${o.history.length} price record${o.history.length === 1 ? "" : "s"}${bestOffer ? " · Best price" : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${money(o.price)}</div><div class="offer-controls"><button data-act="log" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">Log price</button><button data-act="remove-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}" title="Remove offer">×</button></div>`;
+        : escapeHtml(o.store || t("Unknown source"));
+      const recordLabel = t(o.history.length === 1 ? "price record" : "price records");
+      line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(t(o.condition || "New"))}</span></span><span class="offer-meta">${o.history.length} ${escapeHtml(recordLabel)}${bestOffer ? ` · ${escapeHtml(t("Best price"))}` : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${money(o.price)}</div><div class="offer-controls"><button data-act="log" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">${escapeHtml(t("Log price"))}</button><button data-act="remove-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}" title="${escapeAttr(t("Remove offer"))}">×</button></div>`;
       offerList.append(line);
     });
     row.append(offerList);
@@ -356,6 +363,8 @@ function render() {
     selectedWatchlistOfferId,
     getOffer,
     money,
+    t,
+    formatDate,
     escapeHtml,
     escapeAttr,
   };
@@ -365,6 +374,7 @@ function render() {
   $("trashEmpty").hidden = trash.length > 0;
   updateChart();
 }
+window.addEventListener("partly:languagechange", () => render());
 function escapeHtml(s = "") {
   return String(s).replace(
     /[&<>"']/g,
@@ -429,7 +439,7 @@ $("partForm").addEventListener("submit", async (e) => {
       (part) => String(part.id) !== String(id) && componentNameKey(part.name) === componentNameKey(name),
     );
     if (duplicate) {
-      const message = `“${name}” already exists; component skipped`;
+      const message = t("“{name}” already exists; component skipped", { name });
       reportClientIssue("warning", message, "Duplicate component");
       notify(message, "warning");
       return;
@@ -557,7 +567,7 @@ $("componentList").addEventListener("click", async (e) => {
     case "delete":
       if (await openActionDialog({
         eyebrow: "MOVE TO TRASH",
-        title: `Move ${p.name} to the trash?`,
+        title: t("Move {name} to the trash?", { name: p.name }),
         subtitle: "Its offers and price history stay saved. You can restore or permanently delete it from the trash.",
         confirmLabel: "Move to trash",
         danger: true,
@@ -576,7 +586,7 @@ $("componentList").addEventListener("click", async (e) => {
       const offer = p.offers.find((item) => String(item.id) === b.dataset.offer);
       if (await openActionDialog({
         eyebrow: "REMOVE STORE OFFER",
-        title: `Remove ${offer?.store || "this offer"}?`,
+        title: t("Remove {name}?", { name: offer?.store || t("this offer") }),
         subtitle: "This also removes the price history for this store offer.",
         confirmLabel: "Remove offer",
         danger: true,
@@ -626,7 +636,7 @@ $("watchlistList").addEventListener("click", async (event) => {
     const offer = part.offers.find((item) => String(item.id) === button.dataset.offer);
     if (!(await openActionDialog({
       eyebrow: "REMOVE STORE OFFER",
-      title: `Remove ${offer?.store || "this offer"}?`,
+      title: t("Remove {name}?", { name: offer?.store || t("this offer") }),
       subtitle: "This also removes its price history from the graph.",
       confirmLabel: "Remove offer",
       danger: true,
@@ -661,11 +671,11 @@ $("watchlistList").addEventListener("click", async (event) => {
   if (action === "replace") {
     const options = components.map((item) => ({
       value: String(item.id),
-      label: `${item.name} · ${item.category}`,
+      label: `${item.name} · ${t(item.category)}`,
     }));
     const result = await openActionDialog({
       eyebrow: "REPLACE COMPONENT",
-      title: `Use ${part.name} instead of…`,
+      title: t("Use {name} instead of…", { name: part.name }),
       subtitle: "The selected component moves to the trash. You can restore it later.",
       confirmLabel: "Replace component",
       fields: [{ name: "replacementId", label: "Current build component", options, value: String(components.find((item) => item.category === part.category)?.id || components[0]?.id || "") }],
@@ -678,7 +688,7 @@ $("watchlistList").addEventListener("click", async (event) => {
     moveToTrash(replaced, "components");
     watchlist = watchlist.filter((item) => item !== part);
     components.unshift(part);
-    if (await saveCollectionMutation(snapshot)) notify(`${part.name} replaced ${replaced.name}`);
+    if (await saveCollectionMutation(snapshot)) notify(t("{newName} replaced {oldName}", { newName: part.name, oldName: replaced.name }));
   }
 });
 $("trashList").addEventListener("click", async (event) => {
@@ -703,7 +713,7 @@ $("trashList").addEventListener("click", async (event) => {
   }
   if (button.dataset.listAct === "purge" && await openActionDialog({
     eyebrow: "PERMANENTLY DELETE",
-    title: `Delete ${part.name} forever?`,
+    title: t("Delete {name} forever?", { name: part.name }),
     subtitle: "This permanently removes its offers and price history.",
     confirmLabel: "Delete permanently",
     danger: true,
@@ -765,7 +775,7 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
   const rows = $("batchRows");
   rows.replaceChildren();
   $("batchCount").textContent =
-    items.length + " product" + (items.length === 1 ? "" : "s") + " found";
+    t(items.length === 1 ? "{count} product found" : "{count} products found", { count: items.length });
   $("batchStore").value = detectedStore;
   $("batchCondition").value = "New";
   const categories = [
@@ -787,7 +797,7 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
     row.className = "batch-row";
     const nameLabel = document.createElement("label");
     nameLabel.className = "field";
-    nameLabel.textContent = "Product name";
+    nameLabel.textContent = t("Product name");
     const nameInput = document.createElement("input");
     nameInput.className = "batch-name";
     nameInput.value = item.name;
@@ -795,13 +805,13 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
 
     const categoryLabel = document.createElement("label");
     categoryLabel.className = "field";
-    categoryLabel.textContent = "Category";
+    categoryLabel.textContent = t("Category");
     const categorySelect = document.createElement("select");
     categorySelect.className = "batch-category";
     for (const category of categories) {
       const option = document.createElement("option");
       option.value = category;
-      option.textContent = category;
+      option.textContent = t(category);
       categorySelect.append(option);
     }
     categorySelect.value = item.category;
@@ -809,7 +819,7 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
 
     const priceLabel = document.createElement("label");
     priceLabel.className = "field";
-    priceLabel.textContent = "Price (€)";
+    priceLabel.textContent = t("Price (€)");
     const priceInput = document.createElement("input");
     priceInput.className = "batch-price";
     priceInput.type = "number";
@@ -822,11 +832,11 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "icon-button batch-remove";
-    remove.setAttribute("aria-label", "Remove product");
+    remove.setAttribute("aria-label", t("Remove product"));
     remove.textContent = "×";
     remove.addEventListener("click", () => {
       row.remove();
-      $("batchCount").textContent = rows.children.length + " products found";
+      $("batchCount").textContent = t(rows.children.length === 1 ? "{count} product found" : "{count} products found", { count: rows.children.length });
     });
     row.append(nameLabel, categoryLabel, priceLabel, remove);
     rows.append(row);
@@ -834,7 +844,7 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
 
   setComponentEntryMode("bulk");
   $("ocrStatus").textContent =
-    `${method}: check the detected products, correct anything needed, then add the whole list.`;
+    t("{method}: check the detected products, correct anything needed, then add the whole list.", { method });
 }
 
 const imageRecognition = createImageRecognition({
@@ -896,7 +906,7 @@ $("addBatchProducts").addEventListener("click", async () => {
     }
   }
   if (duplicates.length) {
-    const message = `Skipped ${duplicates.length} duplicate component${duplicates.length === 1 ? "" : "s"}: ${duplicates.join(", ")}`;
+    const message = t(duplicates.length === 1 ? "Skipped {count} duplicate component: {names}" : "Skipped {count} duplicate components: {names}", { count: duplicates.length, names: duplicates.join(", ") });
     reportClientIssue("warning", message, "Duplicate components");
     notify(message, "warning");
   }
@@ -933,11 +943,8 @@ $("addBatchProducts").addEventListener("click", async () => {
   closeModal();
   notify(
     duplicates.length
-      ? `Added ${newProducts.length}; skipped ${duplicates.length} duplicate${duplicates.length === 1 ? "" : "s"}`
-      : newProducts.length +
-      " product" +
-      (newProducts.length === 1 ? "" : "s") +
-      " added",
+      ? t(duplicates.length === 1 ? "Added {added}; skipped {skipped} duplicate" : "Added {added}; skipped {skipped} duplicates", { added: newProducts.length, skipped: duplicates.length })
+      : t(newProducts.length === 1 ? "{count} product added" : "{count} products added", { count: newProducts.length }),
     duplicates.length ? "warning" : "info",
   );
 });
@@ -978,8 +985,8 @@ async function initialize() {
       }
     }
     dataReady = true;
-    $("storageTitle").textContent = "Your data stays on this PC";
-    $("storageStatus").textContent = "Saved to data.json";
+    $("storageTitle").textContent = t("Your data stays on this PC");
+    $("storageStatus").textContent = t("Saved to data.json");
     render();
     try {
       const statusResponse = await fetch("/api/status", { cache: "no-store" });
@@ -1000,16 +1007,16 @@ async function initialize() {
         reportClientIssue("error", error?.stack || error, "Clearing previous browser data");
         console.warn("Could not clear previous browser data", error);
       }
-      $("storageStatus").textContent = "Previous data moved to data.json";
+      $("storageStatus").textContent = t("Previous data moved to data.json");
     }
   } catch (error) {
     reportClientIssue("error", error?.stack || error, "Loading /api/data");
-    $("storageTitle").textContent = "Local server is not running";
-    $("storageStatus").textContent = "Start the app with run_app.bat";
+    $("storageTitle").textContent = t("Local server is not running");
+    $("storageStatus").textContent = t("Start the app with run_app.bat");
     $("emptyState").style.display = "block";
     $("componentList").style.display = "none";
     $("emptyState").querySelector("p").textContent =
-      "Start the local app from run_app.bat to load and save your components.";
+      t("Start the local app from run_app.bat to load and save your components.");
     document.querySelectorAll(".primary, .upload-button").forEach((button) => {
       button.disabled = true;
     });
