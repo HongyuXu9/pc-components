@@ -153,7 +153,10 @@ function getOffer(part) {
 function renderSummary() {
   const isWatchlist = activeSummaryCollection === "watchlist";
   const source = isWatchlist ? watchlist : components;
-  const summary = buildSummary(source, getOffer, activeSummaryCollection);
+  const query = isWatchlist ? $("watchlistSummarySearch").value : "";
+  const summary = buildSummary(source, getOffer, activeSummaryCollection, query);
+  $("watchlistSummarySearchField").hidden = !isWatchlist;
+  $("summaryTotalLabel").textContent = t(query.trim() ? "Filtered total" : "Total");
   $("buildSummaryTitle").textContent = t(isWatchlist ? "Watchlist summary" : "Build summary");
   $("summaryCaption").textContent = t(isWatchlist
     ? "All watchlist components at their lowest current offer price. Separate from your build total."
@@ -161,7 +164,7 @@ function renderSummary() {
   $("buildSummaryText").value = summary.text;
   $("buildSummaryText").setAttribute("aria-label", t(isWatchlist ? "Watchlist summary" : "Build summary"));
   $("summaryTotal").textContent = money(summary.total);
-  $("copyBuildSummary").disabled = !source.length;
+  $("copyBuildSummary").disabled = !summary.count;
   $("copyBuildSummary").classList.remove("copied");
   document.querySelectorAll("[data-summary-collection]").forEach((button) => {
     const active = button.dataset.summaryCollection === activeSummaryCollection;
@@ -692,6 +695,7 @@ document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [da
   });
 });
 let summaryCopyTimer;
+$("watchlistSummarySearch").addEventListener("input", renderSummary);
 document.querySelectorAll("[data-summary-collection]").forEach((button) => {
   button.addEventListener("click", () => {
     activeSummaryCollection = button.dataset.summaryCollection;
