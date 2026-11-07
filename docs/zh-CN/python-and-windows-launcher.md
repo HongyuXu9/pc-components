@@ -1,6 +1,6 @@
 # Python 服务器与 Windows 启动器
 
-[English](python-and-windows-launcher.md) · [Italiano](python-and-windows-launcher.it.md) · **简体中文**
+[English](../en/python-and-windows-launcher.md) · [Italiano](../it/python-and-windows-launcher.md) · **简体中文**
 
 本文说明从 Partly 图标到本地服务器的完整启动过程，并介绍维护应用时需要
 了解或修改的配置。

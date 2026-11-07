@@ -1,6 +1,6 @@
 # Architettura
 
-[English](architecture.md) · **Italiano** · [简体中文](architecture.zh-CN.md)
+[English](../en/architecture.md) · **Italiano** · [简体中文](../zh-CN/architecture.md)
 
 Partly è un’app web locale con interfaccia da applicazione desktop. Usa il
 browser per l’interfaccia, la libreria standard Python per l’API HTTP locale e
@@ -39,8 +39,8 @@ del ciclo di vita e `/api/close` segnala la chiusura intenzionale della finestra
 Il riconoscimento screenshot usa `/api/extract-image` solo se AI assist è attivo.
 
 Per la configurazione Python dettagliata, l’API, `.env` e l’avvio Windows,
-consulta la [guida a Python e al launcher](python-and-windows-launcher.it.md)
-([English](python-and-windows-launcher.md), [简体中文](python-and-windows-launcher.zh-CN.md)).
+consulta la [guida a Python e al launcher](python-and-windows-launcher.md)
+([English](../en/python-and-windows-launcher.md), [简体中文](../zh-CN/python-and-windows-launcher.md)).
 
 ## Regole per le modifiche
 

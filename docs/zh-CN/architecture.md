@@ -1,6 +1,6 @@
 # 架构
 
-[English](architecture.md) · [Italiano](architecture.it.md) · **简体中文**
+[English](../en/architecture.md) · [Italiano](../it/architecture.md) · **简体中文**
 
 Partly 是一款本地优先、具有桌面应用风格的 Web 应用。界面由浏览器提供，
 本地 HTTP API 使用 Python 标准库，`data.json` 是可读的数据存储。项目无需
@@ -35,8 +35,8 @@ Partly 是一款本地优先、具有桌面应用风格的 Web 应用。界面�
 截图识别才会调用 `/api/extract-image`。
 
 Python 配置、API、`.env` 和 Windows 启动流程的详细说明见
-[Python 服务器和 Windows 启动器指南](python-and-windows-launcher.zh-CN.md)
-（[English](python-and-windows-launcher.md)，[Italiano](python-and-windows-launcher.it.md)）。
+[Python 服务器和 Windows 启动器指南](python-and-windows-launcher.md)
+（[English](../en/python-and-windows-launcher.md)，[Italiano](../it/python-and-windows-launcher.md)）。
 
 ## 修改边界
 

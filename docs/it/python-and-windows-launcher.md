@@ -1,6 +1,6 @@
 # Server Python e avvio su Windows
 
-[English](python-and-windows-launcher.md) · **Italiano** · [简体中文](python-and-windows-launcher.zh-CN.md)
+[English](../en/python-and-windows-launcher.md) · **Italiano** · [简体中文](../zh-CN/python-and-windows-launcher.md)
 
 Questa guida descrive il percorso completo dall’icona Partly al server locale,
 e i punti da modificare quando si vuole studiare o cambiare la configurazione.

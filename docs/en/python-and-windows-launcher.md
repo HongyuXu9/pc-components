@@ -1,6 +1,6 @@
 # Python Server and Windows Launcher
 
-**English** · [Italiano](python-and-windows-launcher.it.md) · [简体中文](python-and-windows-launcher.zh-CN.md)
+**English** · [Italiano](../it/python-and-windows-launcher.md) · [简体中文](../zh-CN/python-and-windows-launcher.md)
 
 This guide follows the complete path from the Partly icon to the local server,
 and explains the settings to study or change when maintaining the app.

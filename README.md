@@ -1,6 +1,6 @@
 # Partly
 
-**English** · [Italiano](README.it.md) · [简体中文](README.zh-CN.md)
+**English** · [Italiano](docs/it/README.md) · [简体中文](docs/zh-CN/README.md)
 
 Partly is a local PC component and price tracker. It stores its data in the
 readable `data.json` file beside the app; it does not keep data in browser
@@ -20,11 +20,16 @@ Python 3 is required. The server listens only on this PC. Back up `data.json` to
 
 ## Project structure
 
+Start with the [documentation index](docs/README.md) for all guides and translations.
+Documentation is grouped under `docs/en/`, `docs/it/`, and `docs/zh-CN/`;
+this is the only README kept at the project root. Application entry points
+and Windows launcher paths remain at the root.
+
 The frontend uses native JavaScript modules, so no Node.js build step is needed. `app.js` coordinates the interface; focused modules under `js/` handle product rules, image recognition, price history, activity logging, and saved-list rendering. `style.css` is the stylesheet entry point and imports the grouped files in `styles/`.
 
-The Python entry point remains `server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `partly_server/` package. See [docs/architecture.md](docs/architecture.md) for module boundaries and API responsibilities ([Italiano](docs/architecture.it.md), [简体中文](docs/architecture.zh-CN.md)).
+The Python entry point remains `server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `partly_server/` package. See [docs/architecture.md](docs/en/architecture.md) for module boundaries and API responsibilities ([Italiano](docs/it/architecture.md), [简体中文](docs/zh-CN/architecture.md)).
 
-For a walkthrough of the Python settings, `.env`, and the Windows launcher chain (`.lnk` / `.bat` → `.vbs` → PowerShell → Python), see [docs/python-and-windows-launcher.md](docs/python-and-windows-launcher.md) ([Italiano](docs/python-and-windows-launcher.it.md), [简体中文](docs/python-and-windows-launcher.zh-CN.md)).
+For a walkthrough of the Python settings, `.env`, and the Windows launcher chain (`.lnk` / `.bat` → `.vbs` → PowerShell → Python), see [docs/python-and-windows-launcher.md](docs/en/python-and-windows-launcher.md) ([Italiano](docs/it/python-and-windows-launcher.md), [简体中文](docs/zh-CN/python-and-windows-launcher.md)).
 
 Product images can be set with an image URL when adding or editing a component. The example parts already include a few product images; those images are hosted by their respective product sites.
 
@@ -36,4 +41,4 @@ Screenshot recognition runs locally with Tesseract by default. For optional AI i
 
 If saving fails, check partly.log beside data.json. The Save component dialog stays open when the server rejects a save. Browser errors and save activity also appear in the in-app Activity log.
 
-Shared images live in `assets/images/`; see [asset conventions](assets/README.md).
+Shared images live in `assets/images/`; see [asset conventions](docs/en/assets.md).

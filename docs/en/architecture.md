@@ -1,6 +1,6 @@
 # Architecture
 
-**English** · [Italiano](architecture.it.md) · [简体中文](architecture.zh-CN.md)
+**English** · [Italiano](../it/architecture.md) · [简体中文](../zh-CN/architecture.md)
 
 Partly is a local-first desktop-style web app. It uses the browser for the UI,
 Python's standard library for the local HTTP API, and `data.json` as its

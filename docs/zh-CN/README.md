@@ -1,6 +1,6 @@
 # Partly
 
-[English](README.md) · [Italiano](README.it.md) · **简体中文**
+[English](../../README.md) · [Italiano](../it/README.md) · **简体中文**
 
 Partly 是一款本地 PC 配件和价格追踪应用。数据以可读的 `data.json` 文件
 保存在应用目录中；应用不使用数据库，也不把数据保存在浏览器里。如果发现
@@ -26,12 +26,12 @@ Partly 是一款本地 PC 配件和价格追踪应用。数据以可读的 `data
 文件。
 
 `server.py` 是 Python 服务入口。HTTP 路由、配置、日志和共享运行状态位于
-`partly_server/` 包中。模块边界和 API 说明请参阅[架构指南](docs/architecture.zh-CN.md)
-（[English](docs/architecture.md)，[Italiano](docs/architecture.it.md)）。
+`partly_server/` 包中。模块边界和 API 说明请参阅[架构指南](architecture.md)
+（[English](../en/architecture.md)，[Italiano](../it/architecture.md)）。
 
 有关 Python 配置、`.env` 以及 Windows 启动链（`.lnk` / `.bat` → `.vbs` →
-PowerShell → Python），请参阅[服务器和启动器指南](docs/python-and-windows-launcher.zh-CN.md)
-（[English](docs/python-and-windows-launcher.md)，[Italiano](docs/python-and-windows-launcher.it.md)）。
+PowerShell → Python），请参阅[服务器和启动器指南](python-and-windows-launcher.md)
+（[English](../en/python-and-windows-launcher.md)，[Italiano](../it/python-and-windows-launcher.md)）。
 
 添加或编辑配件时，可以通过图片 URL 设置产品图片。示例配件中也包含一些由
 对应商家网站托管的产品图片。
@@ -54,4 +54,4 @@ Partly。在粘贴截图前启用 **AI assist**。启用后，截图会发送给
 **Save component** 对话框会保持打开。浏览器错误和保存活动也会显示在应用的
 Activity log 中。
 
-共享图片位于 `assets/images/`；请参阅[资源约定](assets/README.md)。
+共享图片位于 `assets/images/`；请参阅[资源约定](../en/assets.md)。

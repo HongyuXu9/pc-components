@@ -1,6 +1,6 @@
 # Partly
 
-[English](README.md) · **Italiano** · [简体中文](README.zh-CN.md)
+[English](../../README.md) · **Italiano** · [简体中文](../zh-CN/README.md)
 
 Partly è un’app locale per tenere traccia dei componenti PC e dei relativi
 prezzi. Salva i dati in `data.json`, leggibile e situato accanto all’app; non
@@ -28,12 +28,12 @@ prodotti, riconoscimento immagini, prezzi, Activity log e rendering delle liste.
 
 `server.py` è il punto di ingresso Python. Gli endpoint HTTP, la configurazione,
 il logging e lo stato condiviso risiedono nel pacchetto `partly_server/`. Vedi la
-[guida all’architettura](docs/architecture.it.md) ([English](docs/architecture.md),
-[简体中文](docs/architecture.zh-CN.md)) per i confini dei moduli e le API.
+[guida all’architettura](architecture.md) ([English](../en/architecture.md),
+[简体中文](../zh-CN/architecture.md)) per i confini dei moduli e le API.
 
 Per configurare Python, `.env` e la catena di avvio Windows (`.lnk` / `.bat` →
-`.vbs` → PowerShell → Python), consulta la [guida al server e al launcher](docs/python-and-windows-launcher.it.md)
-([English](docs/python-and-windows-launcher.md), [简体中文](docs/python-and-windows-launcher.zh-CN.md)).
+`.vbs` → PowerShell → Python), consulta la [guida al server e al launcher](python-and-windows-launcher.md)
+([English](../en/python-and-windows-launcher.md), [简体中文](../zh-CN/python-and-windows-launcher.md)).
 
 Quando aggiungi o modifichi un componente puoi indicare l’immagine del prodotto
 tramite URL. Alcuni componenti di esempio includono immagini ospitate dai
@@ -62,4 +62,4 @@ modulo **Save component** resta aperto quando il server rifiuta il salvataggio.
 Gli errori del browser e le operazioni di salvataggio compaiono anche
 nell’Activity log dell’app.
 
-Le immagini condivise si trovano in `assets/images/`; vedi le [convenzioni per gli asset](assets/README.md).
+Le immagini condivise si trovano in `assets/images/`; vedi le [convenzioni per gli asset](../en/assets.md).
