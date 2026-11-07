@@ -42,8 +42,14 @@ export function buildSummary(components, getOffer, collection = "build", query =
       }
     }
   }
-  displayLines.push({ text: "", kind: "spacer" }, { text: `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}`, kind: "total" });
-  if (missingPrices) displayLines.push({ text: t("Components without a price are excluded from the total.") });
-  const text = displayLines.map((line) => line.text).join("\n");
+  // The preview uses the separate total below it; only copied text needs a footer.
+  const notes = missingPrices ? [{ text: t("Components without a price are excluded from the total.") }] : [];
+  const text = [
+    ...displayLines.map((line) => line.text),
+    "",
+    `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}`,
+    ...notes.map((line) => line.text),
+  ].join("\n");
+  displayLines.push(...notes);
   return { text, total, count: matching.length, lines, displayLines };
 }

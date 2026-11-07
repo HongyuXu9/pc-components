@@ -170,7 +170,7 @@ function renderSummary() {
   const preview = $("buildSummaryText");
   preview.replaceChildren();
   summary.displayLines.forEach((match) => {
-    if (["header", "spacer", "total"].includes(match.kind)) return;
+    if (["header", "spacer"].includes(match.kind)) return;
     const line = document.createElement("div");
     line.className = "summary-text-line";
     let content = line;
