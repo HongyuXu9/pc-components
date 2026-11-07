@@ -16,6 +16,7 @@ import { createPriceChart } from "./js/price-chart.js";
 import { renderSavedCollection } from "./js/saved-collections.js";
 import { buildSummary } from "./js/build-summary.js";
 import { appendHighlightedText } from "./js/summary-search.js";
+import { BUILD_CATEGORY_ORDER, groupBuildParts } from "./js/build-sections.js";
 import {
   formatCurrency,
   formatDate,
@@ -202,7 +203,7 @@ function render() {
       (!category || p.category === category),
   );
   $("emptyState").style.display = components.length ? "none" : "block";
-  list.style.display = components.length ? "block" : "none";
+  list.style.display = "block";
   if (components.length && !filtered.length) {
     const e = document.createElement("div");
     e.className = "no-results";
@@ -271,12 +272,31 @@ function render() {
       " · " +
       formatDate(historicalLow.date)
     : selectedProduct?.name || t("Select a component");
-  const cats = [...new Set(components.map((p) => p.category))].sort(),
+  const cats = [...BUILD_CATEGORY_ORDER, ...new Set(components.map((p) => p.category).filter((category) => !BUILD_CATEGORY_ORDER.includes(category)))],
     cur = $("categoryFilter").value;
   $("categoryFilter").innerHTML =
     `<option value="">${escapeHtml(t("All categories"))}</option>` +
     cats.map((c) => `<option value="${escapeAttr(c)}">${escapeHtml(t(c))}</option>`).join("");
   $("categoryFilter").value = cats.includes(cur) ? cur : "";
+  const categoryTargets = new Map();
+  for (const group of groupBuildParts(filtered, category)) {
+    const section = document.createElement("section");
+    section.className = "build-category";
+    section.setAttribute("aria-label", t(group.category));
+    const heading = document.createElement("h3");
+    heading.className = "build-category-heading";
+    const title = document.createElement("span");
+    title.textContent = t(group.category);
+    const count = document.createElement("span");
+    count.className = "build-category-count";
+    count.textContent = group.parts.length;
+    heading.append(title, count);
+    const body = document.createElement("div");
+    body.className = "build-category-items";
+    section.append(heading, body);
+    list.append(section);
+    group.parts.forEach((part) => categoryTargets.set(part, body));
+  }
   for (const p of filtered) {
     const row = document.createElement("article");
     row.className = "component";
@@ -315,7 +335,7 @@ function render() {
       offerList.append(line);
     });
     row.append(offerList);
-    list.append(row);
+    categoryTargets.get(p).append(row);
   }
   $("buildCollection").hidden = activeCollection !== "build";
   $("watchlistCollection").hidden = activeCollection !== "watchlist";

@@ -147,6 +147,11 @@
 .component-list {
   padding: 0 20px;
 }
+.build-category { margin: 16px 0 20px; }
+.build-category-heading { display: flex; align-items: center; gap: 8px; margin: 0; padding: 9px 12px; border: 1px solid #e1e9dc; border-radius: 8px; background: #f4f8ef; color: #40583a; font: 700 11px var(--font); }
+.build-category-count { display: grid; place-items: center; min-width: 19px; height: 19px; padding: 0 4px; box-sizing: border-box; border-radius: 6px; background: #e6eedf; color: #789068; font-size: 9px; }
+.build-category-items:empty { min-height: 30px; margin-top: 7px; border: 1px dashed #e5ebe0; border-radius: 7px; background: #fcfdfa; }
+.build-category-items > .component:last-child { border-bottom: 0; }
 .component {
   padding: 14px 0;
   border-bottom: 1px solid #f0f2ef;
