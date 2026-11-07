@@ -798,6 +798,11 @@ const imageRecognition = createImageRecognition({
   reportClientIssue,
 });
 
+$("rescanScreenshot").addEventListener("click", () => {
+  setComponentEntryMode("single");
+  imageRecognition.rescanScreenshot();
+});
+
 $("removeScreenshot").addEventListener("click", () => {
   imageRecognition.clearScreenshotPreview();
   $("screenshotInput").value = "";

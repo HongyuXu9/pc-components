@@ -15,11 +15,16 @@ export function createImageRecognition({
       reader.onerror = () => reject(reader.error || new Error("Could not read screenshot"));
       reader.readAsDataURL(file);
     });
-    const response = await fetch("/api/extract-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mimeType: file.type, data: dataUrl }),
-    });
+    let response;
+    try {
+      response = await fetch("/api/extract-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mimeType: file.type, data: dataUrl }),
+      });
+    } catch (error) {
+      throw new Error(t("Cannot reach the local server at /api/extract-image. Restart Partly with run_app.bat, then rescan. No HTTP response was received; this does not confirm a Gemini API key error."), { cause: error });
+    }
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || `Gemini request failed (${response.status})`);
     const items = Array.isArray(result.items) ? result.items : [];
@@ -41,6 +46,7 @@ export function createImageRecognition({
     if (!file) return;
     showScreenshotPreview(file);
     const recognitionId = activeRecognitionId;
+    $("rescanScreenshot").disabled = true;
     $("ocrStatus").textContent = t("Reading screenshot and looking for products…");
     let localMethod = "Local OCR";
     try {
@@ -103,13 +109,18 @@ export function createImageRecognition({
       if (recognitionId !== activeRecognitionId) return;
       $("ocrStatus").textContent = t("Screenshot reading failed. Check your connection, or enter the products manually.");
       reportClientIssue("error", error?.stack || error, "Local screenshot OCR");
+    } finally {
+      if (recognitionId === activeRecognitionId) $("rescanScreenshot").disabled = false;
     }
   }
 
   let screenshotPreviewUrl = "";
   let activeRecognitionId = 0;
+  let selectedFile = null;
   function clearScreenshotPreview() {
     activeRecognitionId++;
+    selectedFile = null;
+    $("rescanScreenshot").disabled = true;
     if (screenshotPreviewUrl) URL.revokeObjectURL(screenshotPreviewUrl);
     screenshotPreviewUrl = "";
     $("screenshotPreview").hidden = true;
@@ -118,6 +129,7 @@ export function createImageRecognition({
   }
   function showScreenshotPreview(file) {
     clearScreenshotPreview();
+    selectedFile = file;
     screenshotPreviewUrl = URL.createObjectURL(file);
     const preview = $("screenshotPreviewImage");
     preview.src = screenshotPreviewUrl;
@@ -125,5 +137,10 @@ export function createImageRecognition({
     $("screenshotPreview").hidden = false;
   }
 
-  return { recognizeScreenshot, clearScreenshotPreview };
+  function rescanScreenshot() {
+    if (!selectedFile || $("rescanScreenshot").disabled) return;
+    return recognizeScreenshot(selectedFile);
+  }
+
+  return { recognizeScreenshot, clearScreenshotPreview, rescanScreenshot };
 }

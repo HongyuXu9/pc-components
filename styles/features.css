@@ -86,7 +86,12 @@
   border-radius: 6px;
   background: #fff;
 }
-.screenshot-preview > div { min-width: 0; }
+.screenshot-preview > div { min-width: 0; flex: 1; }
+.rescan-screenshot { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: 0 0 auto; padding: 7px 10px; border: 1px solid #cdddbf; border-radius: 7px; background: #eef5e7; color: #4e7133; font: 600 10px var(--font); cursor: pointer; }
+.rescan-screenshot:hover:not(:disabled) { background: #e0edd4; border-color: #91af73; }
+.rescan-screenshot:disabled { opacity: .45; cursor: wait; }
+.rescan-screenshot:focus-visible { outline: 2px solid #6f9b47; outline-offset: 2px; }
+@media (max-width: 540px) { .screenshot-preview { flex-wrap: wrap; } .screenshot-preview > div { flex-basis: calc(100% - 124px); } .rescan-screenshot { margin-left: auto; } }
 .remove-screenshot { display: grid; place-items: center; flex: 0 0 28px; height: 28px; margin-left: auto; padding: 0; border: 1px solid #dce5d6; border-radius: 50%; background: #fff; color: #788971; font: 20px/1 var(--font); cursor: pointer; }
 .remove-screenshot:hover { border-color: #e5c5c0; background: #fff1ee; color: #a34d40; }
 .remove-screenshot:focus-visible { outline: 2px solid #6f9b47; outline-offset: 3px; }
