@@ -174,8 +174,9 @@ function renderSummary() {
     const line = document.createElement("div");
     line.className = "summary-text-line";
     let content = line;
-    if (match.category) {
+    if (match.category || match.part) {
       line.classList.add("summary-component-row");
+      line.classList.toggle("summary-watchlist-row", !match.category);
       line.classList.toggle("summary-empty-row", match.kind === "empty-category");
       const category = document.createElement("span");
       category.className = "summary-row-category";
@@ -186,7 +187,8 @@ function renderSummary() {
       const price = document.createElement("span");
       price.className = "summary-row-price";
       price.textContent = match.priceText || "";
-      line.append(category, content, price);
+      if (match.category) line.append(category);
+      line.append(content, price);
     } else {
       appendHighlightedText(line, match.text, match.ranges);
     }
