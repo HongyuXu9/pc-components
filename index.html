@@ -32,6 +32,7 @@
       <div class="nav-label">YOUR PC</div>
       <button class="nav" type="button" data-sidebar-view="build" data-collection="build"><span>▦</span> Build <b id="navCount">0</b></button>
       <button class="nav" type="button" data-sidebar-view="watchlist" data-collection="watchlist"><span>☆</span> Watchlist <b id="sidebarWatchCount">0</b></button>
+      <a class="nav" href="#buildSummary" data-sidebar-view="summary"><span>≡</span> Build summary</a>
       <div class="nav-label">TOOLS</div>
       <a class="nav" href="#history" data-sidebar-view="history"><span>⌁</span> Price history</a>
       <button class="nav" type="button" data-sidebar-view="trash" data-collection="trash"><span>▤</span> Trash <b id="sidebarTrashCount">0</b></button>
@@ -179,6 +180,15 @@
             </button>
           </div>
         </div>
+      </section>
+      <section class="panel build-summary-panel" id="buildSummary" aria-labelledby="buildSummaryTitle">
+        <div class="panel-head">
+          <div><span class="eyebrow">READY TO SHARE</span><h2 id="buildSummaryTitle">Build summary</h2></div>
+          <button class="primary" id="copyBuildSummary" type="button" disabled>Copy summary</button>
+        </div>
+        <p class="summary-caption">All build components at their lowest current offer price.</p>
+        <textarea id="buildSummaryText" class="build-summary-text" readonly aria-label="Build summary" spellcheck="false"></textarea>
+        <div class="summary-total"><span>Total</span><strong id="summaryTotal">€0.00</strong></div>
       </section>
       <footer>PARTLY <span>·</span> A clearer way to build your PC</footer>
     </main>

@@ -1,6 +1,13 @@
 :root {
   scroll-padding-top: 20px;
 }
+.build-summary-panel { margin-top: 20px; overflow: hidden; }
+.summary-caption { margin: 0; padding: 0 20px 14px; font-size: 11px; color: #7a8978; }
+.build-summary-text { display: block; box-sizing: border-box; width: calc(100% - 40px); min-height: 180px; max-height: 420px; margin: 0 20px; padding: 16px; resize: vertical; border: 1px solid #dce6d6; border-radius: 10px; background: #f7faf4; color: #3c4f3d; font: 12px/1.9 var(--font); }
+.build-summary-text:focus-visible { outline: 2px solid #6f9b47; outline-offset: 2px; }
+.summary-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; color: #53664c; font-size: 12px; }
+.summary-total strong { font: 700 22px var(--font); color: #405d2d; }
+@media (max-width: 540px) { .build-summary-panel .panel-head { flex-wrap: wrap; gap: 12px; } }
 .screenshot-box {
   display: flex;
   flex-wrap: wrap;

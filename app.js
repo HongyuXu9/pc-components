@@ -14,6 +14,7 @@ import {
 import { createImageRecognition } from "./js/image-recognition.js";
 import { createPriceChart } from "./js/price-chart.js";
 import { renderSavedCollection } from "./js/saved-collections.js";
+import { buildSummary } from "./js/build-summary.js";
 import {
   formatCurrency,
   formatDate,
@@ -204,6 +205,10 @@ function render() {
     null,
   );
   $("grandTotal").textContent = money(total);
+  const summary = buildSummary(components, getOffer);
+  $("buildSummaryText").value = summary.text;
+  $("summaryTotal").textContent = money(summary.total);
+  $("copyBuildSummary").disabled = !components.length;
   $("totalFoot").textContent = t(
     components.length === 1 ? "Across {count} component" : "Across {count} components",
     { count: components.length },
@@ -661,7 +666,7 @@ document.querySelectorAll(".sidebar [data-collection]").forEach((item) => {
     $("parts").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 });
-document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [data-sidebar-view='history']").forEach((item) => {
+document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [data-sidebar-view='history'], .sidebar [data-sidebar-view='summary']").forEach((item) => {
   item.addEventListener("click", () => {
     activeSidebarView = item.dataset.sidebarView;
     document.querySelectorAll("[data-sidebar-view]").forEach((link) => {
@@ -669,6 +674,18 @@ document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [da
     });
   });
 });
+$("copyBuildSummary").addEventListener("click", async () => {
+  const summary = $("buildSummaryText");
+  try {
+    await navigator.clipboard.writeText(summary.value);
+    notify("Build summary copied");
+  } catch {
+    summary.focus();
+    summary.select();
+    notify("Select and copy the summary with Ctrl+C");
+  }
+});
+
 ["openAdd", "emptyAdd"].forEach((id) =>
   $(id).addEventListener("click", () => openModal()),
 );
