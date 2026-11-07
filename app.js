@@ -15,6 +15,7 @@ import { createImageRecognition } from "./js/image-recognition.js";
 import { createPriceChart } from "./js/price-chart.js";
 import { renderSavedCollection } from "./js/saved-collections.js";
 import { buildSummary } from "./js/build-summary.js";
+import { appendHighlightedText } from "./js/summary-search.js";
 import {
   formatCurrency,
   formatDate,
@@ -35,6 +36,7 @@ let trash = [];
 let activeCollection = "build";
 let activeSidebarView = "overview";
 let activeSummaryCollection = "build";
+let summaryPlainText = "";
 let editingCollection = "components";
 let offerCollection = "components";
 let dataReady = false;
@@ -161,7 +163,22 @@ function renderSummary() {
   $("summaryCaption").textContent = t(isWatchlist
     ? "All watchlist components at their lowest current offer price. Separate from your build total."
     : "All build components at their lowest current offer price.");
-  $("buildSummaryText").value = summary.text;
+  summaryPlainText = summary.text;
+  const preview = $("buildSummaryText");
+  preview.replaceChildren();
+  summary.text.split("\n").forEach((text, index) => {
+    const line = document.createElement("div");
+    line.className = "summary-text-line";
+    const match = index >= 2 ? summary.lines[index - 2] : null;
+    appendHighlightedText(line, text, match?.ranges);
+    if (match?.context) {
+      const context = document.createElement("small");
+      context.className = "summary-match-context";
+      appendHighlightedText(context, match.context, match.contextRanges);
+      line.append(context);
+    }
+    preview.append(line);
+  });
   $("buildSummaryText").setAttribute("aria-label", t(isWatchlist ? "Watchlist summary" : "Build summary"));
   $("summaryTotal").textContent = money(summary.total);
   $("copyBuildSummary").disabled = !summary.count;
@@ -705,16 +722,21 @@ document.querySelectorAll("[data-summary-collection]").forEach((button) => {
 $("copyBuildSummary").addEventListener("click", async () => {
   const summary = $("buildSummaryText");
   const copiedCollection = activeSummaryCollection;
+  const copiedText = summaryPlainText;
   try {
-    await navigator.clipboard.writeText(summary.value);
+    await navigator.clipboard.writeText(copiedText);
     const button = $("copyBuildSummary");
-    if (copiedCollection === activeSummaryCollection) button.classList.add("copied");
+    if (copiedCollection === activeSummaryCollection && copiedText === summaryPlainText) button.classList.add("copied");
     clearTimeout(summaryCopyTimer);
     summaryCopyTimer = setTimeout(() => button.classList.remove("copied"), 1800);
     notify(copiedCollection === "watchlist" ? "Watchlist summary copied" : "Build summary copied");
   } catch {
     summary.focus();
-    summary.select();
+    const range = document.createRange();
+    range.selectNodeContents(summary);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
     notify("Select and copy the summary with Ctrl+C");
   }
 });
