@@ -34,6 +34,7 @@ let watchlist = [];
 let trash = [];
 let activeCollection = "build";
 let activeSidebarView = "overview";
+let activeSummaryCollection = "build";
 let editingCollection = "components";
 let offerCollection = "components";
 let dataReady = false;
@@ -149,6 +150,25 @@ function getOffer(part) {
     null,
   );
 }
+function renderSummary() {
+  const isWatchlist = activeSummaryCollection === "watchlist";
+  const source = isWatchlist ? watchlist : components;
+  const summary = buildSummary(source, getOffer, activeSummaryCollection);
+  $("buildSummaryTitle").textContent = t(isWatchlist ? "Watchlist summary" : "Build summary");
+  $("summaryCaption").textContent = t(isWatchlist
+    ? "All watchlist components at their lowest current offer price. Separate from your build total."
+    : "All build components at their lowest current offer price.");
+  $("buildSummaryText").value = summary.text;
+  $("buildSummaryText").setAttribute("aria-label", t(isWatchlist ? "Watchlist summary" : "Build summary"));
+  $("summaryTotal").textContent = money(summary.total);
+  $("copyBuildSummary").disabled = !source.length;
+  $("copyBuildSummary").classList.remove("copied");
+  document.querySelectorAll("[data-summary-collection]").forEach((button) => {
+    const active = button.dataset.summaryCollection === activeSummaryCollection;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
 function render() {
   const query = $("search").value.trim().toLowerCase(),
     category = $("categoryFilter").value;
@@ -205,10 +225,7 @@ function render() {
     null,
   );
   $("grandTotal").textContent = money(total);
-  const summary = buildSummary(components, getOffer);
-  $("buildSummaryText").value = summary.text;
-  $("summaryTotal").textContent = money(summary.total);
-  $("copyBuildSummary").disabled = !components.length;
+  renderSummary();
   $("totalFoot").textContent = t(
     components.length === 1 ? "Across {count} component" : "Across {count} components",
     { count: components.length },
@@ -675,15 +692,22 @@ document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [da
   });
 });
 let summaryCopyTimer;
+document.querySelectorAll("[data-summary-collection]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeSummaryCollection = button.dataset.summaryCollection;
+    renderSummary();
+  });
+});
 $("copyBuildSummary").addEventListener("click", async () => {
   const summary = $("buildSummaryText");
+  const copiedCollection = activeSummaryCollection;
   try {
     await navigator.clipboard.writeText(summary.value);
     const button = $("copyBuildSummary");
-    button.classList.add("copied");
+    if (copiedCollection === activeSummaryCollection) button.classList.add("copied");
     clearTimeout(summaryCopyTimer);
     summaryCopyTimer = setTimeout(() => button.classList.remove("copied"), 1800);
-    notify("Build summary copied");
+    notify(copiedCollection === "watchlist" ? "Watchlist summary copied" : "Build summary copied");
   } catch {
     summary.focus();
     summary.select();

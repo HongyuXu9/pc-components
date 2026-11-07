@@ -2,6 +2,11 @@
   scroll-padding-top: 20px;
 }
 .build-summary-panel { margin-top: 20px; overflow: hidden; }
+.summary-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; margin: 0 20px 14px; padding: 4px; border: 1px solid #e1e9dc; border-radius: 10px; background: #f3f7ef; }
+.summary-tab { padding: 7px 14px; border: 0; border-radius: 7px; background: transparent; color: #7a8978; font: 600 11px var(--font); cursor: pointer; }
+.summary-tab:hover { color: #405d2d; background: #eaf2e3; }
+.summary-tab.active { background: #fff; color: #405d2d; box-shadow: 0 1px 4px #344c211a; }
+.summary-tab:focus-visible { outline: 2px solid #6f9b47; outline-offset: 1px; }
 .summary-caption { margin: 0; padding: 0 20px 14px; font-size: 11px; color: #7a8978; }
 .summary-copy-area { position: relative; margin: 0 20px; }
 .build-summary-text { display: block; box-sizing: border-box; width: 100%; min-height: 180px; max-height: 420px; margin: 0; padding: 16px 52px 16px 16px; resize: vertical; border: 1px solid #dce6d6; border-radius: 10px; background: #f7faf4; color: #3c4f3d; font: 12px/1.9 var(--font); }

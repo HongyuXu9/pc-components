@@ -185,7 +185,11 @@
         <div class="panel-head">
           <div><span class="eyebrow">READY TO SHARE</span><h2 id="buildSummaryTitle">Build summary</h2></div>
         </div>
-        <p class="summary-caption">All build components at their lowest current offer price.</p>
+        <div class="summary-tabs" role="group" aria-label="Summary list">
+          <button type="button" class="summary-tab active" data-summary-collection="build" aria-pressed="true">Build</button>
+          <button type="button" class="summary-tab" data-summary-collection="watchlist" aria-pressed="false">Watchlist</button>
+        </div>
+        <p class="summary-caption" id="summaryCaption">All build components at their lowest current offer price.</p>
         <div class="summary-copy-area">
           <button class="summary-copy-button" id="copyBuildSummary" type="button" aria-label="Copy summary" title="Copy summary" disabled>
             <svg class="summary-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
