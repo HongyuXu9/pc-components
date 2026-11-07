@@ -3,7 +3,7 @@ import { searchSummaryParts } from "./summary-search.js";
 
 export function buildSummary(components, getOffer, collection = "build", query = "") {
   const isWatchlist = collection === "watchlist";
-  const keywords = isWatchlist ? query.match(/[\p{L}\p{N}]+/gu) || [] : [];
+  const keywords = query.match(/[\p{L}\p{N}]+/gu) || [];
   const matching = searchSummaryParts(components, keywords.length ? query : "");
   let total = 0;
   let missingPrices = 0;
@@ -16,10 +16,13 @@ export function buildSummary(components, getOffer, collection = "build", query =
     else missingPrices++;
     return { ...match, text: `${name} — ${priced ? formatCurrency(price) : t("Price unavailable")}` };
   });
+  const emptyMessage = keywords.length && components.length
+    ? isWatchlist ? "No watchlist components match your search." : "No build components match your search."
+    : isWatchlist ? "Your watchlist is empty." : "Your build is empty.";
   const text = [
     t(isWatchlist ? "Watchlist summary" : "Build summary"),
     "",
-    ...(lines.length ? lines.map((line) => line.text) : [t(keywords.length && components.length ? "No watchlist components match your search." : isWatchlist ? "Your watchlist is empty." : "Your build is empty.")]),
+    ...(lines.length ? lines.map((line) => line.text) : [t(emptyMessage)]),
     "",
     `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}`,
     ...(missingPrices ? [t("Components without a price are excluded from the total.")] : []),

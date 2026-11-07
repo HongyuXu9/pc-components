@@ -36,6 +36,7 @@ let trash = [];
 let activeCollection = "build";
 let activeSidebarView = "overview";
 let activeSummaryCollection = "build";
+const summaryQueries = { build: "", watchlist: "" };
 let summaryPlainText = "";
 let editingCollection = "components";
 let offerCollection = "components";
@@ -155,10 +156,11 @@ function getOffer(part) {
 function renderSummary() {
   const isWatchlist = activeSummaryCollection === "watchlist";
   const source = isWatchlist ? watchlist : components;
-  const query = isWatchlist ? $("watchlistSummarySearch").value : "";
+  const query = summaryQueries[activeSummaryCollection];
   const summary = buildSummary(source, getOffer, activeSummaryCollection, query);
-  $("watchlistSummarySearchField").hidden = !isWatchlist;
-  $("summaryTotalLabel").textContent = t(query.trim() ? "Filtered total" : "Total");
+  $("summarySearch").value = query;
+  $("summarySearchLabel").textContent = t(isWatchlist ? "Search watchlist summary" : "Search build summary");
+  $("summaryTotalLabel").textContent = t(/[\p{L}\p{N}]/u.test(query) ? "Filtered total" : "Total");
   $("buildSummaryTitle").textContent = t(isWatchlist ? "Watchlist summary" : "Build summary");
   $("summaryCaption").textContent = t(isWatchlist
     ? "All watchlist components at their lowest current offer price. Separate from your build total."
@@ -712,7 +714,10 @@ document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [da
   });
 });
 let summaryCopyTimer;
-$("watchlistSummarySearch").addEventListener("input", renderSummary);
+$("summarySearch").addEventListener("input", (event) => {
+  summaryQueries[activeSummaryCollection] = event.target.value;
+  renderSummary();
+});
 document.querySelectorAll("[data-summary-collection]").forEach((button) => {
   button.addEventListener("click", () => {
     activeSummaryCollection = button.dataset.summaryCollection;
