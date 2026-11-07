@@ -17,12 +17,12 @@ is the English entry point for the application.
 | `docs/en/`, `docs/it/`, `docs/zh-CN/` | Documentation grouped by language |
 | `js/` | Frontend JavaScript modules |
 | `styles/` | Stylesheets grouped by responsibility |
-| `partly_server/` | Python server package |
+| `backend/partly_server/` | Python server package |
 | `assets/images/` | Shared image assets |
 | Project root | Main README, frontend entry points, Python entry point, Windows launchers and app icon |
 
 The root paths used by the app and Windows shortcuts are kept stable. Local
-configuration (`.env`), saved data (`data.json`), logs and Python caches are
+configuration (`.env`), saved data (`data/data.json`), logs and Python caches are
 runtime files; they remain excluded from Git.
 
 ## Documentation conventions

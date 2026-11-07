@@ -1,12 +1,13 @@
 $ErrorActionPreference = "Stop"
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $appUrl = "http://127.0.0.1:8766"
 $dataUrl = "$appUrl/api/data"
-$serverScript = Join-Path $root "server.py"
+$serverScript = Join-Path $root "backend\server.py"
 $serverProcess = $null
 $ownsServer = $false
 $stage = "initialization"
-$logPath = Join-Path $root "partly.log"
+$logPath = Join-Path $root "logs\partly.log"
+[System.IO.Directory]::CreateDirectory((Join-Path $root "logs")) | Out-Null
 $script:pendingPartlyLogs = @()
 
 function Send-PartlyLogEntry($entry) {
@@ -41,7 +42,7 @@ function Flush-PartlyLogQueue($writeFallbackFile = $false) {
             try {
                 Add-Content -LiteralPath $logPath -Value $line -Encoding UTF8 -ErrorAction Stop
             } catch {
-                Add-Content -LiteralPath (Join-Path $root "partly-launcher.log") -Value $line -Encoding UTF8
+                Add-Content -LiteralPath (Join-Path $root "logs\partly-launcher.log") -Value $line -Encoding UTF8
             }
         }
         $script:pendingPartlyLogs = @()

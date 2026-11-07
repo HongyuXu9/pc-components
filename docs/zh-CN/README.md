@@ -2,9 +2,9 @@
 
 [English](../../README.md) · [Italiano](../it/README.md) · **简体中文**
 
-Partly 是一款本地 PC 配件和价格追踪应用。数据以可读的 `data.json` 文件
+Partly 是一款本地 PC 配件和价格追踪应用。数据以可读的 `data/data.json` 文件
 保存在应用目录中；应用不使用数据库，也不把数据保存在浏览器里。如果发现
-旧版本留在浏览器中的数据，Partly 会先将其迁移到 `data.json`，并且只有在
+旧版本留在浏览器中的数据，Partly 会先将其迁移到 `data/data.json`，并且只有在
 文件保存成功后才清除旧数据。
 
 ## 启动应用
@@ -13,20 +13,20 @@ Partly 是一款本地 PC 配件和价格追踪应用。数据以可读的 `data
    Partly。它会在没有控制台窗口的情况下启动本地服务器，并在关闭 Partly
    窗口时停止服务器。
 2. 可以将 `Partly.lnk` 复制到桌面，作为桌面快捷方式。
-3. 也可以使用 `run_app.bat` 启动服务器和应用。
+3. 也可以使用 `scripts/run_app.bat` 启动服务器和应用。
 
-需要安装 Python 3。服务器只监听本机连接。请备份 `data.json`，以保留配件和
+需要安装 Python 3。服务器只监听本机连接。请备份 `data/data.json`，以保留配件和
 价格历史。
 
 ## 项目结构
 
-前端使用原生 JavaScript 模块，因此不需要 Node.js 构建步骤。`app.js` 负责
+前端使用原生 JavaScript 模块，因此不需要 Node.js 构建步骤。`js/app.js` 负责
 协调界面；`js/` 下的模块分别处理产品规则、图片识别、价格历史、活动日志和
-已保存列表的渲染。`style.css` 是入口样式表，并导入按功能整理的 `styles/`
+已保存列表的渲染。`styles/style.css` 是入口样式表，并导入按功能整理的 `styles/`
 文件。
 
-`server.py` 是 Python 服务入口。HTTP 路由、配置、日志和共享运行状态位于
-`partly_server/` 包中。模块边界和 API 说明请参阅[架构指南](architecture.md)
+`backend/server.py` 是 Python 服务入口。HTTP 路由、配置、日志和共享运行状态位于
+`backend/partly_server/` 包中。模块边界和 API 说明请参阅[架构指南](architecture.md)
 （[English](../en/architecture.md)，[Italiano](../it/architecture.md)）。
 
 有关 Python 配置、`.env` 以及 Windows 启动链（`.lnk` / `.bat` → `.vbs` →
@@ -45,12 +45,12 @@ PowerShell → Python），请参阅[服务器和启动器指南](python-and-win
 
 默认情况下，截图识别由本机的 Tesseract 完成。如需可选的 Gemini AI 识别，
 请在 [Google AI Studio](https://aistudio.google.com/app/apikey) 创建 API 密钥，
-并在 `server.py` 同目录的 `.env` 中设置 `GEMINI_API_KEY=你的密钥`，然后重启
+并在 项目根目录的 `.env` 中设置 `GEMINI_API_KEY=你的密钥`，然后重启
 Partly。在粘贴截图前启用 **AI assist**。启用后，截图会发送给 Google；关闭
 该选项即可只在本机识别。Google 免费 API 有使用限制，提交的内容也可能被用于
 改进其产品；启用前请查看 Google 当前条款。
 
-保存失败时，请查看 `data.json` 旁边的 `partly.log`。如果服务器拒绝保存，
+保存失败时，请查看 `logs/partly.log`。如果服务器拒绝保存，
 **Save component** 对话框会保持打开。浏览器错误和保存活动也会显示在应用的
 Activity log 中。
 

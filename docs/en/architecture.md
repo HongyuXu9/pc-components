@@ -3,14 +3,14 @@
 **English** · [Italiano](../it/architecture.md) · [简体中文](../zh-CN/architecture.md)
 
 Partly is a local-first desktop-style web app. It uses the browser for the UI,
-Python's standard library for the local HTTP API, and `data.json` as its
+Python's standard library for the local HTTP API, and `data/data.json` as its
 human-readable persistence layer. There is no build step or runtime package
 installation requirement.
 
 ## Frontend
 
-`index.html` is the document shell. It loads the CSS manifest in `style.css`
-and the native ES module entry point in `app.js`.
+`index.html` is the document shell. It loads the CSS manifest in `styles/style.css`
+and the native ES module entry point in `js/app.js`.
 
 | Module | Responsibility |
 | --- | --- |
@@ -20,15 +20,15 @@ and the native ES module entry point in `app.js`.
 | `js/price-chart.js` | Price chart rendering and price-history editing |
 | `js/action-dialog.js` | Shared confirmation and field-editing dialog, cancellation, and event cleanup |
 | `js/saved-collections.js` | Watchlist and trash card rendering |
-| `app.js` | Application state, page rendering, form submission, and event coordination |
+| `js/app.js` | Application state, page rendering, form submission, and event coordination |
 
 Styles are grouped by responsibility under `styles/`. The import order in
-`style.css` is intentional: responsive rules and feature overrides follow the
+`styles/style.css` is intentional: responsive rules and feature overrides follow the
 base rules they refine.
 
 ## Local server
 
-`server.py` is the launcher entry point. The `partly_server` package contains
+`backend/server.py` is the launcher entry point. The `backend/partly_server` package contains
 the HTTP handler, path and port configuration, logging setup, and the small
 amount of thread-safe runtime state shared by request handlers. It uses only
 the Python standard library.
@@ -45,8 +45,8 @@ launcher chain, see [Python server and Windows launcher](python-and-windows-laun
 ## Change boundaries
 
 - Keep persisted shape changes compatible with `migrate()` and document them.
-- Keep browser state and API responses plain JSON so `data.json` remains easy to
+- Keep browser state and API responses plain JSON so `data/data.json` remains easy to
   inspect and back up.
 - Keep the application usable without Gemini; local OCR remains the default.
 - Keep frontend modules dependency-free and use explicit imports between them.
-- Keep `server.py` as the stable entry point used by the Windows launcher.
+- Keep `backend/server.py` as the stable entry point used by the Windows launcher.

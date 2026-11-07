@@ -1,9 +1,9 @@
 """Application paths and server configuration."""
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-DATA_FILE = ROOT / "data.json"
-LOG_FILE = ROOT / "partly.log"
+ROOT = Path(__file__).resolve().parents[2]
+DATA_FILE = ROOT / "data" / "data.json"
+LOG_FILE = ROOT / "logs" / "partly.log"
 ENV_FILE = ROOT / ".env"
 GEMINI_MODEL = "gemini-3.1-flash-lite"
 HOST = "127.0.0.1"

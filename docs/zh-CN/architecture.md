@@ -3,13 +3,13 @@
 [English](../en/architecture.md) · [Italiano](../it/architecture.md) · **简体中文**
 
 Partly 是一款本地优先、具有桌面应用风格的 Web 应用。界面由浏览器提供，
-本地 HTTP API 使用 Python 标准库，`data.json` 是可读的数据存储。项目无需
+本地 HTTP API 使用 Python 标准库，`data/data.json` 是可读的数据存储。项目无需
 构建步骤，也无需安装运行时软件包。
 
 ## 前端
 
-`index.html` 是页面骨架，加载 CSS 入口 `style.css` 和原生 JavaScript 模块
-入口 `app.js`。
+`index.html` 是页面骨架，加载 CSS 入口 `styles/style.css` 和原生 JavaScript 模块
+入口 `js/app.js`。
 
 | 模块 | 职责 |
 | --- | --- |
@@ -18,14 +18,14 @@ Partly 是一款本地优先、具有桌面应用风格的 Web 应用。界面�
 | `js/image-recognition.js` | 截图预览、Gemini 请求和本地 OCR 协调 |
 | `js/price-chart.js` | 价格图表渲染和价格历史编辑 |
 | `js/saved-collections.js` | 待考虑列表和回收站卡片渲染 |
-| `app.js` | 应用状态、页面渲染、表单提交和事件协调 |
+| `js/app.js` | 应用状态、页面渲染、表单提交和事件协调 |
 
-样式按职责放在 `styles/` 中。`style.css` 中的导入顺序是有意安排的：响应式
+样式按职责放在 `styles/` 中。`styles/style.css` 中的导入顺序是有意安排的：响应式
 规则和功能覆盖样式放在它们所调整的基础规则之后。
 
 ## 本地服务器
 
-`server.py` 是启动器调用的入口。`partly_server` 包包含 HTTP 请求处理器、
+`backend/server.py` 是启动器调用的入口。`backend/partly_server` 包包含 HTTP 请求处理器、
 路径和端口配置、日志设置，以及请求处理器共享的少量线程安全运行状态。它
 仅使用 Python 标准库。
 
@@ -41,7 +41,7 @@ Python 配置、API、`.env` 和 Windows 启动流程的详细说明见
 ## 修改边界
 
 - 修改持久化数据结构时，确保与 `migrate()` 兼容并记录变更。
-- 浏览器状态和 API 响应保持为普通 JSON，方便检查和备份 `data.json`。
+- 浏览器状态和 API 响应保持为普通 JSON，方便检查和备份 `data/data.json`。
 - 不配置 Gemini 时，应用仍应可用；默认使用本地 OCR。
 - 前端模块不引入运行时依赖，模块之间使用显式导入。
-- `server.py` 保持为 Windows 启动器使用的稳定入口。
+- `backend/server.py` 保持为 Windows 启动器使用的稳定入口。

@@ -97,6 +97,10 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             self._json_response(500, {"error": str(error)})
 
     def do_POST(self):
+        if self.path == "/api/search-offers":
+            from .offer_search import handle_offer_search
+            handle_offer_search(self)
+            return
         if self.path == "/api/close":
             request_close()
             self._json_response(200, {"requested": True})

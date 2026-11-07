@@ -1,28 +1,29 @@
-import { openActionDialog } from "./js/action-dialog.js";
+import { openActionDialog } from "./action-dialog.js";
 import {
   bindStoreUrl,
   componentNameKey,
   migrate,
   resolveStoreName,
   syncStoreName,
-} from "./js/domain.js";
+} from "./domain.js";
 import {
   initializeActivityLog,
   reportActivity,
   reportClientIssue,
-} from "./js/activity-log.js";
-import { createImageRecognition } from "./js/image-recognition.js";
-import { createPriceChart } from "./js/price-chart.js";
-import { renderSavedCollection } from "./js/saved-collections.js";
-import { buildSummary } from "./js/build-summary.js";
-import { appendHighlightedText } from "./js/summary-search.js";
-import { BUILD_CATEGORY_ORDER, groupBuildParts } from "./js/build-sections.js";
+} from "./activity-log.js";
+import { createImageRecognition } from "./image-recognition.js";
+import { createPriceChart } from "./price-chart.js";
+import { renderSavedCollection } from "./saved-collections.js";
+import { buildSummary } from "./build-summary.js";
+import { appendHighlightedText } from "./summary-search.js";
+import { BUILD_CATEGORY_ORDER, groupBuildParts } from "./build-sections.js";
+import { createOfferSearch, offerSearchEligibility, offerUrlKey } from "./offer-search.js";
 import {
   formatCurrency,
   formatDate,
   initializeI18n,
   t,
-} from "./js/i18n.js";
+} from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 initializeI18n();
@@ -333,6 +334,16 @@ function render() {
       : '<div class="part-visual image-missing"></div>';
     const offerCountLabel = t(p.offers.length === 1 ? "store offer" : "store offers");
     top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(t(p.category))} · ${p.offers.length} ${escapeHtml(offerCountLabel)}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">${escapeHtml(t("＋ Store"))}</button><button class="mini-button" title="${escapeAttr(t("Move to watchlist"))}" data-act="watchlist" data-id="${escapeAttr(p.id)}">☆ ${escapeHtml(t("Watchlist"))}</button><button class="icon-button" title="${escapeAttr(t("Edit"))}" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="${escapeAttr(t("Delete"))}" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
+    const searchReason = offerSearchEligibility(p);
+    const searchButton = document.createElement("button");
+    searchButton.type = "button";
+    searchButton.className = "mini-button experimental-offer-button";
+    searchButton.dataset.act = "search-offers";
+    searchButton.dataset.id = p.id;
+    searchButton.disabled = Boolean(searchReason);
+    searchButton.title = t(searchReason || "Search new offers in EUR on Amazon, AliExpress and eBay (experimental).");
+    searchButton.textContent = t("⌕ Find offers · beta");
+    top.querySelector(".component-actions").prepend(searchButton);
     row.append(top);
     const offerList = document.createElement("div");
     offerList.className = "offer-list";
@@ -533,6 +544,29 @@ $("offerForm").addEventListener("submit", async (e) => {
     notify("Store offer added");
   }
 });
+const offerSearch = createOfferSearch({
+  reportClientIssue,
+  async addVerifiedOffers(requested, offers) {
+    const part = components.find((item) => String(item.id) === String(requested.id));
+    if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
+    const existing = new Set(part.offers.map((offer) => offerUrlKey(offer.url)).filter(Boolean));
+    const fresh = offers.filter((offer) => {
+      const key = offerUrlKey(offer.url);
+      if (!key || existing.has(key)) return false;
+      existing.add(key);
+      return true;
+    });
+    if (!fresh.length) return 0;
+    const snapshot = JSON.stringify({ components, watchlist, trash });
+    part.offers.push(...fresh.map((offer) => ({
+      id: `web-${crypto.randomUUID()}`, store: offer.store, condition: "New", url: offer.url,
+      price: offer.price, history: [{ date: today(), price: offer.price }],
+      source: "experimental-web-search", checkedAt: new Date().toISOString(),
+    })));
+    return await saveCollectionMutation(snapshot) ? fresh.length : null;
+  },
+});
+
 $("componentList").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act]");
   if (!b) {
@@ -549,7 +583,11 @@ $("componentList").addEventListener("click", async (e) => {
     return;
   }
   const p = components.find((x) => String(x.id) === b.dataset.id);
+  if (!p || b.disabled) return;
   switch (b.dataset.act) {
+    case "search-offers":
+      offerSearch.open(p);
+      break;
     case "edit":
       openModal(p);
       break;

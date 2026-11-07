@@ -8,6 +8,7 @@ from partly_server.logging_config import logger
 
 
 def main():
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     if not DATA_FILE.exists():
         DATA_FILE.write_text("[]\n", encoding="utf-8")
 

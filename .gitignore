@@ -11,3 +11,17 @@ __pycache__/
 *.py[cod]
 .venv/
 node_modules/
+
+# Personal learning notes (local only)
+/docs/personale/configurazione-gemini.md
+/docs/personale/ricerca-intelligente.md
+
+# Local runtime data, logs, shortcuts and temporary files
+/data/data.json
+/logs/
+*.log.*
+*.tmp
+*.temp
+*.bak
+~$*
+*.lnk

@@ -3,9 +3,9 @@
 [English](../../README.md) · **Italiano** · [简体中文](../zh-CN/README.md)
 
 Partly è un’app locale per tenere traccia dei componenti PC e dei relativi
-prezzi. Salva i dati in `data.json`, leggibile e situato accanto all’app; non
+prezzi. Salva i dati in `data/data.json`, leggibile e situato accanto all’app; non
 usa il database né conserva i dati nel browser. Se trova dati lasciati da una
-versione precedente nel browser, li copia in `data.json` e li rimuove dal
+versione precedente nel browser, li copia in `data/data.json` e li rimuove dal
 browser solo dopo aver salvato il file.
 
 ## Avviare l’app
@@ -14,20 +14,20 @@ browser solo dopo aver salvato il file.
    app di Chrome o Edge. Il server locale viene avviato senza console e si
    arresta quando chiudi la finestra Partly.
 2. Puoi copiare `Partly.lnk` sul Desktop per avere un’icona.
-3. Puoi avviare server e app anche con `run_app.bat`.
+3. Puoi avviare server e app anche con `scripts/run_app.bat`.
 
 È necessario Python 3. Il server accetta connessioni solo da questo PC. Fai una
-copia di sicurezza di `data.json` per conservare componenti e cronologia prezzi.
+copia di sicurezza di `data/data.json` per conservare componenti e cronologia prezzi.
 
 ## Struttura del progetto
 
 Il frontend usa moduli JavaScript nativi, quindi non serve una build di Node.js.
-`app.js` coordina l’interfaccia; i moduli sotto `js/` gestiscono regole dei
+`js/app.js` coordina l’interfaccia; i moduli sotto `js/` gestiscono regole dei
 prodotti, riconoscimento immagini, prezzi, Activity log e rendering delle liste.
-`style.css` è il punto di ingresso degli stili raggruppati in `styles/`.
+`styles/style.css` è il punto di ingresso degli stili raggruppati in `styles/`.
 
-`server.py` è il punto di ingresso Python. Gli endpoint HTTP, la configurazione,
-il logging e lo stato condiviso risiedono nel pacchetto `partly_server/`. Vedi la
+`backend/server.py` è il punto di ingresso Python. Gli endpoint HTTP, la configurazione,
+il logging e lo stato condiviso risiedono nel pacchetto `backend/partly_server/`. Vedi la
 [guida all’architettura](architecture.md) ([English](../en/architecture.md),
 [简体中文](../zh-CN/architecture.md)) per i confini dei moduli e le API.
 
@@ -50,14 +50,14 @@ e aggiungi le righe. Puoi correggere i suggerimenti OCR prima di salvarli.
 
 Il riconoscimento usa Tesseract locale per impostazione predefinita. Per l’AI
 facoltativa, crea una chiave Gemini in [Google AI Studio](https://aistudio.google.com/app/apikey),
-salvala in `.env` accanto a `server.py` come `GEMINI_API_KEY=la_tua_chiave` e
+salvala in `.env` nella root del progetto come `GEMINI_API_KEY=la_tua_chiave` e
 riavvia Partly. Attiva **AI assist** prima di incollare lo screenshot. Con questa
 opzione l’immagine viene inviata a Google; lasciala disattivata per mantenere il
 riconoscimento sul PC. Il piano gratuito di Google ha limiti d’uso e potrebbe
 utilizzare i contenuti inviati per migliorare i suoi prodotti: consulta i
 termini aggiornati di Google prima di attivarlo.
 
-Se un salvataggio non riesce, controlla `partly.log` accanto a `data.json`. Il
+Se un salvataggio non riesce, controlla `logs/partly.log` in `logs/`. Il
 modulo **Save component** resta aperto quando il server rifiuta il salvataggio.
 Gli errori del browser e le operazioni di salvataggio compaiono anche
 nell’Activity log dell’app.

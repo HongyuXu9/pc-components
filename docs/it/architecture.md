@@ -4,13 +4,13 @@
 
 Partly è un’app web locale con interfaccia da applicazione desktop. Usa il
 browser per l’interfaccia, la libreria standard Python per l’API HTTP locale e
-`data.json` come archivio leggibile. Non richiede una procedura di build né
+`data/data.json` come archivio leggibile. Non richiede una procedura di build né
 l’installazione di pacchetti runtime.
 
 ## Frontend
 
 `index.html` contiene lo scheletro della pagina. Carica il manifest CSS
-`style.css` e il punto d’ingresso JavaScript a moduli nativi `app.js`.
+`styles/style.css` e il punto d’ingresso JavaScript a moduli nativi `js/app.js`.
 
 | Modulo | Responsabilità |
 | --- | --- |
@@ -19,15 +19,15 @@ l’installazione di pacchetti runtime.
 | `js/image-recognition.js` | Anteprima screenshot, richiesta Gemini e coordinamento OCR locale |
 | `js/price-chart.js` | Rendering del grafico e modifica della cronologia prezzi |
 | `js/saved-collections.js` | Rendering delle schede Da valutare e Cestino |
-| `app.js` | Stato applicazione, rendering pagina, invio moduli e coordinamento eventi |
+| `js/app.js` | Stato applicazione, rendering pagina, invio moduli e coordinamento eventi |
 
 I fogli di stile sono raggruppati per responsabilità in `styles/`. L’ordine degli
-import in `style.css` è intenzionale: le regole responsive e le personalizzazioni
+import in `styles/style.css` è intenzionale: le regole responsive e le personalizzazioni
 delle funzioni seguono le regole base che modificano.
 
 ## Server locale
 
-`server.py` è il punto d’ingresso del launcher. Il pacchetto `partly_server`
+`backend/server.py` è il punto d’ingresso del launcher. Il pacchetto `backend/partly_server`
 contiene l’handler HTTP, la configurazione dei percorsi e della porta, il setup
 del logging e il piccolo stato thread-safe condiviso dagli handler. Usa soltanto
 la libreria standard Python.
@@ -45,7 +45,7 @@ consulta la [guida a Python e al launcher](python-and-windows-launcher.md)
 ## Regole per le modifiche
 
 - Mantieni compatibili con `migrate()` le modifiche alla forma dei dati salvati e documentale.
-- Mantieni semplice JSON lo stato nel browser e le risposte API, così `data.json` resta ispezionabile e facile da copiare.
+- Mantieni semplice JSON lo stato nel browser e le risposte API, così `data/data.json` resta ispezionabile e facile da copiare.
 - Mantieni l’app utilizzabile senza Gemini; l’OCR locale resta il comportamento predefinito.
 - Mantieni i moduli frontend senza dipendenze e usa import espliciti tra loro.
-- Mantieni `server.py` come punto d’ingresso stabile usato dal launcher Windows.
+- Mantieni `backend/server.py` come punto d’ingresso stabile usato dal launcher Windows.

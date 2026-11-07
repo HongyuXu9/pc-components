@@ -7,6 +7,7 @@ from .config import LOG_FILE
 logger = logging.getLogger("partly")
 logger.setLevel(logging.INFO)
 _formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 _file_handler = RotatingFileHandler(
     LOG_FILE, maxBytes=1_000_000, backupCount=3, encoding="utf-8"
 )
