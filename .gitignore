@@ -13,8 +13,7 @@ __pycache__/
 node_modules/
 
 # Personal learning notes (local only)
-/docs/personale/configurazione-gemini.md
-/docs/personale/ricerca-intelligente.md
+/docs/personale/
 
 # Local runtime data, logs, shortcuts and temporary files
 /data/data.json
