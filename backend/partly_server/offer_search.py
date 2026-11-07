@@ -26,6 +26,12 @@ def eligibility(name, category):
         return "Include the RAM speed in the component name (for example 6000 MHz)."
     if category == "RAM" and not re.search(r"\bCL\s*\d+", name, re.I):
         return "Include the RAM latency in the component name (for example CL36)."
+    if category == "RAM" and not re.search(r"\b\d+\s*[x×]\s*\d+\s*GB\b", name, re.I):
+        return "Include the RAM kit configuration in the name (for example 2x16GB)."
+    if category != "RAM":
+        codes = re.findall(r"\b(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{3,}\b", name.lower())
+        if not any(not re.fullmatch(r"\d+(?:gb|tb|mhz|mm|w|g|t)", code) for code in codes):
+            return "Include the exact alphanumeric model or manufacturer part number in the name."
     return ""
 
 
@@ -110,10 +116,18 @@ def objects(value):
 
 def exact_identity(requested, actual):
     actual = str(actual).lower()
+    if re.search(r"\b(bundle|combo|lotto|replacement|compatible|refurbished|broken|guasto|difettoso|usato)\b|\b(?:for|per)\s+(?:amd|intel|ryzen|geforce)", actual):
+        return False
     words = re.findall(r"[a-z0-9]+", actual)
     brand = re.findall(r"[a-zA-Z]+", requested)
     identifiers = re.findall(r"[a-zA-Z]*\d+[a-zA-Z0-9]*", requested.lower())
     if not brand or not identifiers or brand[0].lower() not in words:
+        return False
+    # A matching number alone is not enough: retain the distinguishing family
+    # names too (Ryzen, Vengeance, Aorus, etc.). Prefer review over loose matches.
+    generic = {"processor", "processore", "motherboard", "memory", "storage", "monitor", "cooler", "cooling", "alimentatore", "scheda", "madre", "power", "supply", "case", "black", "white", "video", "card"}
+    families = [word for word in re.findall(r"[a-z]+", requested.lower()) if len(word) >= 4 and word not in generic]
+    if any(word not in words for word in families):
         return False
     numbers = re.findall(r"\d+", actual)
     units = {"gb", "tb", "g", "t", "mhz", "w", "mm"}
@@ -201,7 +215,7 @@ def search_offers(name, category):
     except urllib.error.HTTPError as error:
         details = error.read(1500).decode("utf-8", errors="replace").replace(key, "[redacted]")
         logger.warning("Offer search Gemini HTTP %s: %s", error.code, details)
-        hints = {400: "Check whether the configured model supports Google Search.", 403: "Check API key permissions.", 429: "Quota or rate limit reached.", 404: "Check the configured Gemini model."}
+        hints = {400: "Check whether the configured model supports Google Search.", 403: "Check API key permissions.", 429: "Google Search quota unavailable or exceeded. Check API quota and billing in Google AI Studio; screenshot OCR may still work.", 404: "Check the configured Gemini model."}
         raise ValueError(f"Gemini HTTP {error.code}. {hints.get(error.code, 'Try again later. Inside partly.log there are more details. ')}") from None
     candidates = data.get("candidates") or []
     if not candidates:
@@ -261,6 +275,8 @@ def handle_offer_search(handler):
             handler._json_response(413, {"error": "Offer search request must be under 10 KB"})
             return
         value = json.loads(handler.rfile.read(length))
+        if not isinstance(value, dict):
+            raise ValueError("Invalid component data")
         name, category = value.get("name"), value.get("category")
         if not isinstance(name, str) or len(name) > 250 or not isinstance(category, str):
             raise ValueError("Invalid component name or category")

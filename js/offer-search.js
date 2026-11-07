@@ -11,6 +11,11 @@ export function offerSearchEligibility(part) {
   if (["RAM", "Storage"].includes(part.category) && !/\d+\s*(GB|TB|G|T)\b/i.test(name)) return "Include the exact capacity in the component name (GB or TB).";
   if (part.category === "RAM" && !/\d{4,5}\s*(MHz|MT\/s)?\b/i.test(name)) return "Include the RAM speed in the component name (for example 6000 MHz).";
   if (part.category === "RAM" && !/\bCL\s*\d+/i.test(name)) return "Include the RAM latency in the component name (for example CL36).";
+  if (part.category === "RAM" && !/\b\d+\s*[x×]\s*\d+\s*GB\b/i.test(name)) return "Include the RAM kit configuration in the name (for example 2x16GB).";
+  if (part.category !== "RAM") {
+    const codes = name.toLowerCase().match(/\b(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{3,}\b/g) || [];
+    if (!codes.some((code) => !/^\d+(gb|tb|mhz|mm|w|g|t)$/.test(code))) return "Include the exact alphanumeric model or manufacturer part number in the name.";
+  }
   return "";
 }
 
@@ -128,7 +133,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     } catch (error) {
       if (currentGeneration !== generation) return;
       const message = activeController.signal.aborted ? t("Offer search timed out. Retry from the component button.")
-        : `${t("Offer search failed; existing offers were not changed.")} ${error.message || error}`;
+        : `${t("Offer search failed; existing offers were not changed.")} ${t(error.message || String(error))}`;
       status.textContent = message;
       reportClientIssue("warning", message, "Experimental offer search");
     } finally {

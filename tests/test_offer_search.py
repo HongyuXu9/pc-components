@@ -24,7 +24,9 @@ class OfferSearchTests(unittest.TestCase):
     def test_eligibility(self):
         self.assertTrue(search.eligibility("Corsair RAM", "RAM"))
         self.assertTrue(search.eligibility("Corsair Vengeance DDR5 32GB", "RAM"))
-        self.assertFalse(search.eligibility("Corsair Vengeance DDR5 32GB 6000MHz CL36", "RAM"))
+        self.assertTrue(search.eligibility("Corsair Vengeance DDR5 32GB 6000MHz CL36", "RAM"))
+        self.assertFalse(search.eligibility("Corsair Vengeance DDR5 2x16GB 6000MHz CL36", "RAM"))
+        self.assertTrue(search.eligibility("Samsung monitor 27", "Monitor"))
         self.assertFalse(search.eligibility(NAME, "CPU"))
 
     def test_urls_and_redirect_boundaries(self):
@@ -38,6 +40,7 @@ class OfferSearchTests(unittest.TestCase):
         self.assertTrue(search.exact_identity(NAME, "AMD Ryzen 7 9700X Processor"))
         self.assertFalse(search.exact_identity(NAME, "AMD Ryzen 7 9700X3D CPU"))
         self.assertFalse(search.exact_identity(NAME, "AMD Ryzen 7 9800X CPU"))
+        self.assertFalse(search.exact_identity(NAME, "AMD Ryzen 7 9700X CPU bundle"))
         self.assertTrue(search.exact_identity("Corsair DDR5 32GB 6000MHz CL36", "Corsair DDR5 32 GB 6000 MHz CL 36"))
 
     def test_price_requires_new_stock_euro_and_same_product(self):
