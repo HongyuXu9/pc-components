@@ -206,8 +206,11 @@
               <span>Review the detected products before adding them. Local OCR stays on this PC.</span>
             </div>
             <label class="ai-recognition-toggle">
-              <input type="checkbox" id="useAiRecognition" />
-              <span><strong>AI assist</strong><small>Sends image to Google if configured</small></span>
+              <select id="ocrProvider" aria-label="Recognition method">
+                <option value="local">Local</option>
+                <option value="gemini" selected>Gemini</option>
+              </select>
+              <span><strong>Recognition method</strong><small>Sends image to Google if configured</small></span>
             </label>
             <label class="upload-button"
               >Choose image

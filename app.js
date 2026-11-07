@@ -771,7 +771,7 @@ function renderBatchReview(items, detectedStore = "", method = "Local OCR") {
 }
 
 const imageRecognition = createImageRecognition({
-  isAiEnabled: () => $("useAiRecognition").checked,
+  isAiEnabled: () => $("ocrProvider").value === "gemini",
   onResults: renderBatchReview,
   reportClientIssue,
 });
