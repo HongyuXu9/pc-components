@@ -44,17 +44,20 @@ export function createImageRecognition({
     let localMethod = "Local OCR";
     try {
       if (isAiEnabled()) {
+        const startedAt = performance.now();
+        reportClientIssue("info", `Gemini recognition started: ${file.type}, ${(file.size / 1024).toFixed(0)} KB`, "Screenshot recognition");
         $("ocrStatus").textContent = t("Sending screenshot to Gemini for product recognition…");
         try {
           const aiResult = await extractScreenshotWithGemini(file);
           if (aiResult.items.length) {
+            reportClientIssue("info", `Gemini recognition completed: ${aiResult.items.length} products in ${((performance.now() - startedAt) / 1000).toFixed(1)} s`, "Screenshot recognition");
             onResults(aiResult.items, aiResult.store, t("Gemini AI"));
             return;
           }
           throw new Error("Gemini did not find any products");
         } catch (error) {
           localMethod = t("Local OCR · Gemini unavailable; check its API key or connection");
-          reportClientIssue("warning", error?.message || error, "Gemini image extraction; using local OCR");
+          reportClientIssue("warning", `Gemini failed after ${((performance.now() - startedAt) / 1000).toFixed(1)} s: ${error?.message || error}. Starting local OCR fallback.`, "Screenshot recognition");
         }
       }
       if (!window.Tesseract) {

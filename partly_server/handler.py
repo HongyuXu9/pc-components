@@ -3,6 +3,7 @@ from http.server import SimpleHTTPRequestHandler
 import base64
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import unquote, urlsplit
@@ -127,9 +128,12 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             self._json_response(400, {"error": str(error)})
 
     def _extract_image_with_gemini(self):
+        started_at = time.monotonic()
+        api_key = ""
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length <= 0 or length > 12_000_000:
+                logger.warning("Gemini request rejected: request body size %s bytes (limit 12 MB)", length)
                 self._json_response(413, {"error": "Image request must be under 12 MB"})
                 return
             request_data = json.loads(self.rfile.read(length))
@@ -158,7 +162,7 @@ class PartlyHandler(SimpleHTTPRequestHandler):
                 self._json_response(503, {"error": "Gemini is not configured. Add GEMINI_API_KEY to .env."})
                 return
 
-            logger.info("Gemini image extraction requested (%s, %s bytes)", mime_type, len(image_bytes))
+            logger.info("Gemini request started: model=%s, image_type=%s, image_bytes=%s, timeout=45s", GEMINI_MODEL, mime_type, len(image_bytes))
             categories = ["CPU", "GPU", "RAM", "Motherboard", "Storage", "Power supply", "Case", "Cooling", "Monitor", "Accessories", "Other"]
             schema = {
                 "type": "OBJECT",
@@ -196,14 +200,31 @@ class PartlyHandler(SimpleHTTPRequestHandler):
             )
             with urllib.request.urlopen(api_request, timeout=45) as response:
                 api_result = json.loads(response.read().decode("utf-8"))
-            result_text = api_result["candidates"][0]["content"]["parts"][0]["text"]
+            candidates = api_result.get("candidates") or []
+            if not candidates:
+                reason = api_result.get("promptFeedback", {}).get("blockReason", "no candidates returned")
+                raise ValueError(f"Gemini returned no result: {reason}")
+            candidate = candidates[0]
+            result_text = "".join(part.get("text", "") for part in candidate.get("content", {}).get("parts", []))
+            if not result_text:
+                raise ValueError(f"Gemini returned no text (finish reason: {candidate.get('finishReason', 'unknown')})")
             result = json.loads(result_text)
-            logger.info("Gemini image extraction completed: %s products returned", len(result.get("items", [])))
+            logger.info("Gemini request completed: model=%s, elapsed=%.2fs, products=%s, finish_reason=%s, token_usage=%s", GEMINI_MODEL, time.monotonic() - started_at, len(result.get("items", [])), candidate.get("finishReason", "unknown"), api_result.get("usageMetadata", {}))
             self._json_response(200, result)
         except urllib.error.HTTPError as error:
             details = error.read().decode("utf-8", errors="replace")[:1000]
-            logger.error("Gemini extraction failed with HTTP %s: %s", error.code, details)
-            self._json_response(502, {"error": f"Gemini API returned HTTP {error.code}"})
+            if api_key:
+                details = details.replace(api_key, "[redacted]")
+            hints = {400: "Check the model and image request", 401: "Check GEMINI_API_KEY", 403: "Check API key permissions and Gemini API access", 404: "Check the configured Gemini model", 429: "Quota or rate limit reached; check API usage", 503: "Gemini is temporarily unavailable"}
+            hint = hints.get(error.code, "Check Gemini service availability and connection")
+            logger.error("Gemini request failed: model=%s, elapsed=%.2fs, HTTP=%s, hint=%s, details=%s; client will use local OCR", GEMINI_MODEL, time.monotonic() - started_at, error.code, hint, details)
+            self._json_response(502, {"error": f"Gemini API returned HTTP {error.code}: {hint}"})
+        except (urllib.error.URLError, TimeoutError) as error:
+            reason = str(getattr(error, "reason", error))
+            if api_key:
+                reason = reason.replace(api_key, "[redacted]")
+            logger.error("Gemini connection failed: model=%s, elapsed=%.2fs, reason=%s; client will use local OCR", GEMINI_MODEL, time.monotonic() - started_at, reason)
+            self._json_response(502, {"error": f"Gemini connection failed: {reason}"})
         except Exception as error:
             logger.exception("Gemini image extraction failed")
             self._json_response(500, {"error": str(error)})
