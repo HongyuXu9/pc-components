@@ -40,6 +40,7 @@ export function createImageRecognition({
   async function recognizeScreenshot(file) {
     if (!file) return;
     showScreenshotPreview(file);
+    const recognitionId = activeRecognitionId;
     $("ocrStatus").textContent = t("Reading screenshot and looking for products…");
     let localMethod = "Local OCR";
     try {
@@ -49,6 +50,7 @@ export function createImageRecognition({
         $("ocrStatus").textContent = t("Sending screenshot to Gemini for product recognition…");
         try {
           const aiResult = await extractScreenshotWithGemini(file);
+          if (recognitionId !== activeRecognitionId) return;
           if (aiResult.items.length) {
             reportClientIssue("info", `Gemini recognition completed: ${aiResult.items.length} products in ${((performance.now() - startedAt) / 1000).toFixed(1)} s`, "Screenshot recognition");
             onResults(aiResult.items, aiResult.store, t("Gemini AI"));
@@ -56,6 +58,7 @@ export function createImageRecognition({
           }
           throw new Error("Gemini did not find any products");
         } catch (error) {
+          if (recognitionId !== activeRecognitionId) return;
           localMethod = t("Local OCR · Gemini unavailable; check its API key or connection");
           reportClientIssue("warning", `Gemini failed after ${((performance.now() - startedAt) / 1000).toFixed(1)} s: ${error?.message || error}. Starting local OCR fallback.`, "Screenshot recognition");
         }
@@ -70,7 +73,9 @@ export function createImageRecognition({
           document.head.append(script);
         });
       }
+      if (recognitionId !== activeRecognitionId) return;
       const result = await window.Tesseract.recognize(file, "eng");
+      if (recognitionId !== activeRecognitionId) return;
       const lines =
         result.data.lines ||
         (result.data.text || "").split(/\n/).map((text) => ({ text }));
@@ -95,13 +100,16 @@ export function createImageRecognition({
         ) || "";
       onResults(items, detectedStore, localMethod);
     } catch (error) {
+      if (recognitionId !== activeRecognitionId) return;
       $("ocrStatus").textContent = t("Screenshot reading failed. Check your connection, or enter the products manually.");
       reportClientIssue("error", error?.stack || error, "Local screenshot OCR");
     }
   }
 
   let screenshotPreviewUrl = "";
+  let activeRecognitionId = 0;
   function clearScreenshotPreview() {
+    activeRecognitionId++;
     if (screenshotPreviewUrl) URL.revokeObjectURL(screenshotPreviewUrl);
     screenshotPreviewUrl = "";
     $("screenshotPreview").hidden = true;

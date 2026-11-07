@@ -205,12 +205,14 @@
               <strong>Paste a screenshot with Ctrl+V</strong>
               <span>Review the detected products before adding them. Local OCR stays on this PC.</span>
             </div>
-            <label class="ai-recognition-toggle">
+            <label class="ocr-provider-field">
+              <span><strong>Recognition method</strong><small>Sends image to Google if configured</small></span>
+              <span class="ocr-provider-control">
               <select id="ocrProvider" aria-label="Recognition method">
                 <option value="local">Local</option>
                 <option value="gemini" selected>Gemini</option>
               </select>
-              <span><strong>Recognition method</strong><small>Sends image to Google if configured</small></span>
+              </span>
             </label>
             <label class="upload-button"
               >Choose image
@@ -220,6 +222,7 @@
           <div id="screenshotPreview" class="screenshot-preview" hidden>
             <img id="screenshotPreviewImage" alt="Screenshot selected for product recognition" />
             <div><strong>Image to recognize</strong><span id="screenshotPreviewName"></span></div>
+            <button type="button" class="remove-screenshot" id="removeScreenshot" aria-label="Remove image" title="Remove image">×</button>
           </div>
           <div id="ocrStatus" class="ocr-status"></div>
           <section id="bulkReview" class="bulk-review" hidden>

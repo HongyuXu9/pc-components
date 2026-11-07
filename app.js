@@ -776,6 +776,13 @@ const imageRecognition = createImageRecognition({
   reportClientIssue,
 });
 
+$("removeScreenshot").addEventListener("click", () => {
+  imageRecognition.clearScreenshotPreview();
+  $("screenshotInput").value = "";
+  $("ocrStatus").textContent = "";
+  setComponentEntryMode("single");
+});
+
 $("screenshotInput").addEventListener("change", async (event) => {
   await imageRecognition.recognizeScreenshot(event.target.files[0]);
   event.target.value = "";
