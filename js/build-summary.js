@@ -15,29 +15,34 @@ export function buildSummary(components, getOffer, collection = "build", query =
     const priced = Number.isFinite(price);
     if (priced) total += price;
     else missingPrices++;
-    return { ...match, text: `${name} — ${priced ? formatCurrency(price) : t("Price unavailable")}` };
+    const priceText = priced ? formatCurrency(price) : t("Price unavailable");
+    return { ...match, priceText, text: `${name} — ${priceText}` };
   });
   const emptyMessage = keywords.length && components.length
     ? isWatchlist ? "No watchlist components match your search." : "No build components match your search."
     : isWatchlist ? "Your watchlist is empty." : "Your build is empty.";
   const displayLines = [
-    { text: t(isWatchlist ? "Watchlist summary" : "Build summary") },
-    { text: "" },
+    { text: t(isWatchlist ? "Watchlist summary" : "Build summary"), kind: "header" },
+    { text: "", kind: "spacer" },
   ];
   if (!lines.length) displayLines.push({ text: t(emptyMessage) });
   if (isWatchlist) {
-    displayLines.push(...lines, { text: "" });
+    displayLines.push(...lines);
   } else {
     const byPart = new Map(lines.map((line) => [line.part, line]));
     for (const group of groupBuildParts(lines.map((line) => line.part))) {
-      displayLines.push(
-        { text: `${t(group.category)}:`, kind: "category" },
-        ...group.parts.map((part) => byPart.get(part)),
-        { text: "" },
-      );
+      const category = t(group.category);
+      if (!group.parts.length) {
+        displayLines.push({ text: `${category}: —`, category, name: "—", kind: "empty-category" });
+      } else {
+        displayLines.push(...group.parts.map((part) => {
+          const line = byPart.get(part);
+          return { ...line, category, text: `${category}: ${line.text}` };
+        }));
+      }
     }
   }
-  displayLines.push({ text: `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}` });
+  displayLines.push({ text: "", kind: "spacer" }, { text: `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}`, kind: "total" });
   if (missingPrices) displayLines.push({ text: t("Components without a price are excluded from the total.") });
   const text = displayLines.map((line) => line.text).join("\n");
   return { text, total, count: matching.length, lines, displayLines };

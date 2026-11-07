@@ -170,15 +170,31 @@ function renderSummary() {
   const preview = $("buildSummaryText");
   preview.replaceChildren();
   summary.displayLines.forEach((match) => {
+    if (["header", "spacer", "total"].includes(match.kind)) return;
     const line = document.createElement("div");
     line.className = "summary-text-line";
-    if (match.kind === "category") line.classList.add("summary-category-line");
-    appendHighlightedText(line, match.text, match.ranges);
+    let content = line;
+    if (match.category) {
+      line.classList.add("summary-component-row");
+      line.classList.toggle("summary-empty-row", match.kind === "empty-category");
+      const category = document.createElement("span");
+      category.className = "summary-row-category";
+      category.textContent = match.category;
+      content = document.createElement("div");
+      content.className = "summary-row-name";
+      appendHighlightedText(content, match.name, match.ranges);
+      const price = document.createElement("span");
+      price.className = "summary-row-price";
+      price.textContent = match.priceText || "";
+      line.append(category, content, price);
+    } else {
+      appendHighlightedText(line, match.text, match.ranges);
+    }
     if (match?.context) {
       const context = document.createElement("small");
       context.className = "summary-match-context";
       appendHighlightedText(context, match.context, match.contextRanges);
-      line.append(context);
+      content.append(context);
     }
     preview.append(line);
   });
