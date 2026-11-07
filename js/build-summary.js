@@ -1,5 +1,6 @@
 import { formatCurrency, t } from "./i18n.js";
 import { searchSummaryParts } from "./summary-search.js";
+import { groupBuildParts } from "./build-sections.js";
 
 export function buildSummary(components, getOffer, collection = "build", query = "") {
   const isWatchlist = collection === "watchlist";
@@ -19,13 +20,25 @@ export function buildSummary(components, getOffer, collection = "build", query =
   const emptyMessage = keywords.length && components.length
     ? isWatchlist ? "No watchlist components match your search." : "No build components match your search."
     : isWatchlist ? "Your watchlist is empty." : "Your build is empty.";
-  const text = [
-    t(isWatchlist ? "Watchlist summary" : "Build summary"),
-    "",
-    ...(lines.length ? lines.map((line) => line.text) : [t(emptyMessage)]),
-    "",
-    `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}`,
-    ...(missingPrices ? [t("Components without a price are excluded from the total.")] : []),
-  ].join("\n");
-  return { text, total, count: matching.length, lines };
+  const displayLines = [
+    { text: t(isWatchlist ? "Watchlist summary" : "Build summary") },
+    { text: "" },
+  ];
+  if (!lines.length) displayLines.push({ text: t(emptyMessage) });
+  if (isWatchlist) {
+    displayLines.push(...lines, { text: "" });
+  } else {
+    const byPart = new Map(lines.map((line) => [line.part, line]));
+    for (const group of groupBuildParts(lines.map((line) => line.part))) {
+      displayLines.push(
+        { text: `${t(group.category)}:`, kind: "category" },
+        ...group.parts.map((part) => byPart.get(part)),
+        { text: "" },
+      );
+    }
+  }
+  displayLines.push({ text: `${t(keywords.length ? "Filtered total" : "Total")}: ${formatCurrency(total)}` });
+  if (missingPrices) displayLines.push({ text: t("Components without a price are excluded from the total.") });
+  const text = displayLines.map((line) => line.text).join("\n");
+  return { text, total, count: matching.length, lines, displayLines };
 }

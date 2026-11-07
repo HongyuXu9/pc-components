@@ -16,6 +16,7 @@
 .summary-copy-area { position: relative; margin: 0 20px; }
 .build-summary-text { display: block; box-sizing: border-box; width: 100%; min-height: 180px; max-height: 420px; overflow: auto; margin: 0; padding: 16px 76px 16px 16px; resize: vertical; border: 1px solid #dce6d6; border-radius: 10px; background: #f7faf4; color: #3c4f3d; font: 12px/1.9 var(--font); overflow-wrap: anywhere; user-select: text; }
 .summary-text-line { min-height: 1.9em; white-space: pre-wrap; }
+.summary-category-line { color: #405d2d; font-weight: 700; border-bottom: 1px solid #e3ebda; margin-bottom: 4px; }
 .build-summary-text mark { padding: 1px 0; border-radius: 3px; background: #d9ed9f; color: #2b471e; box-shadow: 0 0 0 1px #c6df89; font-weight: 700; }
 .summary-match-context { display: block; margin-bottom: 5px; color: #839178; font-size: 10px; line-height: 1.6; }
 .summary-copy-button { position: absolute; top: 9px; right: 34px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid #dce6d6; border-radius: 7px; background: #fff; color: #718368; cursor: pointer; transition: color .15s, background .15s; }

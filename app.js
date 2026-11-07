@@ -169,11 +169,11 @@ function renderSummary() {
   summaryPlainText = summary.text;
   const preview = $("buildSummaryText");
   preview.replaceChildren();
-  summary.text.split("\n").forEach((text, index) => {
+  summary.displayLines.forEach((match) => {
     const line = document.createElement("div");
     line.className = "summary-text-line";
-    const match = index >= 2 ? summary.lines[index - 2] : null;
-    appendHighlightedText(line, text, match?.ranges);
+    if (match.kind === "category") line.classList.add("summary-category-line");
+    appendHighlightedText(line, match.text, match.ranges);
     if (match?.context) {
       const context = document.createElement("small");
       context.className = "summary-match-context";
