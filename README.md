@@ -25,7 +25,7 @@ Documentation is grouped under `docs/en/`, `docs/it/`, and `docs/zh-CN/`;
 this is the only README kept at the project root. Application entry points
 and Windows launcher paths remain at the root.
 
-The frontend uses native JavaScript modules, so no Node.js build step is needed. `js/app.js` coordinates the interface; focused modules under `js/` handle product rules, image recognition, price history, activity logging, and saved-list rendering. `styles/style.css` is the stylesheet entry point and imports the grouped files in `styles/`.
+The frontend uses native JavaScript modules, so no Node.js build step is needed. `frontend/js/app.js` coordinates the interface; focused modules under `frontend/js/` handle product rules, image recognition, price history, activity logging, and saved-list rendering. `frontend/styles/style.css` is the stylesheet entry point and imports the grouped files in `frontend/styles/`.
 
 The Python entry point remains `backend/server.py`. Its HTTP routes, configuration, logging, and shared runtime state live in the `backend/partly_server/` package. See [docs/architecture.md](docs/en/architecture.md) for module boundaries and API responsibilities ([Italiano](docs/it/architecture.md), [简体中文](docs/zh-CN/architecture.md)).
 
@@ -41,4 +41,4 @@ Screenshot recognition runs locally with Tesseract by default. For optional AI i
 
 If saving fails, check logs/partly.log in logs/. The Save component dialog stays open when the server rejects a save. Browser errors and save activity also appear in the in-app Activity log.
 
-Shared images live in `assets/images/`; see [asset conventions](docs/en/assets.md).
+Shared images live in `frontend/assets/images/`; see [asset conventions](docs/en/assets.md).

@@ -15,13 +15,18 @@ is the English entry point for the application.
 | Location | Purpose |
 | --- | --- |
 | `docs/en/`, `docs/it/`, `docs/zh-CN/` | Documentation grouped by language |
-| `js/` | Frontend JavaScript modules |
-| `styles/` | Stylesheets grouped by responsibility |
+| `frontend/js/` | Frontend JavaScript modules |
+| `frontend/styles/` | Stylesheets grouped by responsibility |
 | `backend/partly_server/` | Python server package |
-| `assets/images/` | Shared image assets |
-| Project root | Main README, frontend entry points, Python entry point, Windows launchers and app icon |
+| `frontend/assets/images/` | Shared image assets |
+| `frontend/index.html` | Frontend document served at `/` |
+| `backend/server.py` | Python entry point |
+| `scripts/` | Windows launchers |
+| `data/`, `logs/`, `tests/` | Saved data, runtime logs and tests |
+| Project root | Main README and configuration files |
 
-The root paths used by the app and Windows shortcuts are kept stable. Local
+Filesystem paths are absolute and derived from the Python package or launcher location.
+Only `frontend/` is served as static files; browser URLs remain `/js/`, `/styles/` and `/assets/`. Local
 configuration (`.env`), saved data (`data/data.json`), logs and Python caches are
 runtime files; they remain excluded from Git.
 
@@ -30,4 +35,4 @@ runtime files; they remain excluded from Git.
 - Put guides under their language directory, using the same filename across languages.
 - Add new guides to this index and link their translations when available.
 - Use relative links so navigation works in a checkout and on GitHub.
-- Keep images in `assets/images/` and documentation in `docs/`.
+- Keep images in `frontend/assets/images/` and documentation in `docs/`.

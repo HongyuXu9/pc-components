@@ -9,20 +9,20 @@ l’installazione di pacchetti runtime.
 
 ## Frontend
 
-`index.html` contiene lo scheletro della pagina. Carica il manifest CSS
-`styles/style.css` e il punto d’ingresso JavaScript a moduli nativi `js/app.js`.
+`frontend/index.html` contiene lo scheletro della pagina. Carica il manifest CSS
+`frontend/styles/style.css` e il punto d’ingresso JavaScript a moduli nativi `frontend/js/app.js`.
 
 | Modulo | Responsabilità |
 | --- | --- |
-| `js/domain.js` | Normalizzazione dei prodotti, rilevamento negozi, migrazione e analisi del testo OCR |
-| `js/activity-log.js` | Segnalazione attività del browser, finestra log e segnali del ciclo di vita |
-| `js/image-recognition.js` | Anteprima screenshot, richiesta Gemini e coordinamento OCR locale |
-| `js/price-chart.js` | Rendering del grafico e modifica della cronologia prezzi |
-| `js/saved-collections.js` | Rendering delle schede Da valutare e Cestino |
-| `js/app.js` | Stato applicazione, rendering pagina, invio moduli e coordinamento eventi |
+| `frontend/js/domain.js` | Normalizzazione dei prodotti, rilevamento negozi, migrazione e analisi del testo OCR |
+| `frontend/js/activity-log.js` | Segnalazione attività del browser, finestra log e segnali del ciclo di vita |
+| `frontend/js/image-recognition.js` | Anteprima screenshot, richiesta Gemini e coordinamento OCR locale |
+| `frontend/js/price-chart.js` | Rendering del grafico e modifica della cronologia prezzi |
+| `frontend/js/saved-collections.js` | Rendering delle schede Da valutare e Cestino |
+| `frontend/js/app.js` | Stato applicazione, rendering pagina, invio moduli e coordinamento eventi |
 
-I fogli di stile sono raggruppati per responsabilità in `styles/`. L’ordine degli
-import in `styles/style.css` è intenzionale: le regole responsive e le personalizzazioni
+I fogli di stile sono raggruppati per responsabilità in `frontend/styles/`. L’ordine degli
+import in `frontend/styles/style.css` è intenzionale: le regole responsive e le personalizzazioni
 delle funzioni seguono le regole base che modificano.
 
 ## Server locale

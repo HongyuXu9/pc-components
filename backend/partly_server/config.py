@@ -2,6 +2,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+FRONTEND_ROOT = ROOT / "frontend"
 DATA_FILE = ROOT / "data" / "data.json"
 LOG_FILE = ROOT / "logs" / "partly.log"
 ENV_FILE = ROOT / ".env"

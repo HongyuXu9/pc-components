@@ -22,9 +22,9 @@ copia di sicurezza di `data/data.json` per conservare componenti e cronologia pr
 ## Struttura del progetto
 
 Il frontend usa moduli JavaScript nativi, quindi non serve una build di Node.js.
-`js/app.js` coordina l’interfaccia; i moduli sotto `js/` gestiscono regole dei
+`frontend/js/app.js` coordina l’interfaccia; i moduli sotto `frontend/js/` gestiscono regole dei
 prodotti, riconoscimento immagini, prezzi, Activity log e rendering delle liste.
-`styles/style.css` è il punto di ingresso degli stili raggruppati in `styles/`.
+`frontend/styles/style.css` è il punto di ingresso degli stili raggruppati in `frontend/styles/`.
 
 `backend/server.py` è il punto di ingresso Python. Gli endpoint HTTP, la configurazione,
 il logging e lo stato condiviso risiedono nel pacchetto `backend/partly_server/`. Vedi la
@@ -62,4 +62,4 @@ modulo **Save component** resta aperto quando il server rifiuta il salvataggio.
 Gli errori del browser e le operazioni di salvataggio compaiono anche
 nell’Activity log dell’app.
 
-Le immagini condivise si trovano in `assets/images/`; vedi le [convenzioni per gli asset](../en/assets.md).
+Le immagini condivise si trovano in `frontend/assets/images/`; vedi le [convenzioni per gli asset](../en/assets.md).

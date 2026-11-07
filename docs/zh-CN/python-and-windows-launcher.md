@@ -42,6 +42,7 @@ scripts/run_app.bat ┘
 
 | 常量 | 用途 |
 | --- | --- |
+| `FRONTEND_ROOT` | `ROOT / "frontend"` |
 | `ROOT` | 项目根目录，根据 Python 包的位置计算 |
 | `DATA_FILE` | `data/data.json` 路径，用于保存 Build、Da valutare 和 Cestino |
 | `LOG_FILE` | `logs/partly.log` 路径 |
@@ -121,3 +122,5 @@ py -3 backend/server.py
 
 启动前，启动器会检查端口 `8766`。如果发现有进程正在监听该端口，它会终止该
 进程并启动新实例。启动 Partly 时，请避免让其他服务占用这个端口。
+
+静态文件从 `FRONTEND_ROOT`（`frontend/`）提供，不依赖工作目录。浏览器 URL 仍为 `/js/`、`/styles/` 和 `/assets/`。

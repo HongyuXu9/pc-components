@@ -20,9 +20,9 @@ Partly 是一款本地 PC 配件和价格追踪应用。数据以可读的 `data
 
 ## 项目结构
 
-前端使用原生 JavaScript 模块，因此不需要 Node.js 构建步骤。`js/app.js` 负责
-协调界面；`js/` 下的模块分别处理产品规则、图片识别、价格历史、活动日志和
-已保存列表的渲染。`styles/style.css` 是入口样式表，并导入按功能整理的 `styles/`
+前端使用原生 JavaScript 模块，因此不需要 Node.js 构建步骤。`frontend/js/app.js` 负责
+协调界面；`frontend/js/` 下的模块分别处理产品规则、图片识别、价格历史、活动日志和
+已保存列表的渲染。`frontend/styles/style.css` 是入口样式表，并导入按功能整理的 `frontend/styles/`
 文件。
 
 `backend/server.py` 是 Python 服务入口。HTTP 路由、配置、日志和共享运行状态位于
@@ -54,4 +54,4 @@ Partly。在粘贴截图前启用 **AI assist**。启用后，截图会发送给
 **Save component** 对话框会保持打开。浏览器错误和保存活动也会显示在应用的
 Activity log 中。
 
-共享图片位于 `assets/images/`；请参阅[资源约定](../en/assets.md)。
+共享图片位于 `frontend/assets/images/`；请参阅[资源约定](../en/assets.md)。

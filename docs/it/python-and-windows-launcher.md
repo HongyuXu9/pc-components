@@ -46,6 +46,7 @@ La configurazione è in `backend/partly_server/config.py`:
 
 | Costante | Cosa controlla |
 | --- | --- |
+| `FRONTEND_ROOT` | `ROOT / "frontend"` |
 | `ROOT` | Cartella principale del progetto, calcolata dalla posizione del pacchetto Python |
 | `DATA_FILE` | Percorso di `data/data.json`, dove sono salvate Build, Da valutare e Cestino |
 | `LOG_FILE` | Percorso di `logs/partly.log` |
@@ -137,3 +138,5 @@ gestire apertura, log e chiusura insieme.
 Il launcher controlla la porta `8766` prima di partire. Se trova un processo in
 ascolto su quella porta, lo termina e avvia una nuova istanza; perciò evita di
 usare quella porta per un altro servizio mentre avvii Partly.
+
+I file statici sono serviti da `FRONTEND_ROOT` (`frontend/`), indipendentemente dalla directory di lavoro. Gli URL del browser restano `/js/`, `/styles/` e `/assets/`.

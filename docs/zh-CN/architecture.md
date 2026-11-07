@@ -8,19 +8,19 @@ Partly 是一款本地优先、具有桌面应用风格的 Web 应用。界面�
 
 ## 前端
 
-`index.html` 是页面骨架，加载 CSS 入口 `styles/style.css` 和原生 JavaScript 模块
-入口 `js/app.js`。
+`frontend/index.html` 是页面骨架，加载 CSS 入口 `frontend/styles/style.css` 和原生 JavaScript 模块
+入口 `frontend/js/app.js`。
 
 | 模块 | 职责 |
 | --- | --- |
-| `js/domain.js` | 产品规范化、商店识别、数据迁移和 OCR 文本解析 |
-| `js/activity-log.js` | 浏览器活动上报、日志窗口行为和生命周期信号 |
-| `js/image-recognition.js` | 截图预览、Gemini 请求和本地 OCR 协调 |
-| `js/price-chart.js` | 价格图表渲染和价格历史编辑 |
-| `js/saved-collections.js` | 待考虑列表和回收站卡片渲染 |
-| `js/app.js` | 应用状态、页面渲染、表单提交和事件协调 |
+| `frontend/js/domain.js` | 产品规范化、商店识别、数据迁移和 OCR 文本解析 |
+| `frontend/js/activity-log.js` | 浏览器活动上报、日志窗口行为和生命周期信号 |
+| `frontend/js/image-recognition.js` | 截图预览、Gemini 请求和本地 OCR 协调 |
+| `frontend/js/price-chart.js` | 价格图表渲染和价格历史编辑 |
+| `frontend/js/saved-collections.js` | 待考虑列表和回收站卡片渲染 |
+| `frontend/js/app.js` | 应用状态、页面渲染、表单提交和事件协调 |
 
-样式按职责放在 `styles/` 中。`styles/style.css` 中的导入顺序是有意安排的：响应式
+样式按职责放在 `frontend/styles/` 中。`frontend/styles/style.css` 中的导入顺序是有意安排的：响应式
 规则和功能覆盖样式放在它们所调整的基础规则之后。
 
 ## 本地服务器

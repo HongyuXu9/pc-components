@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import unquote, urlsplit
 
-from .config import APP_VERSION, DATA_FILE, ENV_FILE, GEMINI_MODEL, HOST, PORT, ROOT
+from .config import APP_VERSION, DATA_FILE, ENV_FILE, GEMINI_MODEL, HOST, PORT, FRONTEND_ROOT
 from .logging_config import logger
 from .runtime_state import (
     data_lock,
@@ -21,7 +21,7 @@ from .runtime_state import (
 
 class PartlyHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT), **kwargs)
+        super().__init__(*args, directory=str(FRONTEND_ROOT), **kwargs)
 
     def do_GET(self):
         path_parts = [part for part in unquote(urlsplit(self.path).path).split("/") if part]

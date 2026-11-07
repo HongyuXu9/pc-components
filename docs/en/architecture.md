@@ -9,21 +9,21 @@ installation requirement.
 
 ## Frontend
 
-`index.html` is the document shell. It loads the CSS manifest in `styles/style.css`
-and the native ES module entry point in `js/app.js`.
+`frontend/index.html` is the document shell. It loads the CSS manifest in `frontend/styles/style.css`
+and the native ES module entry point in `frontend/js/app.js`.
 
 | Module | Responsibility |
 | --- | --- |
-| `js/domain.js` | Product normalization, store detection, migration, and OCR text parsing |
-| `js/activity-log.js` | Browser activity reporting, log window behavior, and lifecycle signals |
-| `js/image-recognition.js` | Screenshot preview, Gemini request, and local OCR orchestration |
-| `js/price-chart.js` | Price chart rendering and price-history editing |
-| `js/action-dialog.js` | Shared confirmation and field-editing dialog, cancellation, and event cleanup |
-| `js/saved-collections.js` | Watchlist and trash card rendering |
-| `js/app.js` | Application state, page rendering, form submission, and event coordination |
+| `frontend/js/domain.js` | Product normalization, store detection, migration, and OCR text parsing |
+| `frontend/js/activity-log.js` | Browser activity reporting, log window behavior, and lifecycle signals |
+| `frontend/js/image-recognition.js` | Screenshot preview, Gemini request, and local OCR orchestration |
+| `frontend/js/price-chart.js` | Price chart rendering and price-history editing |
+| `frontend/js/action-dialog.js` | Shared confirmation and field-editing dialog, cancellation, and event cleanup |
+| `frontend/js/saved-collections.js` | Watchlist and trash card rendering |
+| `frontend/js/app.js` | Application state, page rendering, form submission, and event coordination |
 
-Styles are grouped by responsibility under `styles/`. The import order in
-`styles/style.css` is intentional: responsive rules and feature overrides follow the
+Styles are grouped by responsibility under `frontend/styles/`. The import order in
+`frontend/styles/style.css` is intentional: responsive rules and feature overrides follow the
 base rules they refine.
 
 ## Local server

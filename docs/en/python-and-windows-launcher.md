@@ -45,6 +45,7 @@ Settings live in `backend/partly_server/config.py`:
 
 | Constant | What it controls |
 | --- | --- |
+| `FRONTEND_ROOT` | `ROOT / "frontend"` |
 | `ROOT` | Project root, calculated from the location of the Python package |
 | `DATA_FILE` | Path to `data/data.json`, which stores Build, Da valutare, and Cestino |
 | `LOG_FILE` | Path to `logs/partly.log` |
@@ -135,3 +136,5 @@ and shutdown together.
 Before starting, the launcher checks port `8766`. If it finds a listening
 process, it terminates that process and starts a fresh instance. Avoid using
 that port for another service when launching Partly.
+
+Static files are served from `FRONTEND_ROOT` (`frontend/`), independently of the working directory. Browser URLs remain `/js/`, `/styles/` and `/assets/`.

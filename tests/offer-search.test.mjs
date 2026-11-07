@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
 import vm from "node:vm";
-import { offerSearchEligibility, offerUrlKey, createOfferSearch } from "../js/offer-search.js";
+import { offerSearchEligibility, offerUrlKey, createOfferSearch } from "../frontend/js/offer-search.js";
 
 test("precise identities are required, with RAM/storage variant details", () => {
   assert.ok(offerSearchEligibility({ name: "Corsair RAM", category: "RAM" }));
@@ -60,7 +60,7 @@ test("Build integration preserves manual prices, skips duplicate products and re
     crypto: { randomUUID: () => "test-id" }, today: () => "2026-11-07",
     saveCollectionMutation: async () => { saves++; return true; },
   });
-  const source = fs.readFileSync(new URL("../js/app.js", import.meta.url), "utf8");
+  const source = fs.readFileSync(new URL("../frontend/js/app.js", import.meta.url), "utf8");
   vm.runInContext(source.slice(source.indexOf("const offerSearch = createOfferSearch({"), source.indexOf('$("componentList").addEventListener("click"')), context);
   const requested = { id: 1, name: part.name, category: part.category };
   const offers = [
