@@ -674,10 +674,15 @@ document.querySelectorAll(".sidebar [data-sidebar-view='overview'], .sidebar [da
     });
   });
 });
+let summaryCopyTimer;
 $("copyBuildSummary").addEventListener("click", async () => {
   const summary = $("buildSummaryText");
   try {
     await navigator.clipboard.writeText(summary.value);
+    const button = $("copyBuildSummary");
+    button.classList.add("copied");
+    clearTimeout(summaryCopyTimer);
+    summaryCopyTimer = setTimeout(() => button.classList.remove("copied"), 1800);
     notify("Build summary copied");
   } catch {
     summary.focus();

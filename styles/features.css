@@ -3,7 +3,15 @@
 }
 .build-summary-panel { margin-top: 20px; overflow: hidden; }
 .summary-caption { margin: 0; padding: 0 20px 14px; font-size: 11px; color: #7a8978; }
-.build-summary-text { display: block; box-sizing: border-box; width: calc(100% - 40px); min-height: 180px; max-height: 420px; margin: 0 20px; padding: 16px; resize: vertical; border: 1px solid #dce6d6; border-radius: 10px; background: #f7faf4; color: #3c4f3d; font: 12px/1.9 var(--font); }
+.summary-copy-area { position: relative; margin: 0 20px; }
+.build-summary-text { display: block; box-sizing: border-box; width: 100%; min-height: 180px; max-height: 420px; margin: 0; padding: 16px 52px 16px 16px; resize: vertical; border: 1px solid #dce6d6; border-radius: 10px; background: #f7faf4; color: #3c4f3d; font: 12px/1.9 var(--font); }
+.summary-copy-button { position: absolute; top: 9px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid #dce6d6; border-radius: 7px; background: #fff; color: #718368; cursor: pointer; transition: color .15s, background .15s; }
+.summary-copy-button:hover:not(:disabled) { color: #405d2d; background: #eaf2e3; }
+.summary-copy-button:focus-visible { outline: 2px solid #6f9b47; outline-offset: 2px; }
+.summary-copy-button:disabled { opacity: .4; cursor: default; }
+.summary-copy-button .summary-copied-icon, .summary-copy-button.copied .summary-copy-icon { display: none; }
+.summary-copy-button.copied .summary-copied-icon { display: block; }
+.summary-copy-button.copied { color: #4e7133; background: #eaf2e3; }
 .build-summary-text:focus-visible { outline: 2px solid #6f9b47; outline-offset: 2px; }
 .summary-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; color: #53664c; font-size: 12px; }
 .summary-total strong { font: 700 22px var(--font); color: #405d2d; }
