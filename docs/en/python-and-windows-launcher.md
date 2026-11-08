@@ -148,7 +148,7 @@ in the log. Gemini is used only for optional screenshot recognition.
 
 The search adds new product links, including results that need manual checking.
 It never changes an existing offer's price, link or history. The same product
-link is not added twice; different listings from the same store can coexist.
+link is not added twice; only one offer per store is added.
 A verified result has a matching model and page metadata confirming a new,
 in-stock product with a EUR price. Other results are marked for manual checking.
 When no reliable price is available, the saved offer has no price and an empty
@@ -167,3 +167,5 @@ The shortcut starts a hidden server. Close Partly, open the project in VS Code a
 python -m unittest discover -s tests -v
 node --test tests/offer-search.test.mjs
 ```
+
+Search selects the lowest available EUR price per store among returned listings, including prices in Tavily snippets. Snippet prices need manual checking and may include stale or conditional amounts. Stores already saved are skipped entirely; existing prices and links are never changed. If no price is found, one link per missing store can still be added without a price.

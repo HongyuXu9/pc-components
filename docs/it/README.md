@@ -73,7 +73,7 @@ dal servizio viene scritto nel log. Gemini serve solo per gli screenshot AI.
 
 La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
 Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
-due volte lo stesso prodotto; più inserzioni dello stesso negozio possono convivere.
+due volte lo stesso prodotto; viene aggiunta una sola offerta per negozio.
 Un risultato è verificato se la pagina conferma modello, prodotto nuovo,
 disponibilità e prezzo in euro. Altrimenti resta da verificare.
 Se manca un prezzo attendibile, salva il link senza prezzo e senza cronologia.
@@ -83,3 +83,5 @@ Queste offerte non incidono sul prezzo minimo della Build. Apri il link e usa
 Controlla sempre modello, variante, condizione, disponibilità e prezzo finale:
 la ricerca può includere prodotti diversi. La spedizione è esclusa e non è
 garantito il minimo assoluto di tutti i negozi online.
+
+La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi già presenti vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.

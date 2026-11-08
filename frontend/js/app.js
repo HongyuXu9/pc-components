@@ -550,12 +550,12 @@ const offerSearch = createOfferSearch({
     const part = components.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
     const snapshot = JSON.stringify({ components, watchlist, trash });
-    const existing = new Set(part.offers.map(old => offerUrlKey(old.url)).filter(Boolean));
+    const existing = new Set(part.offers.map(old => offerUrlKey(old.url)?.split(":")[0] || old.store));
     let changed = 0;
     for (const offer of offers) {
       const key = offerUrlKey(offer.url);
-      if (!key || existing.has(key)) continue;
-      existing.add(key);
+      if (!key || existing.has(key.split(":")[0])) continue;
+      existing.add(key.split(":")[0]);
       const price = offer.currency === "EUR" && Number.isFinite(offer.price) && offer.price > 0 ? offer.price : null;
       part.offers.push({ id: `web-${crypto.randomUUID()}`, store: key.split(":")[0],
         condition: offer.verified ? "New" : "Unknown", url: offer.url, price,

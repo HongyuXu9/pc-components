@@ -184,6 +184,26 @@ def load_key():
     return key
 
 
+def snippet_price(text):
+    """Read explicit EUR amounts from search text; these are not page-verified."""
+    amounts = []
+    number = r"(\d+(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?)"
+    for pattern in [r"(?:€|EUR)\s*" + number, number + r"\s*(?:€|EUR)\b?"]:
+        for match in re.finditer(pattern.replace(r"\b?", ""), str(text), re.I):
+            value = re.sub(r"\s", "", match[1])
+            if "," in value and "." in value:
+                decimal = max(value.rfind(","), value.rfind("."))
+                value = re.sub(r"[.,]", "", value[:decimal]) + "." + value[decimal+1:]
+            elif re.search(r"[.,]\d{1,2}$", value):
+                value = value.replace(",", ".")
+            else:
+                value = value.replace(",", "").replace(".", "")
+            price = float(value)
+            if 0 < price < 100000:
+                amounts.append(price)
+    return min(amounts) if amounts else None
+
+
 def search_offers(name, category):
     reason = eligibility(name, category)
     if reason:
@@ -242,9 +262,18 @@ def search_offers(name, category):
             continue
         source = sources.get(identity)
         price = verified_price(source[1], name, identity) if source else None
+        verified = price is not None
+        if price is None:
+            price = snippet_price(str(item.get("title", "")) + " " + str(item.get("content", "")))
         offers.append({"title": str(item.get("title", name))[:250], "url": source[0] if source else url, "store": store,
-                       "price": price, "currency": "EUR", "condition": "New", "verified": price is not None,
-                       "reason": "Price, exact model, new condition and availability verified on the product page." if price is not None else "Could not verify the exact variant, price, new condition or stock on the product page."})
+                       "price": price, "currency": "EUR", "condition": "New", "verified": verified,
+                       "reason": "Price, exact model, new condition and availability verified on the product page." if verified else "Could not verify the exact variant, price, new condition or stock on the product page."})
+    best = {}
+    for offer in offers:
+        old = best.get(offer["store"])
+        if old is None or (offer["price"] is not None and (old["price"] is None or offer["price"] < old["price"])):
+            best[offer["store"]] = offer
+    offers = list(best.values())
     logger.info("Offer search completed: %.2fs, candidates=%s, verified=%s", time.monotonic() - started, len(offers), sum(item["verified"] for item in offers))
     return {"offers": offers, "checkedAt": time.time(), "searchSuggestions": metadata.get("searchEntryPoint", {}).get("renderedContent", ""),
             "searchSources": [chunk["web"] for chunk in chunks if isinstance(chunk.get("web"), dict) and chunk["web"].get("uri", "").startswith("https://")][:12]}

@@ -21,6 +21,12 @@ def page(**changes):
 
 
 class OfferSearchTests(unittest.TestCase):
+    def test_search_prices(self):
+        self.assertEqual(search.snippet_price("EUR 250,00"), 250)
+        self.assertEqual(search.snippet_price("€1.234,56"), 1234.56)
+        self.assertEqual(search.snippet_price("199.99 EUR"), 199.99)
+        self.assertIsNone(search.snippet_price("9700X 250 dollars"))
+
     def test_eligibility(self):
         self.assertTrue(search.eligibility("Corsair RAM", "RAM"))
         self.assertTrue(search.eligibility("Corsair Vengeance DDR5 32GB", "RAM"))

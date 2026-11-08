@@ -101,7 +101,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
         const row = document.createElement("article");
         row.className = "offer-search-result";
         const label = document.createElement("strong");
-        label.textContent = `${offer.store} · ${verified.includes(offer) ? formatCurrency(offer.price) : t("Needs verification")}`;
+        label.textContent = `${offer.store} · ${Number.isFinite(offer.price) ? `${formatCurrency(offer.price)}${offer.verified ? "" : ` · ${t("Needs verification")}`}` : t("Needs verification")}`;
         const link = document.createElement("a");
         link.href = offer.url;
         link.target = "_blank";
