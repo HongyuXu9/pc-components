@@ -549,21 +549,27 @@ const offerSearch = createOfferSearch({
   async addVerifiedOffers(requested, offers) {
     const part = components.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
-    const existing = new Set(part.offers.map((offer) => offerUrlKey(offer.url)).filter(Boolean));
-    const fresh = offers.filter((offer) => {
-      const key = offerUrlKey(offer.url);
-      if (!key || existing.has(key)) return false;
-      existing.add(key);
-      return true;
-    });
-    if (!fresh.length) return 0;
     const snapshot = JSON.stringify({ components, watchlist, trash });
-    part.offers.push(...fresh.map((offer) => ({
-      id: `web-${crypto.randomUUID()}`, store: offer.store, condition: "New", url: offer.url,
-      price: offer.price, history: [{ date: today(), price: offer.price }],
-      source: "experimental-web-search", checkedAt: new Date().toISOString(),
-    })));
-    return await saveCollectionMutation(snapshot) ? fresh.length : null;
+    let changed = 0;
+    for (const offer of offers) {
+      const key = offerUrlKey(offer.url);
+      if (!key || !Number.isFinite(offer.price) || offer.price <= 0) continue;
+      const store = key.split(":")[0];
+      const matches = part.offers.filter(old => (offerUrlKey(old.url)?.split(":")[0] || old.store) === store);
+      const priced = matches.filter(old => Number.isFinite(old.price) && old.price > 0);
+      if (priced.some(old => old.price <= offer.price)) continue;
+      const target = priced.sort((a, b) => a.price - b.price)[0] || matches[0];
+      const values = { store, condition: "New", url: offer.url, price: offer.price,
+        source: "experimental-web-search", checkedAt: new Date().toISOString() };
+      if (target) {
+        target.history ||= [];
+        target.history.push({ date: today(), price: offer.price });
+        Object.assign(target, values);
+      } else part.offers.push({ ...values, id: `web-${crypto.randomUUID()}`, history: [{ date: today(), price: offer.price }] });
+      changed++;
+    }
+    if (!changed) return 0;
+    return await saveCollectionMutation(snapshot) ? changed : null;
   },
 });
 

@@ -67,11 +67,15 @@ test("Build integration preserves manual prices, skips duplicate products and re
     { store: "Amazon", url: "https://amazon.it/gp/product/B0TEST1234?tag=other", price: 90 },
     { store: "eBay", url: "https://www.ebay.it/itm/123456789012", price: 100 },
   ];
-  assert.equal(await options.addVerifiedOffers(requested, offers), 1);
-  assert.equal(JSON.stringify(manual), before);
+  assert.equal(await options.addVerifiedOffers(requested, offers), 2);
+  assert.equal(manual.price, 90);
+  assert.equal(manual.url, offers[0].url);
+  assert.equal(manual.history.length, 2);
   assert.equal(part.offers.length, 2);
   assert.equal(await options.addVerifiedOffers(requested, offers), 0);
   assert.equal(saves, 1);
+  assert.equal(await options.addVerifiedOffers(requested, [{ ...offers[0], price: 250 }]), 0);
+  assert.equal(manual.price, 90);
   part.name = "Changed model";
   assert.equal(await options.addVerifiedOffers(requested, offers), null);
 });

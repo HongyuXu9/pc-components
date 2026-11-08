@@ -216,7 +216,7 @@ def search_offers(name, category):
     logger.info("Tavily search returned %s listings, usage=%s", len(proposed), data.get("usage", {}))
     # Only URLs actually present in Tavily search sources are eligible.
     sources = {}
-    proposed_keys = {product_key(str(item.get("url", ""))) for item in proposed[:6] if isinstance(item, dict)} - {None}
+    proposed_keys = {product_key(str(item.get("url", ""))) for item in proposed[:12] if isinstance(item, dict)} - {None}
     for chunk in chunks[:12]:
         uri = chunk.get("web", {}).get("uri", "")
         if not uri or not allowed_fetch(uri):
@@ -232,20 +232,25 @@ def search_offers(name, category):
             # Blocked/unsupported pages must never become verified offers.
             continue
     offers, seen = [], set()
-    for item in proposed[:6]:
+    for item in proposed[:12]:
         if not isinstance(item, dict):
             continue
         url = str(item.get("url", ""))
         identity = product_key(url)
         store = store_for(url)
-        if not identity or store in seen:
+        if not identity:
             continue
-        seen.add(store)
         source = sources.get(identity)
         price = verified_price(source[1], name, identity) if source else None
         offers.append({"title": str(item.get("title", name))[:250], "url": source[0] if source else url, "store": store,
                        "price": price, "currency": "EUR", "condition": "New", "verified": price is not None,
                        "reason": "Price, exact model, new condition and availability verified on the product page." if price is not None else "Could not verify the exact variant, price, new condition or stock on the product page."})
+    best = {}
+    for offer in offers:
+        old = best.get(offer["store"])
+        if old is None or (offer["verified"] and (not old["verified"] or offer["price"] < old["price"])):
+            best[offer["store"]] = offer
+    offers = list(best.values())
     logger.info("Offer search completed: %.2fs, candidates=%s, verified=%s", time.monotonic() - started, len(offers), sum(item["verified"] for item in offers))
     return {"offers": offers, "checkedAt": time.time(), "searchSuggestions": metadata.get("searchEntryPoint", {}).get("renderedContent", ""),
             "searchSources": [chunk["web"] for chunk in chunks if isinstance(chunk.get("web"), dict) and chunk["web"].get("uri", "").startswith("https://")][:12]}
