@@ -43,12 +43,22 @@ If saving fails, check logs/partly.log in logs/. The Save component dialog stays
 
 Shared images live in `frontend/assets/images/`; see [asset conventions](docs/en/assets.md).
 
-## Experimental offer search
+## Offer search with Tavily
 
-The Build search button uses Tavily Search, independently of Gemini screenshot
-recognition. Set TAVILY_API_KEY in the local .env and restart Partly.
-Each click sends one basic search request (auto_parameters disabled), restricted
-to Amazon.it, eBay.it and AliExpress.com. Credit usage is logged when returned.
-No SDK is required. Only product-page verified new, in-stock EUR prices are
-saved automatically; other results remain available for manual review.
-Shipping is excluded. The search does not guarantee the lowest price on the web.
+Click **Find offers · beta** on a Build component to search Amazon.it, eBay.it
+and AliExpress.com. Add `TAVILY_API_KEY=your_key` to the local `.env`, then restart
+Partly. Each click sends one basic search request; the API reports credit usage
+in the log. Gemini is used only for optional screenshot recognition.
+
+The search adds new product links, including results that need manual checking.
+It never changes an existing offer's price, link or history. The same product
+link is not added twice; different listings from the same store can coexist.
+A verified result has a matching model and page metadata confirming a new,
+in-stock product with a EUR price. Other results are marked for manual checking.
+When no reliable price is available, the saved offer has no price and an empty
+history. It is excluded from the Build's lowest-price calculation. Open the link
+and use **Log price** to enter the amount yourself.
+
+Search results may contain different variants or unrelated products: check the
+model, condition, stock and final price yourself. Shipping is excluded. Search
+cannot guarantee the lowest price across the whole web.

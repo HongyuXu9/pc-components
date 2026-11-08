@@ -36,3 +36,7 @@ runtime files; they remain excluded from Git.
 - Add new guides to this index and link their translations when available.
 - Use relative links so navigation works in a checkout and on GitHub.
 - Keep images in `frontend/assets/images/` and documentation in `docs/`.
+
+## Keeping guides current
+
+Read [AGENTS.md](../AGENTS.md) before changing the project. Update the English, Italian and Chinese guides together when behavior changes. Local learning notes in `docs/personale/` are excluded from Git and are not the main product documentation.

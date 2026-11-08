@@ -124,3 +124,28 @@ py -3 backend/server.py
 进程并启动新实例。启动 Partly 时，请避免让其他服务占用这个端口。
 
 静态文件从 `FRONTEND_ROOT`（`frontend/`）提供，不依赖工作目录。浏览器 URL 仍为 `/js/`、`/styles/` 和 `/assets/`。
+
+## 使用 Tavily 搜索报价
+
+在 Build 配件上点击 **Find offers · beta**，搜索 Amazon.it、eBay.it 和
+AliExpress.com。在本地 `.env` 中设置 `TAVILY_API_KEY=你的密钥` 后重启。
+每次点击发送一次 basic 搜索，返回的积分用量记录在日志中。
+Gemini 仅用于可选的截图识别。
+
+搜索会添加新链接，包括需要人工确认的结果。已有报价的价格、链接和历史
+永远不会被覆盖。同一商品链接不会重复添加，同一商店可以有多个不同商品链接。
+已验证结果需要页面确认型号、新品、库存及欧元价格；其他结果需要人工确认。
+无法确认价格时，保存无价格的链接，历史为空，不参与 Build 最低价计算。
+打开链接检查后，使用 **Log price** 手动输入价格。
+
+搜索可能返回不同型号或无关商品，请确认型号、版本、成色、库存和最终价格。
+不包含运费，也不能保证找到整个互联网的最低价。
+
+## Debug
+
+快捷方式隐藏启动服务器。关闭 Partly，在 VS Code 打开项目，按 F5 选择 **Partly: debug server**。设置断点后打开 http://127.0.0.1:8766。启动器优先使用 `.venv`，否则使用系统 Python。不需要额外 Python 包。
+
+```powershell
+python -m unittest discover -s tests -v
+node --test tests/offer-search.test.mjs
+```

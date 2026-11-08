@@ -50,3 +50,27 @@ launcher chain, see [Python server and Windows launcher](python-and-windows-laun
 - Keep the application usable without Gemini; local OCR remains the default.
 - Keep frontend modules dependency-free and use explicit imports between them.
 - Keep `backend/server.py` as the stable entry point used by the Windows launcher.
+
+## Offer search with Tavily
+
+Click **Find offers · beta** on a Build component to search Amazon.it, eBay.it
+and AliExpress.com. Add `TAVILY_API_KEY=your_key` to the local `.env`, then restart
+Partly. Each click sends one basic search request; the API reports credit usage
+in the log. Gemini is used only for optional screenshot recognition.
+
+The search adds new product links, including results that need manual checking.
+It never changes an existing offer's price, link or history. The same product
+link is not added twice; different listings from the same store can coexist.
+A verified result has a matching model and page metadata confirming a new,
+in-stock product with a EUR price. Other results are marked for manual checking.
+When no reliable price is available, the saved offer has no price and an empty
+history. It is excluded from the Build's lowest-price calculation. Open the link
+and use **Log price** to enter the amount yourself.
+
+Search results may contain different variants or unrelated products: check the
+model, condition, stock and final price yourself. Shipping is excluded. Search
+cannot guarantee the lowest price across the whole web.
+
+`frontend/js/offer-search.js` → `POST /api/search-offers` → `backend/partly_server/offer_search.py` → Tavily Search.
+
+The server checks product pages; the browser appends new offers and saves through `/api/data`. Missing prices use JSON null and an empty history. No Google Search or Live API is used.

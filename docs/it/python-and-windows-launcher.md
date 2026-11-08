@@ -140,3 +140,32 @@ ascolto su quella porta, lo termina e avvia una nuova istanza; perciò evita di
 usare quella porta per un altro servizio mentre avvii Partly.
 
 I file statici sono serviti da `FRONTEND_ROOT` (`frontend/`), indipendentemente dalla directory di lavoro. Gli URL del browser restano `/js/`, `/styles/` e `/assets/`.
+
+## Ricerca offerte con Tavily
+
+Premi **Find offers · beta** su un componente Build per cercare su Amazon.it,
+eBay.it e AliExpress.com. Inserisci `TAVILY_API_KEY=la_tua_chiave` nel `.env`
+locale e riavvia Partly. Ogni clic invia una ricerca basic; il consumo restituito
+dal servizio viene scritto nel log. Gemini serve solo per gli screenshot AI.
+
+La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
+Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
+due volte lo stesso prodotto; più inserzioni dello stesso negozio possono convivere.
+Un risultato è verificato se la pagina conferma modello, prodotto nuovo,
+disponibilità e prezzo in euro. Altrimenti resta da verificare.
+Se manca un prezzo attendibile, salva il link senza prezzo e senza cronologia.
+Queste offerte non incidono sul prezzo minimo della Build. Apri il link e usa
+**Log price** per inserire personalmente il prezzo.
+
+Controlla sempre modello, variante, condizione, disponibilità e prezzo finale:
+la ricerca può includere prodotti diversi. La spedizione è esclusa e non è
+garantito il minimo assoluto di tutti i negozi online.
+
+## Debug
+
+Il collegamento avvia il server nascosto. Chiudi Partly, apri il progetto in VS Code e premi F5 scegliendo **Partly: debug server**. Metti i breakpoint e apri http://127.0.0.1:8766. Il launcher usa `.venv` se presente, altrimenti Python di sistema. Non servono pacchetti Python aggiuntivi.
+
+```powershell
+python -m unittest discover -s tests -v
+node --test tests/offer-search.test.mjs
+```

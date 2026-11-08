@@ -45,3 +45,23 @@ Python 配置、API、`.env` 和 Windows 启动流程的详细说明见
 - 不配置 Gemini 时，应用仍应可用；默认使用本地 OCR。
 - 前端模块不引入运行时依赖，模块之间使用显式导入。
 - `backend/server.py` 保持为 Windows 启动器使用的稳定入口。
+
+## 使用 Tavily 搜索报价
+
+在 Build 配件上点击 **Find offers · beta**，搜索 Amazon.it、eBay.it 和
+AliExpress.com。在本地 `.env` 中设置 `TAVILY_API_KEY=你的密钥` 后重启。
+每次点击发送一次 basic 搜索，返回的积分用量记录在日志中。
+Gemini 仅用于可选的截图识别。
+
+搜索会添加新链接，包括需要人工确认的结果。已有报价的价格、链接和历史
+永远不会被覆盖。同一商品链接不会重复添加，同一商店可以有多个不同商品链接。
+已验证结果需要页面确认型号、新品、库存及欧元价格；其他结果需要人工确认。
+无法确认价格时，保存无价格的链接，历史为空，不参与 Build 最低价计算。
+打开链接检查后，使用 **Log price** 手动输入价格。
+
+搜索可能返回不同型号或无关商品，请确认型号、版本、成色、库存和最终价格。
+不包含运费，也不能保证找到整个互联网的最低价。
+
+`frontend/js/offer-search.js` → `POST /api/search-offers` → `backend/partly_server/offer_search.py` → Tavily Search.
+
+服务器检查商品页面，浏览器添加报价并通过 `/api/data` 保存。缺失价格使用 JSON null，历史为空。不使用 Google Search 或 Live API。

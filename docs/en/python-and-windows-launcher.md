@@ -138,3 +138,32 @@ process, it terminates that process and starts a fresh instance. Avoid using
 that port for another service when launching Partly.
 
 Static files are served from `FRONTEND_ROOT` (`frontend/`), independently of the working directory. Browser URLs remain `/js/`, `/styles/` and `/assets/`.
+
+## Offer search with Tavily
+
+Click **Find offers · beta** on a Build component to search Amazon.it, eBay.it
+and AliExpress.com. Add `TAVILY_API_KEY=your_key` to the local `.env`, then restart
+Partly. Each click sends one basic search request; the API reports credit usage
+in the log. Gemini is used only for optional screenshot recognition.
+
+The search adds new product links, including results that need manual checking.
+It never changes an existing offer's price, link or history. The same product
+link is not added twice; different listings from the same store can coexist.
+A verified result has a matching model and page metadata confirming a new,
+in-stock product with a EUR price. Other results are marked for manual checking.
+When no reliable price is available, the saved offer has no price and an empty
+history. It is excluded from the Build's lowest-price calculation. Open the link
+and use **Log price** to enter the amount yourself.
+
+Search results may contain different variants or unrelated products: check the
+model, condition, stock and final price yourself. Shipping is excluded. Search
+cannot guarantee the lowest price across the whole web.
+
+## Debug
+
+The shortcut starts a hidden server. Close Partly, open the project in VS Code and press F5 with **Partly: debug server**. Set breakpoints in the editor, then open http://127.0.0.1:8766. The launcher uses `.venv` when present, otherwise system Python. No extra Python packages are required.
+
+```powershell
+python -m unittest discover -s tests -v
+node --test tests/offer-search.test.mjs
+```

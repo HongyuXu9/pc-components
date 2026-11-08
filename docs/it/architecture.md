@@ -49,3 +49,27 @@ consulta la [guida a Python e al launcher](python-and-windows-launcher.md)
 - Mantieni l’app utilizzabile senza Gemini; l’OCR locale resta il comportamento predefinito.
 - Mantieni i moduli frontend senza dipendenze e usa import espliciti tra loro.
 - Mantieni `backend/server.py` come punto d’ingresso stabile usato dal launcher Windows.
+
+## Ricerca offerte con Tavily
+
+Premi **Find offers · beta** su un componente Build per cercare su Amazon.it,
+eBay.it e AliExpress.com. Inserisci `TAVILY_API_KEY=la_tua_chiave` nel `.env`
+locale e riavvia Partly. Ogni clic invia una ricerca basic; il consumo restituito
+dal servizio viene scritto nel log. Gemini serve solo per gli screenshot AI.
+
+La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
+Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
+due volte lo stesso prodotto; più inserzioni dello stesso negozio possono convivere.
+Un risultato è verificato se la pagina conferma modello, prodotto nuovo,
+disponibilità e prezzo in euro. Altrimenti resta da verificare.
+Se manca un prezzo attendibile, salva il link senza prezzo e senza cronologia.
+Queste offerte non incidono sul prezzo minimo della Build. Apri il link e usa
+**Log price** per inserire personalmente il prezzo.
+
+Controlla sempre modello, variante, condizione, disponibilità e prezzo finale:
+la ricerca può includere prodotti diversi. La spedizione è esclusa e non è
+garantito il minimo assoluto di tutti i negozi online.
+
+`frontend/js/offer-search.js` → `POST /api/search-offers` → `backend/partly_server/offer_search.py` → Tavily Search.
+
+Il server controlla le pagine prodotto; il browser aggiunge le offerte e salva tramite `/api/data`. Prezzi mancanti: null nel JSON e cronologia vuota. Non usiamo Google Search o Live API.
