@@ -92,11 +92,11 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
       if (currentGeneration !== generation) return;
       const offers = (Array.isArray(result.offers) ? result.offers : []).filter((offer) => offer && offerUrlKey(offer.url));
       const verified = offers.filter((offer) => offer.verified === true && offer.currency === "EUR" && offer.condition === "New" && Number.isFinite(offer.price) && offer.price > 0);
-      const added = verified.length ? await addVerifiedOffers(requestPart, verified) : 0;
+      const added = offers.length ? await addVerifiedOffers(requestPart, offers) : 0;
       if (currentGeneration !== generation) return;
       status.textContent = added === null ? t("Component changed or save failed. No search offers were added.")
-        : t("{count} verified offers added. Other results need manual verification.", { count: added });
-      if (!offers.length) status.textContent = t("No verified offers found. Existing offers were not changed.");
+        : t("{count} search offers added. Existing offers unchanged; check prices manually.", { count: added });
+      if (!offers.length) status.textContent = t("No search offers found. Existing offers were not changed.");
       for (const offer of offers) {
         const row = document.createElement("article");
         row.className = "offer-search-result";

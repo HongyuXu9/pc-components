@@ -150,7 +150,7 @@ function closeModal() {
   imageRecognition.clearScreenshotPreview();
 }
 function getOffer(part) {
-  return part.offers.reduce(
+  return part.offers.filter(o => Number.isFinite(o.price) && o.price > 0).reduce(
     (best, o) => (!best || Number(o.price) < Number(best.price) ? o : best),
     null,
   );
@@ -360,7 +360,7 @@ function render() {
         ? `<a href="${escapeAttr(o.url)}" target="_blank" rel="noopener">${escapeHtml(o.store)} ↗</a>`
         : escapeHtml(o.store || t("Unknown source"));
       const recordLabel = t(o.history.length === 1 ? "price record" : "price records");
-      line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(t(o.condition || "New"))}</span></span><span class="offer-meta">${o.history.length} ${escapeHtml(recordLabel)}${bestOffer ? ` · ${escapeHtml(t("Best price"))}` : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${money(o.price)}</div><div class="offer-controls"><button data-act="log" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">${escapeHtml(t("Log price"))}</button><button data-act="remove-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}" title="${escapeAttr(t("Remove offer"))}">×</button></div>`;
+      line.innerHTML = `<div><span class="offer-name">${name}<span class="condition">${escapeHtml(t(o.condition || "New"))}</span></span><span class="offer-meta">${o.history.length} ${escapeHtml(recordLabel)}${bestOffer ? ` · ${escapeHtml(t("Best price"))}` : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${o.price == null ? escapeHtml(t("Needs verification")) : money(o.price)}</div><div class="offer-controls"><button data-act="log" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">${escapeHtml(t("Log price"))}</button><button data-act="remove-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}" title="${escapeAttr(t("Remove offer"))}">×</button></div>`;
       offerList.append(line);
     });
     row.append(offerList);
@@ -550,22 +550,17 @@ const offerSearch = createOfferSearch({
     const part = components.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
     const snapshot = JSON.stringify({ components, watchlist, trash });
+    const existing = new Set(part.offers.map(old => offerUrlKey(old.url)).filter(Boolean));
     let changed = 0;
     for (const offer of offers) {
       const key = offerUrlKey(offer.url);
-      if (!key || !Number.isFinite(offer.price) || offer.price <= 0) continue;
-      const store = key.split(":")[0];
-      const matches = part.offers.filter(old => (offerUrlKey(old.url)?.split(":")[0] || old.store) === store);
-      const priced = matches.filter(old => Number.isFinite(old.price) && old.price > 0);
-      if (priced.some(old => old.price <= offer.price)) continue;
-      const target = priced.sort((a, b) => a.price - b.price)[0] || matches[0];
-      const values = { store, condition: "New", url: offer.url, price: offer.price,
-        source: "experimental-web-search", checkedAt: new Date().toISOString() };
-      if (target) {
-        target.history ||= [];
-        target.history.push({ date: today(), price: offer.price });
-        Object.assign(target, values);
-      } else part.offers.push({ ...values, id: `web-${crypto.randomUUID()}`, history: [{ date: today(), price: offer.price }] });
+      if (!key || existing.has(key)) continue;
+      existing.add(key);
+      const price = offer.currency === "EUR" && Number.isFinite(offer.price) && offer.price > 0 ? offer.price : null;
+      part.offers.push({ id: `web-${crypto.randomUUID()}`, store: key.split(":")[0],
+        condition: offer.verified ? "New" : "Unknown", url: offer.url, price,
+        history: price === null ? [] : [{ date: today(), price }],
+        verified: offer.verified === true, source: "experimental-web-search", checkedAt: new Date().toISOString() });
       changed++;
     }
     if (!changed) return 0;

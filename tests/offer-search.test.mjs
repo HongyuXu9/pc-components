@@ -20,7 +20,7 @@ test("product identity ignores tracking parameters and rejects foreign URLs", ()
   for (const url of ["https://amazon.it.evil.example/dp/B0TEST1234", "javascript:alert(1)", "https://user@amazon.it/dp/B0TEST1234", "https://amazon.it/s?k=cpu"]) assert.equal(offerUrlKey(url), null);
 });
 
-test("only verified EUR new offers reach the save callback; close aborts late results", async () => {
+test("all search offers reach the save callback; close aborts late results", async () => {
   class Element {
     constructor() { this.listeners = {}; this.children = []; this.classList = { add() {}, remove() {} }; }
     addEventListener(name, callback) { this.listeners[name] = callback; }
@@ -39,14 +39,14 @@ test("only verified EUR new offers reach the save callback; close aborts late re
   const search = createOfferSearch({ addVerifiedOffers: async (_part, offers) => { saved.push(...offers); return offers.length; }, reportClientIssue() {} });
   const part = { id: 1, name: "AMD Ryzen 7 9700X CPU", category: "CPU" };
   await search.open(part);
-  assert.equal(saved.length, 1);
+  assert.equal(saved.length, 2);
   assert.equal(nodes.get("offerSearchResults").children.length, 2);
   globalThis.fetch = () => new Promise(done => { resolve = done; });
   const pending = search.open(part);
   nodes.get("closeOfferSearch").listeners.click();
   resolve({ ok: true, json: async () => ({ offers: [{ url: "https://www.amazon.it/dp/B0TEST1234", verified: true, price: 50, currency: "EUR", condition: "New" }] }) });
   await pending;
-  assert.equal(saved.length, 1);
+  assert.equal(saved.length, 2);
 });
 
 test("Build integration preserves manual prices, skips duplicate products and rejects stale components", async () => {
@@ -67,15 +67,15 @@ test("Build integration preserves manual prices, skips duplicate products and re
     { store: "Amazon", url: "https://amazon.it/gp/product/B0TEST1234?tag=other", price: 90 },
     { store: "eBay", url: "https://www.ebay.it/itm/123456789012", price: 100 },
   ];
-  assert.equal(await options.addVerifiedOffers(requested, offers), 2);
-  assert.equal(manual.price, 90);
-  assert.equal(manual.url, offers[0].url);
-  assert.equal(manual.history.length, 2);
+  assert.equal(await options.addVerifiedOffers(requested, offers), 1);
+  assert.equal(manual.price, 120);
+  assert.equal(JSON.stringify(manual), before);
+  assert.equal(manual.history.length, 1);
   assert.equal(part.offers.length, 2);
   assert.equal(await options.addVerifiedOffers(requested, offers), 0);
   assert.equal(saves, 1);
   assert.equal(await options.addVerifiedOffers(requested, [{ ...offers[0], price: 250 }]), 0);
-  assert.equal(manual.price, 90);
+  assert.equal(manual.price, 120);
   part.name = "Changed model";
   assert.equal(await options.addVerifiedOffers(requested, offers), null);
 });

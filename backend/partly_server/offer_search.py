@@ -245,12 +245,6 @@ def search_offers(name, category):
         offers.append({"title": str(item.get("title", name))[:250], "url": source[0] if source else url, "store": store,
                        "price": price, "currency": "EUR", "condition": "New", "verified": price is not None,
                        "reason": "Price, exact model, new condition and availability verified on the product page." if price is not None else "Could not verify the exact variant, price, new condition or stock on the product page."})
-    best = {}
-    for offer in offers:
-        old = best.get(offer["store"])
-        if old is None or (offer["verified"] and (not old["verified"] or offer["price"] < old["price"])):
-            best[offer["store"]] = offer
-    offers = list(best.values())
     logger.info("Offer search completed: %.2fs, candidates=%s, verified=%s", time.monotonic() - started, len(offers), sum(item["verified"] for item in offers))
     return {"offers": offers, "checkedAt": time.time(), "searchSuggestions": metadata.get("searchEntryPoint", {}).get("renderedContent", ""),
             "searchSources": [chunk["web"] for chunk in chunks if isinstance(chunk.get("web"), dict) and chunk["web"].get("uri", "").startswith("https://")][:12]}
