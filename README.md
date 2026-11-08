@@ -45,29 +45,25 @@ Shared images live in `frontend/assets/images/`; see [asset conventions](docs/en
 
 ## Experimental offer search
 
-The Build button **Search offers · beta** uses `gemini-3.8-live` with Google
-Search, separately from screenshot recognition. Install the optional SDK once:
+The Build button uses Google Search through the standard Gemini generateContent
+API. OFFER_SEARCH_MODEL in backend/partly_server/config.py controls this model
+separately from screenshot recognition. No Live API or Google SDK is required.
+The existing GEMINI_API_KEY remains on the server.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
+Free search availability was checked on November 8, 2026:
+- Gemini 2.5 Flash and Flash-Lite list up to 500 grounded requests per day on
+  the free tier, shared between the two models.
+- Both returned HTTP 404 for this project's key: no longer available to new users.
+- Gemini 3 standard models list Google Search as unavailable on the free tier.
+  The 5,000 monthly free searches belong to the paid tier; model tokens can cost money.
 
-The Windows launcher uses `.venv` when present. For a manual start, use
-`.\.venv\Scripts\python.exe backend/server.py`. Restart Partly after installation.
-The existing `GEMINI_API_KEY` is kept on the server.
+The configured gemini-3.5-flash is retained from the local configuration. This is
+not a confirmed free search solution. Live was removed at the user's request.
+No working free Gemini Search model has been confirmed for this account.
+The app does not enable billing or automatically switch providers.
 
-Each click opens one Live API session (60-second search deadline), submits a text
-query and receives listings through a function call. Audio output is discarded;
-no microphone is used. Google grounding sources and product-page verification
-remain required before an offer can be saved automatically. Searches currently
-cover Amazon.it, eBay.it and AliExpress.com; shipping is excluded.
+Sources and exact product-page prices must still be verified before automatic
+saving. Searches cover Amazon.it, eBay.it and AliExpress.com, excluding shipping.
 
-Google lists Search grounding as supported for these Live models on the free
-tier, but actual availability depends on the project's quota. Our November 8,
-2026 test reached the v1beta Live service and was rejected with a quota-exceeded
-error (WebSocket 1011). Real offer discovery has therefore not yet been confirmed
-on this account. There is no automatic paid-provider fallback or retry loop.
-
-References: [Live tools](https://ai.google.dev/gemini-api/docs/live-api/tools),
-[pricing and quotas](https://ai.google.dev/gemini-api/docs/pricing).
+Sources: [pricing](https://ai.google.dev/gemini-api/docs/pricing) and
+[project rate limits](https://ai.google.dev/gemini-api/docs/rate-limits).

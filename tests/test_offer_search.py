@@ -53,10 +53,11 @@ class OfferSearchTests(unittest.TestCase):
 
     def test_grounded_results_only_auto_verify(self):
         response = {"candidates": [{"content": {"parts": [{"text": json.dumps({"offers": [{"title": NAME, "url": URL}]})}]}, "groundingMetadata": {"groundingChunks": [{"web": {"uri": URL, "title": NAME}}]}}]}
-        candidate = response["candidates"][0]
-        def discover(*args):
-            return json.loads(candidate["content"]["parts"][0]["text"])["offers"], candidate["groundingMetadata"]
-        with patch.object(search, "load_key", return_value="test-secret"), patch.object(search, "discover_offers", side_effect=discover), patch.object(search, "read_page", return_value=(URL, page())):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, *args): return json.dumps(response).encode()
+        with patch.object(search, "load_key", return_value="test-secret"), patch.object(search.urllib.request, "urlopen", return_value=Response()), patch.object(search, "read_page", return_value=(URL, page())):
             result = search.search_offers(NAME, "CPU")
             self.assertTrue(result["offers"][0]["verified"])
             self.assertEqual(result["offers"][0]["price"], 199.99)
