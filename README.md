@@ -45,25 +45,10 @@ Shared images live in `frontend/assets/images/`; see [asset conventions](docs/en
 
 ## Experimental offer search
 
-The Build button uses Google Search through the standard Gemini generateContent
-API. OFFER_SEARCH_MODEL in backend/partly_server/config.py controls this model
-separately from screenshot recognition. No Live API or Google SDK is required.
-The existing GEMINI_API_KEY remains on the server.
-
-Free search availability was checked on November 8, 2026:
-- Gemini 2.5 Flash and Flash-Lite list up to 500 grounded requests per day on
-  the free tier, shared between the two models.
-- Both returned HTTP 404 for this project's key: no longer available to new users.
-- Gemini 3 standard models list Google Search as unavailable on the free tier.
-  The 5,000 monthly free searches belong to the paid tier; model tokens can cost money.
-
-The configured gemini-3.5-flash is retained from the local configuration. This is
-not a confirmed free search solution. Live was removed at the user's request.
-No working free Gemini Search model has been confirmed for this account.
-The app does not enable billing or automatically switch providers.
-
-Sources and exact product-page prices must still be verified before automatic
-saving. Searches cover Amazon.it, eBay.it and AliExpress.com, excluding shipping.
-
-Sources: [pricing](https://ai.google.dev/gemini-api/docs/pricing) and
-[project rate limits](https://ai.google.dev/gemini-api/docs/rate-limits).
+The Build search button uses Tavily Search, independently of Gemini screenshot
+recognition. Set TAVILY_API_KEY in the local .env and restart Partly.
+Each click sends one basic search request (auto_parameters disabled), restricted
+to Amazon.it, eBay.it and AliExpress.com. Credit usage is logged when returned.
+No SDK is required. Only product-page verified new, in-stock EUR prices are
+saved automatically; other results remain available for manual review.
+Shipping is excluded. The search does not guarantee the lowest price on the web.

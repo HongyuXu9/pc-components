@@ -52,7 +52,7 @@ class OfferSearchTests(unittest.TestCase):
         self.assertIsNone(search.verified_price("<html>CAPTCHA</html>", NAME, identity))
 
     def test_grounded_results_only_auto_verify(self):
-        response = {"candidates": [{"content": {"parts": [{"text": json.dumps({"offers": [{"title": NAME, "url": URL}]})}]}, "groundingMetadata": {"groundingChunks": [{"web": {"uri": URL, "title": NAME}}]}}]}
+        response = {"results": [{"title": NAME, "url": URL}]}
         class Response:
             def __enter__(self): return self
             def __exit__(self, *args): pass
@@ -61,10 +61,9 @@ class OfferSearchTests(unittest.TestCase):
             result = search.search_offers(NAME, "CPU")
             self.assertTrue(result["offers"][0]["verified"])
             self.assertEqual(result["offers"][0]["price"], 199.99)
-            response["candidates"][0]["groundingMetadata"] = {}
+            response["results"] = []
             result = search.search_offers(NAME, "CPU")
-            self.assertFalse(result["offers"][0]["verified"])
-            self.assertIsNone(result["offers"][0]["price"])
+            self.assertEqual(result["offers"], [])
 
     def test_invalid_request_does_not_call_gemini(self):
         class Handler:
