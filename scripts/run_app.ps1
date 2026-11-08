@@ -123,6 +123,8 @@ try {
     } else {
         $pythonPath = (Get-Command python.exe -ErrorAction Stop).Source
     }
+    $venvPython = Join-Path $root ".venv\Scripts\python.exe"
+    if (Test-Path -LiteralPath $venvPython) { $pythonPath = $venvPython }
     if (-not $pythonPath) { throw "Python 3 was not found." }
 
     $stage = "starting local server"

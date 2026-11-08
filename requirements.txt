@@ -1,0 +1,2 @@
+# Optional Google Search offer discovery through the Live API.
+google-genai>=3.0,<4
