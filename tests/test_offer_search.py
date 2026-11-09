@@ -76,7 +76,9 @@ class OfferSearchTests(unittest.TestCase):
         ]
         candidates = [{"title": NAME, "url": URL, "content": text} for text, _, _ in cases]
         candidates.append({"title": "AMD Ryzen 7 9700X3D", "url": URL})
+        candidates.append({"title": NAME, "url": URL, "content": "Sold out"})
         selected = [{"id": i, "price_evidence": quote} for i, (_, quote, _) in enumerate(cases)]
+        selected.append({"id": len(candidates) - 1, "available": False, "price_evidence": ""})
         response = unittest.mock.MagicMock()
         response.__enter__.return_value.read.return_value = json.dumps({"candidates": [{"content": {"parts": [{"text": json.dumps({"selected": selected})}]}}]}).encode()
         with patch.object(search, "load_key", return_value="test"), patch.object(search.urllib.request, "urlopen", return_value=response) as call:
@@ -134,6 +136,33 @@ class OfferSearchTests(unittest.TestCase):
             self.assertIsNone(search.verified_price(page(**changes), NAME, identity))
         self.assertIsNone(search.verified_price(page().replace("9700X CPU", "9700X3D CPU"), NAME, identity))
         self.assertIsNone(search.verified_price("<html>CAPTCHA</html>", NAME, identity))
+
+    def test_unavailable_listings_never_fall_back_to_snippet_prices(self):
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({"results": [{"title": NAME, "url": URL, "content": "Prezzo EUR 200"}]}).encode()
+        for state in ["OutOfStock", "SoldOut", "Discontinued", "Reserved"]:
+            with self.subTest(state=state), patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: [{**item, "selected_price": 200} for item in items]), patch.object(search.urllib.request, "urlopen", return_value=response), patch.object(search, "read_page", return_value=(URL, page(availability="https://schema.org/" + state))):
+                result = search.search_offers(NAME, "CPU")
+                self.assertEqual(result["offers"], [])
+                self.assertEqual(result["searchSources"], [])
+        for code in [404, 410]:
+            with self.subTest(code=code), patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: items), patch.object(search.urllib.request, "urlopen", return_value=response), patch.object(search, "read_page", side_effect=search.urllib.error.HTTPError(URL, code, "gone", {}, None)):
+                self.assertEqual(search.search_offers(NAME, "CPU")["offers"], [])
+        for text in ["Esaurito", "Sold out", "Attualmente non disponibile", "Annuncio scaduto", "Prodotto venduto"]:
+            with self.subTest(text=text):
+                self.assertTrue(search.unavailable(text))
+                self.assertTrue(search.page_unavailable("<main>" + text + "</main>", NAME, search.product_key(URL)))
+        self.assertFalse(search.page_unavailable(page(), NAME, search.product_key(URL)))
+        related = page(availability="OutOfStock", url="https://amazon.it/dp/B0OTHER123").replace("9700X CPU", "9800X CPU")
+        self.assertFalse(search.page_unavailable(page() + related, NAME, search.product_key(URL)))
+        self.assertFalse(search.page_unavailable("<html>CAPTCHA</html>", NAME, search.product_key(URL)))
+
+    def test_unavailable_snippets_are_filtered_before_page_checks(self):
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({"results": [{"title": NAME, "url": URL, "content": "Prezzo EUR 200. Out of stock"}]}).encode()
+        with patch.object(search, "load_key", return_value="test"), patch.object(search.urllib.request, "urlopen", return_value=response), patch.object(search, "read_page") as read, patch.object(search, "refine_candidates", side_effect=lambda name, items: items):
+            self.assertEqual(search.search_offers(NAME, "CPU")["offers"], [])
+        read.assert_not_called()
 
     def test_tavily_results_only_auto_verify(self):
         response = {"results": [{"title": NAME, "url": URL}]}

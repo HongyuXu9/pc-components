@@ -145,7 +145,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue, getSea
       const added = offers.length ? await addVerifiedOffers(requestPart, offers) : 0;
       if (currentGeneration !== generation) return;
       status.textContent = added === null ? t("Component changed or save failed. No search offers were added.")
-        : t("{count} search offers added. Existing offers unchanged.", { count: added });
+        : t("{count} search offers added or improved. Manual offers unchanged.", { count: added });
       if (!offers.length) status.textContent = t("No search offers found. Existing offers were not changed.");
       for (const offer of offers) {
         const row = document.createElement("article");

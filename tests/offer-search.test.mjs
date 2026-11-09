@@ -43,7 +43,7 @@ test("all search offers reach the save callback; close aborts late results", asy
   assert.equal(saved.length, 2);
 });
 
-test("Build integration preserves manual prices, skips duplicate products and rejects stale components", async () => {
+test("Build integration preserves manual prices, improves store tags and rejects stale components", async () => {
   const manual = { id: "manual", url: "https://amazon.it/dp/B0TEST1234", price: 120, history: [{ date: "2026-11-01", price: 120 }] };
   const part = { id: 1, name: "AMD Ryzen 7 9700X CPU", category: "CPU", offers: [manual] };
   const before = JSON.stringify(manual);
@@ -60,24 +60,43 @@ test("Build integration preserves manual prices, skips duplicate products and re
   assert.equal(options.getSearchParts().parts[0], part);
   const requested = { id: 1, name: part.name, category: part.category };
   const offers = [
-    { store: "Amazon", url: "https://amazon.it/gp/product/B0TEST1234?tag=other", price: 90 },
-    { store: "eBay", url: "https://www.ebay.it/itm/123456789012", price: 100 },
-    { store: "Amazon", url: "https://amazon.it/dp/B0OTHER123", price: 110 },
+    { store: "Amazon", url: "https://amazon.it/gp/product/B0TEST1234?tag=other", price: 90, currency: "EUR" },
+    { store: "eBay", url: "https://www.ebay.it/itm/123456789012", price: 100, currency: "EUR" },
+    { store: "Amazon", url: "https://amazon.it/dp/B0OTHER123", price: 110, currency: "EUR" },
   ];
-  assert.equal(await options.addVerifiedOffers(requested, offers), 3);
+  assert.equal(await options.addVerifiedOffers(requested, offers), 2);
   assert.equal(manual.price, 120);
   assert.equal(JSON.stringify(manual), before);
   assert.equal(manual.history.length, 1);
-  assert.equal(part.offers.length, 4);
+  assert.equal(part.offers.length, 3);
   assert.equal(await options.addVerifiedOffers(requested, offers), 0);
   assert.equal(saves, 1);
   assert.equal(await options.addVerifiedOffers(requested, [{ ...offers[0], price: 250 }]), 0);
   assert.equal(manual.price, 120);
+  const web = part.offers.find(offer => offer.source === "experimental-web-search" && offer.store === "Amazon");
+  const originalId = web.id;
+  assert.equal(web.price, 90);
+  const lower = { ...offers[0], url: "https://amazon.it/dp/B0LOWER123", price: 80, verified: false, condition: "Used" };
+  assert.equal(await options.addVerifiedOffers(requested, [lower]), 1);
+  assert.equal(web.price, 80);
+  assert.equal(web.url, lower.url);
+  assert.equal(web.id, originalId);
+  assert.equal(web.condition, "Used");
+  assert.equal(web.verified, false);
+  assert.deepEqual(Array.from(web.history, record => record.price), [90, 80]);
+  assert.equal(await options.addVerifiedOffers(requested, [lower, { ...lower, price: 81 }, { ...lower, price: null }]), 0);
+  assert.equal(JSON.stringify(manual), before);
   const wished = { id: 2, name: part.name, category: part.category, offers: [] };
   context.watchlist.push(wished);
-  assert.equal(await options.addVerifiedOffers({ id: 2, name: wished.name, category: wished.category, collection: "watchlist" }, offers), 3);
-  assert.equal(wished.offers.length, 3);
-  assert.equal(part.offers.length, 4);
+  assert.equal(await options.addVerifiedOffers({ id: 2, name: wished.name, category: wished.category, collection: "watchlist" }, offers), 2);
+  assert.equal(wished.offers.length, 2);
+  const missing = { id: "missing", store: "Subito", url: "https://subito.it/informatica/old-123456.htm", source: "experimental-web-search", price: null, history: [] };
+  wished.offers.push(missing);
+  const wishedRequest = { id: 2, name: wished.name, category: wished.category, collection: "watchlist" };
+  assert.equal(await options.addVerifiedOffers(wishedRequest, [{ url: "https://subito.it/informatica/new-123457.htm", price: 50, currency: "EUR" }]), 1);
+  assert.equal(missing.price, 50);
+  assert.equal(missing.history.length, 1);
+  assert.equal(part.offers.length, 3);
   context.activeCollection = "watchlist";
   assert.equal(options.getSearchParts().parts[0], wished);
   assert.equal(options.isCurrentPart(requested), true);

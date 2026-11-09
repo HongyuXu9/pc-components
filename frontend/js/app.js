@@ -555,17 +555,26 @@ const offerSearch = createOfferSearch({
     const part = collection.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
     const snapshot = JSON.stringify({ components, watchlist, trash });
-    const existing = new Set(part.offers.filter(old => old.source === "experimental-web-search").map(old => `${offerUrlKey(old.url)}:${old.condition || "Unknown"}`));
     let changed = 0;
     for (const offer of offers) {
       const key = offerUrlKey(offer.url);
-      if (!key || existing.has(`${key}:${offer.condition || "Unknown"}`)) continue;
-      existing.add(`${key}:${offer.condition || "Unknown"}`);
+      if (!key) continue;
+      const store = key.split(":")[0];
       const price = offer.currency === "EUR" && Number.isFinite(offer.price) && offer.price > 0 ? offer.price : null;
-      part.offers.push({ id: `web-${crypto.randomUUID()}`, store: key.split(":")[0],
-        condition: ["New", "Used", "Refurbished"].includes(offer.condition) ? offer.condition : "Unknown", url: offer.url, price,
-        history: price === null ? [] : [{ date: today(), price }],
-        verified: offer.verified === true, source: "experimental-web-search", checkedAt: new Date().toISOString() });
+      const webOffers = part.offers.filter(old => old.source === "experimental-web-search" && (offerUrlKey(old.url)?.split(":")[0] || old.store) === store);
+      const priced = webOffers.filter(old => Number.isFinite(old.price) && old.price > 0);
+      const existing = priced.reduce((best, old) => !best || old.price < best.price ? old : best, null) || webOffers[0];
+      if (existing && (price === null || (Number.isFinite(existing.price) && existing.price > 0 && price >= existing.price))) continue;
+      const values = { store, condition: ["New", "Used", "Refurbished"].includes(offer.condition) ? offer.condition : "Unknown",
+        url: offer.url, price, verified: offer.verified === true,
+        source: "experimental-web-search", checkedAt: new Date().toISOString() };
+      if (existing) {
+        Object.assign(existing, values);
+        existing.history ||= [];
+        existing.history.push({ date: today(), price });
+      } else {
+        part.offers.push({ id: `web-${crypto.randomUUID()}`, ...values, history: price === null ? [] : [{ date: today(), price }] });
+      }
       changed++;
     }
     if (!changed) return 0;
