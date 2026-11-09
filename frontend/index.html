@@ -129,6 +129,11 @@
             <button class="collection-tab" type="button" data-collection="watchlist">Watchlist <b id="watchlistCount">0</b></button>
             <button class="collection-tab" type="button" data-collection="trash">Trash <b id="trashCount">0</b></button>
           </div>
+          <div class="collection-toolbar offer-search-toolbar">
+            <button class="mini-button experimental-offer-button" id="searchAllOffers" type="button">Find all offers</button>
+            <button class="mini-button" id="stopAllOffers" type="button" hidden>Stop remaining searches</button>
+            <span id="allOffersStatus" class="offer-search-status" role="status" aria-live="polite"></span>
+          </div>
           <div id="buildCollection">
           <div class="collection-toolbar"><p>Parts currently in your build and included in the total.</p><button class="primary" id="openAdd">＋ Add component</button></div>
           <div id="componentList" class="component-list"></div>

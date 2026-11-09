@@ -16,7 +16,9 @@ export function offerUrlKey(value) {
   return null;
 }
 
-export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
+export function createOfferSearch({ addVerifiedOffers, reportClientIssue, getSearchParts, isCurrentPart = () => true }) {
+  let singleBusy = false;
+  let batch = null;
   let controller = null;
   let previousFocus = null;
   let generation = 0;
@@ -42,7 +44,85 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     }
   });
 
+  // Both entry points use the same endpoint, timeout and result validation.
+  async function fetchOffers(requestPart, activeController) {
+    const timer = setTimeout(() => activeController.abort("timeout"), 180_000);
+    try {
+      const response = await fetch("/api/search-offers", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestPart), signal: activeController.signal,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Offer search HTTP ${response.status}`);
+      return { ...result, offers: (Array.isArray(result.offers) ? result.offers : []).filter((offer) => offer && offerUrlKey(offer.url)) };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function stopAll() {
+    if (!batch) return;
+    batch.stopped = true;
+    $("stopAllOffers").disabled = true;
+    $("allOffersStatus").textContent = t("Stopping after the current component…");
+  }
+
+  async function searchAll(parts, collection = "build") {
+    if (batch || singleBusy || collection === "trash") return;
+    const seen = new Set();
+    const queue = parts.filter(part => {
+      if (seen.has(String(part.id))) return false;
+      seen.add(String(part.id));
+      return true;
+    }).map(part => ({ id: part.id, name: part.name, category: part.category, collection }));
+    batch = { stopped: false };
+    const state = batch;
+    const cache = new Map();
+    let done = 0, errors = 0;
+    $("searchAllOffers").disabled = true;
+    $("stopAllOffers").hidden = false;
+    $("stopAllOffers").disabled = false;
+    const progress = $("allOffersStatus");
+    progress.setAttribute("aria-busy", "true");
+    try {
+      for (const requested of queue) {
+        if (state.stopped) break;
+        progress.textContent = t("Searching offers: {done}/{total} components · {name}", { done, total: queue.length, name: requested.name });
+        try {
+          if (isCurrentPart(requested) && requested.name?.trim()) {
+            const key = JSON.stringify([requested.name.trim().replace(/\s+/g, " ").toLowerCase(), requested.category]);
+            if (!cache.has(key)) cache.set(key, fetchOffers(requested, new AbortController()));
+            const result = await cache.get(key);
+            if (isCurrentPart(requested)) {
+              const added = result.offers.length ? await addVerifiedOffers(requested, result.offers) : 0;
+              if (added === null) throw new Error(t("Component changed or save failed. No search offers were added."));
+            }
+          }
+        } catch (error) {
+          errors++;
+          reportClientIssue("warning", error.message || String(error), requested.name);
+        }
+        done++;
+      }
+    } finally {
+      progress.textContent = t(state.stopped ? "Offer search stopped: {done}/{total} components · {errors} errors" : "Offer search completed: {done}/{total} components · {errors} errors", { done, total: queue.length, errors });
+      progress.setAttribute("aria-busy", "false");
+      $("searchAllOffers").disabled = false;
+      $("stopAllOffers").hidden = true;
+      batch = null;
+    }
+  }
+  $("searchAllOffers")?.addEventListener("click", () => {
+    if (!getSearchParts) return;
+    const { parts, collection } = getSearchParts();
+    void searchAll(parts, collection);
+  });
+  $("stopAllOffers")?.addEventListener("click", stopAll);
+
   async function open(part, collection = "build") {
+    if (singleBusy || batch) return;
+    singleBusy = true;
+    $("searchAllOffers").disabled = true;
     controller?.abort();
     controller = new AbortController();
     const activeController = controller;
@@ -57,16 +137,10 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     modal.classList.add("open");
     $("closeOfferSearch").focus();
     reportClientIssue("info", "Offer search started", part.name);
-    const timer = setTimeout(() => activeController.abort("timeout"), 180_000);
     try {
-      const response = await fetch("/api/search-offers", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestPart), signal: activeController.signal,
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || `Offer search HTTP ${response.status}`);
+      const result = await fetchOffers(requestPart, activeController);
       if (currentGeneration !== generation) return;
-      const offers = (Array.isArray(result.offers) ? result.offers : []).filter((offer) => offer && offerUrlKey(offer.url));
+      const offers = result.offers;
       const verified = offers.filter((offer) => offer.verified === true && offer.currency === "EUR" && offer.condition === "New" && Number.isFinite(offer.price) && offer.price > 0);
       const added = offers.length ? await addVerifiedOffers(requestPart, offers) : 0;
       if (currentGeneration !== generation) return;
@@ -105,9 +179,10 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
       status.textContent = message;
       reportClientIssue("warning", message, "Offer search");
     } finally {
-      clearTimeout(timer);
+      singleBusy = false;
+      $("searchAllOffers").disabled = false;
       if (currentGeneration === generation) status.setAttribute("aria-busy", "false");
     }
   }
-  return { open };
+  return { open, searchAll, stopAll };
 }

@@ -49,13 +49,15 @@ test("Build integration preserves manual prices, skips duplicate products and re
   const before = JSON.stringify(manual);
   let options, saves = 0;
   const context = vm.createContext({
-    components: [part], watchlist: [], trash: [], dataReady: true,
+    components: [part], watchlist: [], trash: [], dataReady: true, activeCollection: "build",
     createOfferSearch(value) { options = value; return {}; }, reportClientIssue() {}, offerUrlKey,
     crypto: { randomUUID: () => "test-id" }, today: () => "2026-11-07",
     saveCollectionMutation: async () => { saves++; return true; },
   });
   const source = fs.readFileSync(new URL("../frontend/js/app.js", import.meta.url), "utf8");
   vm.runInContext(source.slice(source.indexOf("const offerSearch = createOfferSearch({"), source.indexOf('$("componentList").addEventListener("click"')), context);
+  assert.equal(options.getSearchParts().collection, "build");
+  assert.equal(options.getSearchParts().parts[0], part);
   const requested = { id: 1, name: part.name, category: part.category };
   const offers = [
     { store: "Amazon", url: "https://amazon.it/gp/product/B0TEST1234?tag=other", price: 90 },
@@ -76,6 +78,101 @@ test("Build integration preserves manual prices, skips duplicate products and re
   assert.equal(await options.addVerifiedOffers({ id: 2, name: wished.name, category: wished.category, collection: "watchlist" }, offers), 3);
   assert.equal(wished.offers.length, 3);
   assert.equal(part.offers.length, 4);
+  context.activeCollection = "watchlist";
+  assert.equal(options.getSearchParts().parts[0], wished);
+  assert.equal(options.isCurrentPart(requested), true);
   part.name = "Changed model";
+  assert.equal(options.isCurrentPart(requested), false);
   assert.equal(await options.addVerifiedOffers(requested, offers), null);
+});
+
+function batchSearchHarness(options = {}) {
+  class Element {
+    constructor() { this.listeners = {}; this.classList = { add() {}, remove() {} }; }
+    addEventListener(name, callback) { this.listeners[name] = callback; }
+    setAttribute() {}
+    replaceChildren() {}
+    focus() {}
+  }
+  const nodes = new Map();
+  globalThis.document = { activeElement: null, getElementById(id) { if (!nodes.has(id)) nodes.set(id, new Element()); return nodes.get(id); } };
+  return { search: createOfferSearch({ addVerifiedOffers: async () => 1, reportClientIssue() {}, ...options }), nodes };
+}
+
+test("batch searches sequentially, reuses identical models, skips stale parts and continues after errors", async () => {
+  let calls = 0, active = 0, maxActive = 0;
+  const saved = [], issues = [];
+  const parts = [
+    { id: 1, name: "AMD Ryzen 7 9700X", category: "CPU" },
+    { id: 2, name: "AMD Ryzen 7 9700X", category: "CPU" },
+    { id: 3, name: "Failed component", category: "GPU" },
+    { id: 4, name: "Samsung 990 PRO 2TB", category: "Storage" },
+    { id: 5, name: "Deleted component", category: "CPU" },
+  ];
+  globalThis.fetch = async (_url, request) => {
+    calls++; active++; maxActive = Math.max(active, maxActive);
+    const part = JSON.parse(request.body);
+    await Promise.resolve();
+    active--;
+    return { ok: part.id !== 3, json: async () => part.id === 3 ? { error: "provider unavailable" } : { offers: [{ url: "https://amazon.it/dp/B0TEST1234", price: null }, { url: "https://outside.example/product" }] } };
+  };
+  const { search, nodes } = batchSearchHarness({
+    isCurrentPart: part => part.id !== 5,
+    addVerifiedOffers: async (part, offers) => { saved.push([part.id, part.collection, offers.length]); return 1; },
+    reportClientIssue: (...args) => issues.push(args),
+  });
+  const pending = search.searchAll([...parts, parts[0]], "watchlist");
+  assert.equal(nodes.get("searchAllOffers").disabled, true);
+  assert.match(nodes.get("allOffersStatus").textContent, /0\/5 components/);
+  await search.searchAll(parts);
+  await search.open(parts[0]);
+  await pending;
+  assert.equal(calls, 3);
+  assert.equal(maxActive, 1);
+  assert.deepEqual(saved, [[1, "watchlist", 1], [2, "watchlist", 1], [4, "watchlist", 1]]);
+  assert.equal(issues.length, 1);
+  assert.match(nodes.get("allOffersStatus").textContent, /completed: 5\/5 components · 1 errors/);
+  assert.equal(nodes.get("searchAllOffers").disabled, false);
+  assert.equal(nodes.get("stopAllOffers").hidden, true);
+});
+
+test("stop finishes the current component, skips remaining searches and allows a fresh run", async () => {
+  let resolve, calls = 0, saved = 0;
+  const part = { id: 1, name: "AMD Ryzen 7 9700X", category: "CPU" };
+  globalThis.fetch = () => { calls++; return new Promise(done => { resolve = done; }); };
+  const { search, nodes } = batchSearchHarness({ addVerifiedOffers: async () => { saved++; return 1; } });
+  const pending = search.searchAll([part, { ...part, id: 2, name: "Other model" }]);
+  nodes.get("stopAllOffers").listeners.click();
+  assert.match(nodes.get("allOffersStatus").textContent, /Stopping/);
+  resolve({ ok: true, json: async () => ({ offers: [{ url: "https://amazon.it/dp/B0TEST1234" }] }) });
+  await pending;
+  assert.equal(calls, 1);
+  assert.equal(saved, 1);
+  assert.match(nodes.get("allOffersStatus").textContent, /stopped: 1\/2/);
+  globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ offers: [] }) }; };
+  await search.searchAll([part]);
+  assert.equal(calls, 2);
+  assert.match(nodes.get("allOffersStatus").textContent, /completed: 1\/1/);
+});
+
+test("batch ignores a component edited during its request and continues after a save failure", async () => {
+  let resolve, current = true, calls = 0;
+  const saved = [];
+  const parts = [1, 2, 3].map(id => ({ id, name: `Model ${id}`, category: "CPU" }));
+  globalThis.fetch = async () => {
+    calls++;
+    if (calls === 1) await new Promise(done => { resolve = done; });
+    return { ok: true, json: async () => ({ offers: [{ url: "https://amazon.it/dp/B0TEST1234" }] }) };
+  };
+  const { search, nodes } = batchSearchHarness({
+    isCurrentPart: part => part.id !== 1 || current,
+    addVerifiedOffers: async part => { saved.push(part.id); return part.id === 2 ? null : 1; },
+  });
+  const pending = search.searchAll(parts);
+  current = false;
+  resolve();
+  await pending;
+  assert.equal(calls, 3);
+  assert.deepEqual(saved, [2, 3]);
+  assert.match(nodes.get("allOffersStatus").textContent, /completed: 3\/3 components · 1 errors/);
 });

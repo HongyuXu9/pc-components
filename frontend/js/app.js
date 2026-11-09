@@ -367,6 +367,7 @@ function render() {
   $("buildCollection").hidden = activeCollection !== "build";
   $("watchlistCollection").hidden = activeCollection !== "watchlist";
   $("trashCollection").hidden = activeCollection !== "trash";
+  $("searchAllOffers").hidden = activeCollection === "trash";
   $("parts").querySelector(".tools").hidden = activeCollection !== "build";
   $("logPriceBtn").hidden = activeCollection === "trash";
   document.querySelectorAll(".collection-tab").forEach((tab) => {
@@ -544,6 +545,11 @@ $("offerForm").addEventListener("submit", async (e) => {
 });
 const offerSearch = createOfferSearch({
   reportClientIssue,
+  getSearchParts: () => ({ parts: dataReady ? (activeCollection === "watchlist" ? watchlist : components) : [], collection: activeCollection }),
+  isCurrentPart(requested) {
+    const parts = requested.collection === "watchlist" ? watchlist : components;
+    return dataReady && parts.some(part => String(part.id) === String(requested.id) && part.name === requested.name && part.category === requested.category);
+  },
   async addVerifiedOffers(requested, offers) {
     const collection = requested.collection === "watchlist" ? watchlist : components;
     const part = collection.find((item) => String(item.id) === String(requested.id));
