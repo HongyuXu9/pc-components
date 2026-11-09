@@ -327,3 +327,5 @@
 
 .offer-search-toolbar { flex-wrap: wrap; justify-content: flex-start; gap: 10px; }
 .offer-search-toolbar [hidden] { display: none; }
+
+.offer-controls { flex-wrap: wrap; justify-content: flex-end; }

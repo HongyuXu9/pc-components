@@ -358,7 +358,7 @@ function render() {
         ? `<a href="${escapeAttr(o.url)}" target="_blank" rel="noopener">${escapeHtml(o.store)} ↗</a>`
         : escapeHtml(o.store || t("Unknown source"));
       const recordLabel = t(o.history.length === 1 ? "price record" : "price records");
-      line.innerHTML = `<div><span class="offer-name"><span class="offer-origin ${o.source === "experimental-web-search" ? "offer-origin-search" : "offer-origin-manual"}">${escapeHtml(t(o.source === "experimental-web-search" ? "From search" : "Manual"))}</span>${name}<span class="condition">${escapeHtml(t(o.condition || "New"))}</span></span><span class="offer-meta">${o.history.length} ${escapeHtml(recordLabel)}${bestOffer ? ` · ${escapeHtml(t("Best price"))}` : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${o.price == null ? "undefined" : money(o.price)}</div><div class="offer-controls"><button data-act="log" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">${escapeHtml(t("Log price"))}</button><button data-act="remove-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}" title="${escapeAttr(t("Remove offer"))}">×</button></div>`;
+      line.innerHTML = `<div><span class="offer-name"><span class="offer-origin ${o.source === "experimental-web-search" ? "offer-origin-search" : "offer-origin-manual"}">${escapeHtml(t(o.source === "experimental-web-search" ? "From search" : "Manual"))}</span>${name}<span class="condition">${escapeHtml(t(o.condition || "New"))}</span></span><span class="offer-meta">${o.history.length} ${escapeHtml(recordLabel)}${bestOffer ? ` · ${escapeHtml(t("Best price"))}` : ""}</span></div><div class="offer-price ${bestOffer ? "best" : ""}">${o.price == null ? "undefined" : money(o.price)}</div><div class="offer-controls"><button data-act="edit-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">${escapeHtml(t("Edit"))}</button><button data-act="log" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}">${escapeHtml(t("Log price"))}</button><button data-act="remove-offer" data-id="${escapeAttr(p.id)}" data-offer="${escapeAttr(o.id)}" title="${escapeAttr(t("Remove offer"))}">×</button></div>`;
       offerList.append(line);
     });
     row.append(offerList);
@@ -406,6 +406,55 @@ function escapeHtml(s = "") {
 function escapeAttr(s = "") {
   return escapeHtml(s);
 }
+async function editOffer(partId, offerId, collection = "components") {
+  const source = collection === "watchlist" ? watchlist : components;
+  const part = source.find(item => String(item.id) === String(partId));
+  const offer = part?.offers.find(item => String(item.id) === String(offerId));
+  if (!offer || !dataReady) return;
+  const before = JSON.stringify(offer);
+  const values = await openActionDialog({
+    eyebrow: "EDIT OFFER", title: "Edit offer", confirmLabel: "Save changes",
+    subtitle: "Corrections become manual and are protected from automatic search updates.",
+    fields: [
+      { name: "store", label: "Store name", value: offer.store, required: false },
+      { name: "url", label: "Product link", type: "url", value: offer.url, required: false },
+      { name: "condition", label: "Condition", value: offer.condition || "Unknown", options: ["New", "Used", "Used — like new", "Used — good", "Used — acceptable", "Refurbished", "Unknown"].map(value => ({ value, label: value })) },
+      { name: "price", label: "Price (€)", type: "number", min: "0.01", step: "0.01", value: offer.price, required: false },
+    ],
+  });
+  if (!values) return;
+  const current = collection === "watchlist" ? watchlist : components;
+  if (!dataReady || !current.includes(part) || !part.offers.includes(offer) || JSON.stringify(offer) !== before) {
+    notify("Offer changed. Reopen it to edit the latest values.");
+    return;
+  }
+  const url = values.url.trim();
+  const price = values.price.trim() === "" ? null : Number(values.price);
+  let validUrl = true;
+  if (url) {
+    try {
+      const parsed = new URL(url);
+      validUrl = ["https:", "http:"].includes(parsed.protocol) && !parsed.username && !parsed.password;
+    } catch { validUrl = false; }
+  }
+  if (!validUrl || (price !== null && (!Number.isFinite(price) || price <= 0))) {
+    notify("Enter a valid product link and a positive price, or leave them empty.");
+    return;
+  }
+  const snapshot = JSON.stringify({ components, watchlist, trash });
+  if (price !== offer.price) {
+    const latest = offer.history.reduce((best, entry) => !best || entry.date >= best.date ? entry : best, null);
+    if (latest && latest.price === offer.price) {
+      if (price === null) offer.history = offer.history.filter(entry => entry !== latest);
+      else latest.price = price;
+    } else if (price !== null) offer.history.push({ date: today(), price });
+  }
+  Object.assign(offer, { store: resolveStoreName(values.store, url), url, condition: values.condition, price, source: "manual", verified: false });
+  delete offer.checkedAt;
+  delete offer.reason;
+  if (await saveCollectionMutation(snapshot)) notify("Offer updated");
+}
+
 function addOffer(partId, collection = "components") {
   offerCollection = collection;
   const source = collection === "watchlist" ? watchlist : components;
@@ -618,6 +667,9 @@ $("componentList").addEventListener("click", async (e) => {
       }
       break;
     }
+    case "edit-offer":
+      await editOffer(p.id, b.dataset.offer);
+      break;
     case "log":
       selectedHistoryOfferId = b.dataset.offer;
       logPrice(p.id, b.dataset.offer);
@@ -683,6 +735,10 @@ $("watchlistList").addEventListener("click", async (event) => {
   }
   if (action === "add-offer") {
     addOffer(part.id, "watchlist");
+    return;
+  }
+  if (action === "edit-offer") {
+    await editOffer(part.id, button.dataset.offer, "watchlist");
     return;
   }
   if (action === "log") {
