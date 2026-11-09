@@ -55,7 +55,7 @@ consulta la [guida a Python e al launcher](python-and-windows-launcher.md)
 Premi **Find offers** su un componente Build per cercare su Amazon.it,
 eBay.it e AliExpress.com. Inserisci `TAVILY_API_KEY=la_tua_chiave` nel `.env`
 locale e riavvia Partly. Ogni clic invia una ricerca basic; il consumo restituito
-dal servizio viene scritto nel log. Gemini serve solo per gli screenshot AI.
+dal servizio viene scritto nel log. Gemini supporta screenshot AI e selezione delle offerte.
 
 La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
 Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
@@ -77,3 +77,5 @@ Il server controlla le pagine prodotto; il browser aggiunge le offerte e salva t
 La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi già presenti vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.
 
 Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo mancante appare come `undefined`. La finestra risultati include un pulsante Chiudi. Non sono mostrate etichette di verifica.
+
+La ricerca filtra prima i titoli per modello e variante. Gemini, se configurato, seleziona i candidati Tavily pertinenti senza Google Search. Prezzi e link restano vincolati alle fonti. Se Gemini non risponde, usa i candidati filtrati localmente. Amazon può restituire estratti senza prezzo: in quel caso resta undefined.

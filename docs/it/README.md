@@ -69,7 +69,7 @@ Le immagini condivise si trovano in `frontend/assets/images/`; vedi le [convenzi
 Premi **Find offers** su un componente Build per cercare su Amazon.it,
 eBay.it e AliExpress.com. Inserisci `TAVILY_API_KEY=la_tua_chiave` nel `.env`
 locale e riavvia Partly. Ogni clic invia una ricerca basic; il consumo restituito
-dal servizio viene scritto nel log. Gemini serve solo per gli screenshot AI.
+dal servizio viene scritto nel log. Gemini supporta screenshot AI e selezione delle offerte.
 
 La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
 Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
@@ -91,3 +91,5 @@ Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo man
 Le offerte mostrano un badge blu “Da ricerca” oppure grigio “Manuale”, con testo e indicatore colorato.
 
 Il badge di provenienza appare a sinistra del negozio, compatto e allineato al testo.
+
+La ricerca filtra prima i titoli per modello e variante. Gemini, se configurato, seleziona i candidati Tavily pertinenti senza Google Search. Prezzi e link restano vincolati alle fonti. Se Gemini non risponde, usa i candidati filtrati localmente. Amazon può restituire estratti senza prezzo: in quel caso resta undefined.

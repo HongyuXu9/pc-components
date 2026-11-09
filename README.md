@@ -48,7 +48,7 @@ Shared images live in `frontend/assets/images/`; see [asset conventions](docs/en
 Click **Find offers** on a Build component to search Amazon.it, eBay.it
 and AliExpress.com. Add `TAVILY_API_KEY=your_key` to the local `.env`, then restart
 Partly. Each click sends one basic search request; the API reports credit usage
-in the log. Gemini is used only for optional screenshot recognition.
+in the log. Gemini supports screenshot recognition and optional offer refinement.
 
 The search adds new product links, including results that need manual checking.
 It never changes an existing offer's price, link or history. The same product
@@ -70,3 +70,5 @@ UI: offers are labeled From search or Manual. Missing prices display `undefined`
 Offer origin uses a blue From search badge or a gray Manual badge, with text and a colored dot.
 
 Origin badges appear before the store name, with compact spacing and aligned text.
+
+Search first filters titles by exact model, then uses configured Gemini to select relevant Tavily candidates without Google Search. Links and prices remain source-bound. Gemini failures fall back to local filtering. Amazon snippets can omit prices; missing prices stay undefined.
