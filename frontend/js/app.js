@@ -557,7 +557,7 @@ const offerSearch = createOfferSearch({
       existing.add(key.split(":")[0]);
       const price = offer.currency === "EUR" && Number.isFinite(offer.price) && offer.price > 0 ? offer.price : null;
       part.offers.push({ id: `web-${crypto.randomUUID()}`, store: key.split(":")[0],
-        condition: offer.verified ? "New" : "Unknown", url: offer.url, price,
+        condition: ["New", "Used", "Refurbished"].includes(offer.condition) ? offer.condition : "Unknown", url: offer.url, price,
         history: price === null ? [] : [{ date: today(), price }],
         verified: offer.verified === true, source: "experimental-web-search", checkedAt: new Date().toISOString() });
       changed++;

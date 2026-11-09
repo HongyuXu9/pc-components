@@ -83,3 +83,5 @@ La ricerca filtra prima i titoli per modello e variante. Gemini, se configurato,
 Il grafico prolunga l’ultimo prezzo fino a oggi. I giorni senza registrazioni mantengono il prezzo precedente; i cambiamenti sono a gradini. I punti indicano solo registrazioni reali, modificabili con un clic. Non vengono aggiunti dati alla cronologia.
 
 Cerca offerte è disponibile sia in Build sia in Da valutare (wishlist), anche con nomi incompleti. I risultati si salvano nella lista di origine. Anche il grafico wishlist prolunga il prezzo fino a oggi.
+
+Fonti: Amazon, AliExpress, eBay, PcComponentes, BPM Power, Alternate, LDLC, MediaWorld, Unieuro e Subito. Sono incluse inserzioni usate e ricondizionate. Una ricerca valuta fino a 20 candidati e restituisce al massimo 8 offerte, una per sito, ordinate per prezzo; quelle senza prezzo vengono dopo. La condizione è riconosciuta dal titolo quando disponibile. Si controllano direttamente al massimo 6 pagine; per le altre si usano gli estratti.

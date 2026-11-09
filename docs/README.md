@@ -50,3 +50,5 @@ Search first filters titles by exact model, then uses configured Gemini to selec
 The chart carries the last recorded price through today. Days without records retain the previous price; changes use steps. Dots represent actual editable records only. No synthetic history is saved.
 
 Find offers is available in Build and Watchlist, including incomplete model names. Results save into the originating collection. Watchlist charts also carry prices through today.
+
+Sources: Amazon, AliExpress, eBay, PcComponentes, BPM Power, Alternate, LDLC, MediaWorld, Unieuro and Subito, including used/refurbished listings. Search evaluates up to 20 candidates and returns at most 8 offers, one per site, sorted by price with missing prices last. Condition comes from titles when identifiable. Direct page checks are capped at 6; other listings use snippets.

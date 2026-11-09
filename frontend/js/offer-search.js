@@ -29,6 +29,15 @@ export function offerUrlKey(value) {
       ["ebay.it", "eBay", /\/itm\/(?:[^/]+\/)?(\d{9,15})(?:\/|$)/],
       ["aliexpress.com", "AliExpress", /\/item\/(\d+)\.html/],
     ];
+    rules.push(
+      ["subito.it", "Subito", /\/[^/]+\/([^/]+-\d+\.htm)$/],
+      ["pccomponentes.it", "PcComponentes", /\/([^/]{12,})\/?$/],
+      ["bpm-power.com", "BPM Power", /\/(.+-b\d+)\/?$/],
+      ["alternate.it", "Alternate", /\/(.+\/product\/\d+)\/?$/],
+      ["ldlc.com", "LDLC", /\/(?:[^/]+\/)*(PB\d+\.html)$/i],
+      ["mediaworld.it", "MediaMarkt", /\/it\/product\/([^/]+\.html)$/],
+      ["unieuro.it", "Unieuro", /\/online\/(.+-pid[^/]+)\/?$/]
+    );
     for (const [domain, store, pattern] of rules) {
       const match = (host === domain || host.endsWith(`.${domain}`)) && url.pathname.match(pattern);
       if (match) return `${store}:${match[1].toUpperCase()}`;
@@ -75,7 +84,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     $("offerSearchResults").replaceChildren();
     $("offerSearchSources").replaceChildren();
     $("offerSearchSuggestions").replaceChildren();
-    status.textContent = t("Searching Amazon, AliExpress and eBay…");
+    status.textContent = t("Searching stores and second-hand marketplaces…");
     status.setAttribute("aria-busy", "true");
     modal.classList.add("open");
     $("closeOfferSearch").focus();
