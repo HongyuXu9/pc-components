@@ -53,7 +53,7 @@ launcher chain, see [Python server and Windows launcher](python-and-windows-laun
 
 ## Offer search with Tavily
 
-Click **Find offers · beta** on a Build component to search Amazon.it, eBay.it
+Click **Find offers** on a Build component to search Amazon.it, eBay.it
 and AliExpress.com. Add `TAVILY_API_KEY=your_key` to the local `.env`, then restart
 Partly. Each click sends one basic search request; the API reports credit usage
 in the log. Gemini is used only for optional screenshot recognition.

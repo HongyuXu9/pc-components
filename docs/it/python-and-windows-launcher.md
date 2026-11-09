@@ -143,7 +143,7 @@ I file statici sono serviti da `FRONTEND_ROOT` (`frontend/`), indipendentemente 
 
 ## Ricerca offerte con Tavily
 
-Premi **Find offers · beta** su un componente Build per cercare su Amazon.it,
+Premi **Find offers** su un componente Build per cercare su Amazon.it,
 eBay.it e AliExpress.com. Inserisci `TAVILY_API_KEY=la_tua_chiave` nel `.env`
 locale e riavvia Partly. Ogni clic invia una ricerca basic; il consumo restituito
 dal servizio viene scritto nel log. Gemini serve solo per gli screenshot AI.

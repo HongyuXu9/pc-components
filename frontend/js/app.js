@@ -342,7 +342,7 @@ function render() {
     searchButton.dataset.id = p.id;
     searchButton.disabled = Boolean(searchReason);
     searchButton.title = t(searchReason || "Search new offers in EUR on Amazon, AliExpress and eBay (experimental).");
-    searchButton.textContent = t("⌕ Find offers · beta");
+    searchButton.textContent = t("⌕ Find offers");
     top.querySelector(".component-actions").prepend(searchButton);
     row.append(top);
     const offerList = document.createElement("div");

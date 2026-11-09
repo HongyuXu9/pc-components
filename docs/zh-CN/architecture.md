@@ -48,7 +48,7 @@ Python 配置、API、`.env` 和 Windows 启动流程的详细说明见
 
 ## 使用 Tavily 搜索报价
 
-在 Build 配件上点击 **Find offers · beta**，搜索 Amazon.it、eBay.it 和
+在 Build 配件上点击 **Find offers**，搜索 Amazon.it、eBay.it 和
 AliExpress.com。在本地 `.env` 中设置 `TAVILY_API_KEY=你的密钥` 后重启。
 每次点击发送一次 basic 搜索，返回的积分用量记录在日志中。
 Gemini 仅用于可选的截图识别。
