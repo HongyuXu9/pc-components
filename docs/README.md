@@ -41,7 +41,7 @@ runtime files; they remain excluded from Git.
 
 Read [AGENTS.md](../AGENTS.md) before changing the project. Update the English, Italian and Chinese guides together when behavior changes. Local learning notes in `docs/personale/` are excluded from Git and are not the main product documentation.
 
-Search selects the lowest available EUR price per store among returned listings, including prices in Tavily snippets. Snippet prices need manual checking and may include stale or conditional amounts. Stores already saved are skipped entirely; existing prices and links are never changed. If no price is found, one link per missing store can still be added without a price.
+Search selects the lowest available EUR price per store among returned listings, including prices in Tavily snippets. Snippet prices need manual checking and may include stale or conditional amounts. Stores with an existing web offer are skipped; existing prices and links are never changed. If no price is found, one link per missing store can still be added without a price.
 
 UI: offers are labeled From search or Manual. Missing prices display `undefined`. The results window has a Close button at the bottom. Verification labels are not displayed.
 
@@ -52,3 +52,5 @@ The chart carries the last recorded price through today. Days without records re
 Find offers is available in Build and Watchlist, including incomplete model names. Results save into the originating collection. Watchlist charts also carry prices through today.
 
 Sources: Amazon, AliExpress, eBay, PcComponentes, BPM Power, Alternate, LDLC, MediaWorld, Unieuro and Subito, including used/refurbished listings. Search evaluates up to 20 candidates and returns at most 8 offers, one per site, sorted by price with missing prices last. Condition comes from titles when identifiable. Direct page checks are capped at 6; other listings use snippets.
+
+Store configuration: `frontend/assets/search-stores.json`, shared by server and browser. Each entry has domain, name and productPattern (product URL expression). maxCandidates and maxOffers are configurable up to 20. Restart Partly and reload after edits. API keys stay in .env. A manual and a web offer can coexist per store, even if the web price is higher. Existing offers are never overwritten.

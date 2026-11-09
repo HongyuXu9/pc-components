@@ -84,7 +84,7 @@ Controlla sempre modello, variante, condizione, disponibilità e prezzo finale:
 la ricerca può includere prodotti diversi. La spedizione è esclusa e non è
 garantito il minimo assoluto di tutti i negozi online.
 
-La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi già presenti vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.
+La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi con un’offerta web già presente vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.
 
 Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo mancante appare come `undefined`. La finestra risultati include un pulsante Chiudi. Non sono mostrate etichette di verifica.
 
@@ -99,3 +99,5 @@ Il grafico prolunga l’ultimo prezzo fino a oggi. I giorni senza registrazioni 
 Cerca offerte è disponibile sia in Build sia in Da valutare (wishlist), anche con nomi incompleti. I risultati si salvano nella lista di origine. Anche il grafico wishlist prolunga il prezzo fino a oggi.
 
 Fonti: Amazon, AliExpress, eBay, PcComponentes, BPM Power, Alternate, LDLC, MediaWorld, Unieuro e Subito. Sono incluse inserzioni usate e ricondizionate. Una ricerca valuta fino a 20 candidati e restituisce al massimo 8 offerte, una per sito, ordinate per prezzo; quelle senza prezzo vengono dopo. La condizione è riconosciuta dal titolo quando disponibile. Si controllano direttamente al massimo 6 pagine; per le altre si usano gli estratti.
+
+Configurazione negozi: `frontend/assets/search-stores.json`, condivisa da server e interfaccia. Ogni negozio ha domain, name e productPattern (espressione per riconoscere il link prodotto). I limiti maxCandidates e maxOffers sono configurabili fino a 20. Dopo una modifica riavvia Partly e ricarica la pagina. Le chiavi API restano nel .env. Ogni negozio può avere un’offerta manuale e una web: la presenza della manuale non blocca la web, anche se più cara. Le offerte esistenti non vengono sovrascritte.

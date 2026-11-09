@@ -1,3 +1,4 @@
+import searchConfig from "../assets/search-stores.json" with { type: "json" };
 import { t, formatCurrency } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
@@ -24,20 +25,7 @@ export function offerUrlKey(value) {
     const url = new URL(value);
     const host = url.hostname.toLowerCase();
     if (url.protocol !== "https:" || url.username || url.password || (url.port && url.port !== "443")) return null;
-    const rules = [
-      ["amazon.it", "Amazon", /\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:\/|$)/i],
-      ["ebay.it", "eBay", /\/itm\/(?:[^/]+\/)?(\d{9,15})(?:\/|$)/],
-      ["aliexpress.com", "AliExpress", /\/item\/(\d+)\.html/],
-    ];
-    rules.push(
-      ["subito.it", "Subito", /\/[^/]+\/([^/]+-\d+\.htm)$/],
-      ["pccomponentes.it", "PcComponentes", /\/([^/]{12,})\/?$/],
-      ["bpm-power.com", "BPM Power", /\/(.+-b\d+)\/?$/],
-      ["alternate.it", "Alternate", /\/(.+\/product\/\d+)\/?$/],
-      ["ldlc.com", "LDLC", /\/(?:[^/]+\/)*(PB\d+\.html)$/i],
-      ["mediaworld.it", "MediaMarkt", /\/it\/product\/([^/]+\.html)$/],
-      ["unieuro.it", "Unieuro", /\/online\/(.+-pid[^/]+)\/?$/]
-    );
+    const rules = searchConfig.stores.map(item => [item.domain, item.name, new RegExp(item.productPattern, "i")]);
     for (const [domain, store, pattern] of rules) {
       const match = (host === domain || host.endsWith(`.${domain}`)) && url.pathname.match(pattern);
       if (match) return `${store}:${match[1].toUpperCase()}`;

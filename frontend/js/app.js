@@ -549,7 +549,7 @@ const offerSearch = createOfferSearch({
     const part = collection.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
     const snapshot = JSON.stringify({ components, watchlist, trash });
-    const existing = new Set(part.offers.map(old => offerUrlKey(old.url)?.split(":")[0] || old.store));
+    const existing = new Set(part.offers.filter(old => old.source === "experimental-web-search").map(old => offerUrlKey(old.url)?.split(":")[0] || old.store));
     let changed = 0;
     for (const offer of offers) {
       const key = offerUrlKey(offer.url);

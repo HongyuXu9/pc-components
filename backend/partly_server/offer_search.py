@@ -9,13 +9,15 @@ import urllib.request
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
-from .config import ENV_FILE, GEMINI_MODEL
+from .config import ENV_FILE, GEMINI_MODEL, FRONTEND_ROOT
 from .logging_config import logger
 
 
-STORES = {"amazon.it": "Amazon", "aliexpress.com": "AliExpress", "ebay.it": "eBay", "pccomponentes.it": "PcComponentes", "bpm-power.com": "BPM Power", "alternate.it": "Alternate", "ldlc.com": "LDLC", "mediaworld.it": "MediaMarkt", "unieuro.it": "Unieuro", "subito.it": "Subito"}
-MAX_CANDIDATES = 20
-MAX_OFFERS = 8
+SEARCH_CONFIG = json.loads((FRONTEND_ROOT / "assets" / "search-stores.json").read_text(encoding="utf-8"))
+STORES = {item["domain"]: item["name"] for item in SEARCH_CONFIG["stores"]}
+PRODUCT_PATTERNS = {item["name"]: re.compile(item["productPattern"], re.I) for item in SEARCH_CONFIG["stores"]}
+MAX_CANDIDATES = min(20, max(1, int(SEARCH_CONFIG["maxCandidates"])))
+MAX_OFFERS = min(20, max(1, int(SEARCH_CONFIG["maxOffers"])))
 CATEGORIES = {"CPU", "Cooling", "Motherboard", "RAM", "Storage", "GPU", "Case", "Power supply", "Monitor", "Accessories", "Other"}
 
 
@@ -51,13 +53,8 @@ def store_for(url):
 def product_key(url):
     store = store_for(url)
     path = urlsplit(url).path
-    patterns = {"Amazon": r"/(?:dp|gp/product)/([A-Z0-9]{10})(?:/|$)", "eBay": r"/itm/(?:[^/]+/)?(\d{9,15})(?:/|$)", "AliExpress": r"/item/(\d+)\.html"}
-    extra = {"Subito": r"/[^/]+/([^/]+-\d+\.htm)$", "PcComponentes": r"/([^/]{12,})/?$",
-             "BPM Power": r"/(.+-b\d+)/?$", "Alternate": r"/(.+/product/\d+)/?$",
-             "LDLC": r"/(?:[^/]+/)*(PB\d+\.html)$", "MediaMarkt": r"/it/product/([^/]+\.html)$",
-             "Unieuro": r"/online/(.+-pid[^/]+)/?$"}
-    patterns.update(extra)
-    match = re.search(patterns.get(store, r"(?!)"), path, re.I)
+    pattern = PRODUCT_PATTERNS.get(store)
+    match = pattern.search(path) if pattern else None
     return (store, match.group(1).upper()) if match else None
 
 

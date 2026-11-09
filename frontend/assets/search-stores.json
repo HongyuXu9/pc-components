@@ -1,0 +1,56 @@
+{
+  "maxCandidates": 20,
+  "maxOffers": 8,
+  "stores": [
+    {
+      "domain": "amazon.it",
+      "name": "Amazon",
+      "productPattern": "/(?:dp|gp/product)/([A-Z0-9]{10})(?:/|$)"
+    },
+    {
+      "domain": "aliexpress.com",
+      "name": "AliExpress",
+      "productPattern": "/item/(\\d+)\\.html"
+    },
+    {
+      "domain": "ebay.it",
+      "name": "eBay",
+      "productPattern": "/itm/(?:[^/]+/)?(\\d{9,15})(?:/|$)"
+    },
+    {
+      "domain": "pccomponentes.it",
+      "name": "PcComponentes",
+      "productPattern": "/([^/]{12,})/?$"
+    },
+    {
+      "domain": "bpm-power.com",
+      "name": "BPM Power",
+      "productPattern": "/(.+-b\\d+)/?$"
+    },
+    {
+      "domain": "alternate.it",
+      "name": "Alternate",
+      "productPattern": "/(.+/product/\\d+)/?$"
+    },
+    {
+      "domain": "ldlc.com",
+      "name": "LDLC",
+      "productPattern": "/(?:[^/]+/)*(PB\\d+\\.html)$"
+    },
+    {
+      "domain": "mediaworld.it",
+      "name": "MediaMarkt",
+      "productPattern": "/it/product/([^/]+\\.html)$"
+    },
+    {
+      "domain": "unieuro.it",
+      "name": "Unieuro",
+      "productPattern": "/online/(.+-pid[^/]+)/?$"
+    },
+    {
+      "domain": "subito.it",
+      "name": "Subito",
+      "productPattern": "/[^/]+/([^/]+-\\d+\\.htm)$"
+    }
+  ]
+}
