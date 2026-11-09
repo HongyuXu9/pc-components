@@ -21,27 +21,13 @@ MAX_OFFERS = min(20, max(1, int(SEARCH_CONFIG["maxOffers"])))
 CATEGORIES = {"CPU", "Cooling", "Motherboard", "RAM", "Storage", "GPU", "Case", "Power supply", "Monitor", "Accessories", "Other"}
 
 
-def eligibility(name, category):
-    if category not in CATEGORIES or len(name.strip()) < 10 or len(name.split()) < 2 or not re.search(r"\d", name) or not re.search(r"[a-zA-Z]", name):
-        return "Enter a specific brand and model code in the component name."
-    if category in {"RAM", "Storage"} and not re.search(r"\d+\s*(?:GB|TB|G|T)\b", name, re.I):
-        return "Include the exact capacity in the component name (GB or TB)."
-    if category == "RAM" and not re.search(r"\d{4,5}\s*(?:MHz|MT/s)?\b", name, re.I):
-        return "Include the RAM speed in the component name (for example 6000 MHz)."
-    if category == "RAM" and not re.search(r"\bCL\s*\d+", name, re.I):
-        return "Include the RAM latency in the component name (for example CL36)."
-    if category == "RAM" and not re.search(r"\b\d+\s*[x×]\s*\d+\s*GB\b", name, re.I):
-        return "Include the RAM kit configuration in the name (for example 2x16GB)."
-    if category != "RAM":
-        codes = re.findall(r"\b(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{3,}\b", name.lower())
-        if not any(not re.fullmatch(r"\d+(?:gb|tb|mhz|mm|w|g|t)", code) for code in codes):
-            return "Include the exact alphanumeric model or manufacturer part number in the name."
-    return ""
-
-
 def store_for(url):
-    parsed = urlsplit(str(url))
-    if parsed.scheme != "https" or parsed.username or parsed.password or parsed.port not in {None, 443}:
+    try:
+        parsed = urlsplit(str(url))
+        port = parsed.port
+    except ValueError:
+        return None
+    if parsed.scheme != "https" or parsed.username or parsed.password or port not in {None, 443}:
         return None
     host = (parsed.hostname or "").lower()
     for domain, name in STORES.items():
@@ -52,6 +38,8 @@ def store_for(url):
 
 def product_key(url):
     store = store_for(url)
+    if not store:
+        return None
     path = urlsplit(url).path
     pattern = PRODUCT_PATTERNS.get(store)
     match = pattern.search(path) if pattern else None
@@ -59,8 +47,7 @@ def product_key(url):
 
 
 def allowed_fetch(url):
-    parsed = urlsplit(url)
-    return bool(store_for(url) or (parsed.scheme == "https" and parsed.hostname == "vertexaisearch.cloud.google.com" and parsed.path.startswith("/grounding-api-redirect/") and not parsed.username and not parsed.password and parsed.port in {None, 443}))
+    return bool(store_for(url))
 
 
 class RestrictedRedirect(urllib.request.HTTPRedirectHandler):
@@ -281,27 +268,23 @@ def search_offers(name, category):
     proposed = [item for item in proposed if exact_identity(name, re.sub(r"\b(usato|used|refurbished|ricondizionato)\b", "", str(item.get("title", "")), flags=re.I))
                 and not re.search(r"\b(pc gaming|desktop|workstation|computer completo|notebook)\b", str(item.get("title", "")), re.I)]
     proposed = refine_candidates(name, proposed)
-    chunks = [{"web": {"uri": item["url"], "title": str(item.get("title", ""))}} for item in proposed]
-    metadata = {}
     logger.info("Tavily search returned %s listings, usage=%s", len(proposed), data.get("usage", {}))
-    # Only URLs actually present in Tavily search sources are eligible.
+    offers = []
     sources = {}
-    proposed_keys = {product_key(str(item.get("url", ""))) for item in proposed[:MAX_CANDIDATES] if isinstance(item, dict)} - {None}
-    for chunk in chunks[:6]:
-        uri = chunk.get("web", {}).get("uri", "")
-        if not uri or not allowed_fetch(uri):
+    checked = set()
+    for item in proposed[:MAX_CANDIDATES]:
+        url = str(item.get("url", ""))
+        identity = product_key(url)
+        if identity in checked or len(checked) >= 6:
             continue
+        checked.add(identity)
         try:
-            final, html = read_page(uri)
-            identity = product_key(final)
-            if identity in proposed_keys:
+            final, html = read_page(url)
+            # A redirect must retain this listing's identity, not another candidate's.
+            if product_key(final) == identity:
                 sources[identity] = (final, html)
-            if proposed_keys and proposed_keys.issubset(sources):
-                break
-        except (ValueError, OSError, urllib.error.URLError):
-            # Blocked/unsupported pages must never become verified offers.
+        except (ValueError, OSError):
             continue
-    offers, seen = [], set()
     for item in proposed[:MAX_CANDIDATES]:
         if not isinstance(item, dict):
             continue
@@ -311,22 +294,27 @@ def search_offers(name, category):
         if not identity:
             continue
         source = sources.get(identity)
-        price = verified_price(source[1], name, identity) if source else None
+        title = str(item.get("title", name))
+        condition = "Refurbished" if re.search(r"\b(ricondizionato|refurbished)\b", title, re.I) else "Used" if re.search(r"\b(usato|used|seconda mano)\b", title, re.I) else "Unknown"
+        price = verified_price(source[1], name, identity) if source and condition == "Unknown" else None
         verified = price is not None
         if price is None:
             price = item.get("selected_price") or snippet_price(str(item.get("title", "")) + " " + str(item.get("content", "")))
         offers.append({"title": str(item.get("title", name))[:250], "url": source[0] if source else url, "store": store,
-                       "price": price, "currency": "EUR", "condition": "Used" if re.search(r"\b(usato|used|seconda mano)\b", str(item.get("title", "")), re.I) else "Refurbished" if re.search(r"\b(ricondizionato|refurbished)\b", str(item.get("title", "")), re.I) else "New" if verified else "Unknown", "verified": verified,
+                       "price": price, "currency": "EUR", "condition": "New" if verified else condition, "verified": verified,
                        "reason": "Price, exact model, new condition and availability verified on the product page." if verified else "Could not verify the exact variant, price, new condition or stock on the product page."})
+    # Tracking links collapse by product ID and condition; distinct listings survive.
     best = {}
+    rank = lambda offer: (not offer["verified"], offer["price"] is None, offer["price"] or 0)
     for offer in offers:
-        old = best.get(offer["store"])
-        if old is None or (offer["price"] is not None and (old["price"] is None or offer["price"] < old["price"])):
-            best[offer["store"]] = offer
-    offers = sorted(best.values(), key=lambda offer: (offer["price"] is None, offer["price"] or 0))[:MAX_OFFERS]
+        identity = (product_key(offer["url"]), offer["condition"])
+        old = best.get(identity)
+        if old is None or rank(offer) < rank(old):
+            best[identity] = offer
+    offers = sorted(best.values(), key=rank)[:MAX_OFFERS]
     logger.info("Offer search completed: %.2fs, candidates=%s, verified=%s", time.monotonic() - started, len(offers), sum(item["verified"] for item in offers))
-    return {"offers": offers, "checkedAt": time.time(), "searchSuggestions": metadata.get("searchEntryPoint", {}).get("renderedContent", ""),
-            "searchSources": [chunk["web"] for chunk in chunks if isinstance(chunk.get("web"), dict) and chunk["web"].get("uri", "").startswith("https://")][:12]}
+    return {"offers": offers, "checkedAt": time.time(),
+            "searchSources": [{"uri": item["url"], "title": str(item.get("title", ""))} for item in proposed[:12]]}
 
 
 def handle_offer_search(handler):

@@ -2,21 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
 import vm from "node:vm";
-import { offerSearchEligibility, offerUrlKey, createOfferSearch } from "../frontend/js/offer-search.js";
-
-test("precise identities are required, with RAM/storage variant details", () => {
-  assert.ok(offerSearchEligibility({ name: "Corsair RAM", category: "RAM" }));
-  assert.ok(offerSearchEligibility({ name: "Corsair Vengeance DDR5 32GB", category: "RAM" }));
-  assert.ok(offerSearchEligibility({ name: "Corsair Vengeance DDR5 32GB 6000MHz CL36", category: "RAM" }));
-  assert.equal(offerSearchEligibility({ name: "Corsair Vengeance DDR5 2x16GB 6000MHz CL36", category: "RAM" }), "");
-  assert.ok(offerSearchEligibility({ name: "Samsung monitor 27", category: "Monitor" }));
-  assert.equal(offerSearchEligibility({ name: "AMD Ryzen 7 9700X CPU", category: "CPU" }), "");
-});
+import { offerUrlKey, createOfferSearch } from "../frontend/js/offer-search.js";
 
 test("product identity ignores tracking parameters and rejects foreign URLs", () => {
   assert.equal(offerUrlKey("https://www.amazon.it/dp/B0TEST1234?tag=example"), offerUrlKey("https://amazon.it/gp/product/B0TEST1234"));
   assert.equal(offerUrlKey("https://www.ebay.it/itm/name/123456789012"), "eBay:123456789012");
   assert.equal(offerUrlKey("https://it.aliexpress.com/item/1005001234567.html"), "AliExpress:1005001234567");
+  assert.equal(offerUrlKey("https://www.alternate.it/old-name/product/123456"), offerUrlKey("https://www.alternate.it/new-name/product/123456"));
+  assert.equal(offerUrlKey("https://www.subito.it/informatica/old-name-123456.htm"), offerUrlKey("https://www.subito.it/informatica/new-name-123456.htm"));
   for (const url of ["https://amazon.it.evil.example/dp/B0TEST1234", "javascript:alert(1)", "https://user@amazon.it/dp/B0TEST1234", "https://amazon.it/s?k=cpu"]) assert.equal(offerUrlKey(url), null);
 });
 
@@ -66,21 +59,22 @@ test("Build integration preserves manual prices, skips duplicate products and re
   const offers = [
     { store: "Amazon", url: "https://amazon.it/gp/product/B0TEST1234?tag=other", price: 90 },
     { store: "eBay", url: "https://www.ebay.it/itm/123456789012", price: 100 },
+    { store: "Amazon", url: "https://amazon.it/dp/B0OTHER123", price: 110 },
   ];
-  assert.equal(await options.addVerifiedOffers(requested, offers), 2);
+  assert.equal(await options.addVerifiedOffers(requested, offers), 3);
   assert.equal(manual.price, 120);
   assert.equal(JSON.stringify(manual), before);
   assert.equal(manual.history.length, 1);
-  assert.equal(part.offers.length, 3);
+  assert.equal(part.offers.length, 4);
   assert.equal(await options.addVerifiedOffers(requested, offers), 0);
   assert.equal(saves, 1);
   assert.equal(await options.addVerifiedOffers(requested, [{ ...offers[0], price: 250 }]), 0);
   assert.equal(manual.price, 120);
   const wished = { id: 2, name: part.name, category: part.category, offers: [] };
   context.watchlist.push(wished);
-  assert.equal(await options.addVerifiedOffers({ id: 2, name: wished.name, category: wished.category, collection: "watchlist" }, offers), 2);
-  assert.equal(wished.offers.length, 2);
-  assert.equal(part.offers.length, 3);
+  assert.equal(await options.addVerifiedOffers({ id: 2, name: wished.name, category: wished.category, collection: "watchlist" }, offers), 3);
+  assert.equal(wished.offers.length, 3);
+  assert.equal(part.offers.length, 4);
   part.name = "Changed model";
   assert.equal(await options.addVerifiedOffers(requested, offers), null);
 });

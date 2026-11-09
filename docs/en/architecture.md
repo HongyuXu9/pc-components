@@ -60,7 +60,7 @@ in the log. Gemini supports screenshot recognition and optional offer refinement
 
 The search adds new product links, including results that need manual checking.
 It never changes an existing offer's price, link or history. The same product
-link is not added twice; only one offer per store is added.
+link is not added twice; multiple offers per store can be added.
 A verified result has a matching model and page metadata confirming a new,
 in-stock product with a EUR price. Search results display their price when available, otherwise `undefined`.
 When no reliable price is available, the saved offer has no price and an empty
@@ -75,16 +75,10 @@ cannot guarantee the lowest price across the whole web.
 
 The server checks product pages; the browser appends new offers and saves through `/api/data`. Missing prices use JSON null and an empty history. No Google Search or Live API is used.
 
-Search selects the lowest available EUR price per store among returned listings, including prices in Tavily snippets. Snippet prices need manual checking and may include stale or conditional amounts. Stores with an existing web offer are skipped; existing prices and links are never changed. If no price is found, one link per missing store can still be added without a price.
-
-UI: offers are labeled From search or Manual. Missing prices display `undefined`. The results window has a Close button at the bottom. Verification labels are not displayed.
+Search retains multiple listings per store and deduplicates by product URL identifier and condition. Existing offers stay unchanged. Verified prices rank before snippet prices; missing prices remain null and do not affect the minimum. New, used and refurbished listings stay distinct. At most maxCandidates (default 20) are evaluated and maxOffers (default 8) returned. Up to six distinct product pages are checked. Snippet prices require manual verification. The results window shows verification and condition. Tavily sources use uri/title; the obsolete suggestions HTML field is removed. Store rules and limits are shared in frontend/assets/search-stores.json. No additional dependencies or startup settings are required.
 
 Search first filters titles by exact model, then uses configured Gemini to select relevant Tavily candidates without Google Search. Links and prices remain source-bound. Gemini failures fall back to local filtering. Amazon snippets can omit prices; missing prices stay undefined.
 
 The chart carries the last recorded price through today. Days without records retain the previous price; changes use steps. Dots represent actual editable records only. No synthetic history is saved.
 
 Find offers is available in Build and Watchlist, including incomplete model names. Results save into the originating collection. Watchlist charts also carry prices through today.
-
-Sources: Amazon, AliExpress, eBay, PcComponentes, BPM Power, Alternate, LDLC, MediaWorld, Unieuro and Subito, including used/refurbished listings. Search evaluates up to 20 candidates and returns at most 8 offers, one per site, sorted by price with missing prices last. Condition comes from titles when identifiable. Direct page checks are capped at 6; other listings use snippets.
-
-Store configuration: `frontend/assets/search-stores.json`, shared by server and browser. Each entry has domain, name and productPattern (product URL expression). maxCandidates and maxOffers are configurable up to 20. Restart Partly and reload after edits. API keys stay in .env. A manual and a web offer can coexist per store, even if the web price is higher. Existing offers are never overwritten.

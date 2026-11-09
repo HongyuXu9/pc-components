@@ -17,7 +17,7 @@ import { renderSavedCollection } from "./saved-collections.js";
 import { buildSummary } from "./build-summary.js";
 import { appendHighlightedText } from "./summary-search.js";
 import { BUILD_CATEGORY_ORDER, groupBuildParts } from "./build-sections.js";
-import { createOfferSearch, offerSearchEligibility, offerUrlKey } from "./offer-search.js";
+import { createOfferSearch, offerUrlKey } from "./offer-search.js";
 import {
   formatCurrency,
   formatDate,
@@ -549,12 +549,12 @@ const offerSearch = createOfferSearch({
     const part = collection.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
     const snapshot = JSON.stringify({ components, watchlist, trash });
-    const existing = new Set(part.offers.filter(old => old.source === "experimental-web-search").map(old => offerUrlKey(old.url)?.split(":")[0] || old.store));
+    const existing = new Set(part.offers.filter(old => old.source === "experimental-web-search").map(old => `${offerUrlKey(old.url)}:${old.condition || "Unknown"}`));
     let changed = 0;
     for (const offer of offers) {
       const key = offerUrlKey(offer.url);
-      if (!key || existing.has(key.split(":")[0])) continue;
-      existing.add(key.split(":")[0]);
+      if (!key || existing.has(`${key}:${offer.condition || "Unknown"}`)) continue;
+      existing.add(`${key}:${offer.condition || "Unknown"}`);
       const price = offer.currency === "EUR" && Number.isFinite(offer.price) && offer.price > 0 ? offer.price : null;
       part.offers.push({ id: `web-${crypto.randomUUID()}`, store: key.split(":")[0],
         condition: ["New", "Used", "Refurbished"].includes(offer.condition) ? offer.condition : "Unknown", url: offer.url, price,

@@ -73,7 +73,7 @@ dal servizio viene scritto nel log. Gemini supporta screenshot AI e selezione de
 
 La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
 Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
-due volte lo stesso prodotto; viene aggiunta una sola offerta per negozio.
+due volte lo stesso prodotto; si possono aggiungere più offerte per negozio.
 Un risultato è verificato se la pagina conferma modello, prodotto nuovo,
 disponibilità e prezzo in euro. Il risultato mostra il prezzo disponibile, altrimenti `undefined`.
 Se manca un prezzo attendibile, salva il link senza prezzo e senza cronologia.
@@ -84,9 +84,7 @@ Controlla sempre modello, variante, condizione, disponibilità e prezzo finale:
 la ricerca può includere prodotti diversi. La spedizione è esclusa e non è
 garantito il minimo assoluto di tutti i negozi online.
 
-La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi con un’offerta web già presente vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.
-
-Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo mancante appare come `undefined`. La finestra risultati include un pulsante Chiudi. Non sono mostrate etichette di verifica.
+La ricerca conserva più inserzioni per negozio ed elimina i duplicati per identificativo nel link prodotto e condizione. Le offerte esistenti restano invariate. I prezzi verificati precedono quelli degli estratti; i prezzi mancanti restano null e non entrano nel minimo. Nuovo, usato e ricondizionato restano distinti. Si valutano al massimo maxCandidates (20 predefiniti) e si restituiscono maxOffers (8 predefinite). Si controllano fino a sei pagine prodotto distinte. I prezzi degli estratti richiedono verifica manuale. La finestra risultati mostra verifica e condizione. Le fonti Tavily usano uri/title; il vecchio campo HTML dei suggerimenti è rimosso. Regole e limiti condivisi sono in frontend/assets/search-stores.json. Non servono nuove dipendenze o impostazioni di avvio.
 
 Le offerte mostrano un badge blu “Da ricerca” oppure grigio “Manuale”, con testo e indicatore colorato.
 
@@ -97,7 +95,3 @@ La ricerca filtra prima i titoli per modello e variante. Gemini, se configurato,
 Il grafico prolunga l’ultimo prezzo fino a oggi. I giorni senza registrazioni mantengono il prezzo precedente; i cambiamenti sono a gradini. I punti indicano solo registrazioni reali, modificabili con un clic. Non vengono aggiunti dati alla cronologia.
 
 Cerca offerte è disponibile sia in Build sia in Da valutare (wishlist), anche con nomi incompleti. I risultati si salvano nella lista di origine. Anche il grafico wishlist prolunga il prezzo fino a oggi.
-
-Fonti: Amazon, AliExpress, eBay, PcComponentes, BPM Power, Alternate, LDLC, MediaWorld, Unieuro e Subito. Sono incluse inserzioni usate e ricondizionate. Una ricerca valuta fino a 20 candidati e restituisce al massimo 8 offerte, una per sito, ordinate per prezzo; quelle senza prezzo vengono dopo. La condizione è riconosciuta dal titolo quando disponibile. Si controllano direttamente al massimo 6 pagine; per le altre si usano gli estratti.
-
-Configurazione negozi: `frontend/assets/search-stores.json`, condivisa da server e interfaccia. Ogni negozio ha domain, name e productPattern (espressione per riconoscere il link prodotto). I limiti maxCandidates e maxOffers sono configurabili fino a 20. Dopo una modifica riavvia Partly e ricarica la pagina. Le chiavi API restano nel .env. Ogni negozio può avere un’offerta manuale e una web: la presenza della manuale non blocca la web, anche se più cara. Le offerte esistenti non vengono sovrascritte.

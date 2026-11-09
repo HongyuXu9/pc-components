@@ -25,12 +25,12 @@
     {
       "domain": "bpm-power.com",
       "name": "BPM Power",
-      "productPattern": "/(.+-b\\d+)/?$"
+      "productPattern": "/(?:[^/]+-)?(b\\d+)/?$"
     },
     {
       "domain": "alternate.it",
       "name": "Alternate",
-      "productPattern": "/(.+/product/\\d+)/?$"
+      "productPattern": "/.+/product/(\\d+)/?$"
     },
     {
       "domain": "ldlc.com",
@@ -40,17 +40,17 @@
     {
       "domain": "mediaworld.it",
       "name": "MediaMarkt",
-      "productPattern": "/it/product/([^/]+\\.html)$"
+      "productPattern": "/it/product/[^/]+-(\\d+)\\.html$"
     },
     {
       "domain": "unieuro.it",
       "name": "Unieuro",
-      "productPattern": "/online/(.+-pid[^/]+)/?$"
+      "productPattern": "/online/[^/]+-pid([^/]+)/?$"
     },
     {
       "domain": "subito.it",
       "name": "Subito",
-      "productPattern": "/[^/]+/([^/]+-\\d+\\.htm)$"
+      "productPattern": "/[^/]+/[^/]+-(\\d+)\\.htm$"
     }
   ]
 }

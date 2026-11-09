@@ -16,7 +16,6 @@
 .offer-search-result small { color: #89958b; line-height: 1.5; }
 .offer-search-sources { margin-top: 16px; font-size: 11px; color: #89958b; }
 #offerSearchSources { display: grid; gap: 8px; padding-top: 10px; }
-#offerSearchSuggestions iframe { width: 100%; min-height: 150px; border: 0; margin-top: 12px; }
 .build-summary-panel { margin-top: 20px; overflow: hidden; }
 .summary-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; margin: 0 20px 14px; padding: 4px; border: 1px solid #e1e9dc; border-radius: 10px; background: #f3f7ef; }
 .summary-tab { padding: 7px 14px; border: 0; border-radius: 7px; background: transparent; color: #7a8978; font: 600 11px var(--font); cursor: pointer; }
