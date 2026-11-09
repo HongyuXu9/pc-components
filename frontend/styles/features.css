@@ -285,3 +285,34 @@
   width: 28px;
   height: 28px;
 }
+
+/* Offer origin stays readable through both text and color. */
+.offer-origin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.offer-origin::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.offer-origin-search {
+  color: #17539b;
+  background: #e8f2ff;
+  border-color: #abcaf0;
+}
+.offer-origin-manual {
+  color: #46515e;
+  background: #eef0f3;
+  border-color: #c7cdd5;
+}
