@@ -32,6 +32,36 @@ class OfferSearchTests(unittest.TestCase):
             with self.subTest(quote=quote):
                 self.assertIsNone(search.snippet_price(quote))
 
+    def test_price_context_allows_discounted_selling_price_and_free_shipping(self):
+        for quote in ["Prezzo in sconto EUR 200", "Prezzo dopo sconto EUR 200", "Prezzo prodotto EUR 200 con spedizione gratuita", "Sconto disponibile; prezzo EUR 200, spedizione inclusa", "Spedizione gratuita. Prezzo EUR 200"]:
+            with self.subTest(quote=quote):
+                self.assertEqual(search.snippet_price(quote), 200)
+        for quote in ["EUR 20 di sconto", "EUR 5 per spedizione", "EUR 20/mese", "EUR 200 con coupon"]:
+            with self.subTest(quote=quote):
+                self.assertIsNone(search.snippet_price(quote))
+
+    def test_incomplete_title_reaches_gemini_but_final_page_model_stays_strict(self):
+        listing = {"title": "Ryzen 7 9700X", "url": URL, "content": "Processore AMD Ryzen 7 9700X, prezzo EUR 200"}
+        wrong = {"title": "AMD Ryzen 7 9700X3D", "url": "https://amazon.it/dp/B0WRONG123"}
+        tavily = unittest.mock.MagicMock()
+        tavily.__enter__.return_value.read.return_value = json.dumps({"results": [listing, wrong]}).encode()
+        gemini = unittest.mock.MagicMock()
+        gemini.__enter__.return_value.read.return_value = json.dumps({"candidates": [{"content": {"parts": [{"text": json.dumps({"selected": [{"id": 0, "price_evidence": "prezzo EUR 200"}]})}]}}]}).encode()
+        with patch.object(search, "load_key", return_value="test"), patch.object(search, "read_page", return_value=(URL, page().replace("9700X CPU", "9700X3D CPU"))), patch.object(search.urllib.request, "urlopen", side_effect=lambda request, **kwargs: gemini if "generativelanguage" in request.full_url else tavily) as call:
+            offers = search.search_offers(NAME, "CPU")["offers"]
+        self.assertEqual(len(offers), 1)
+        self.assertEqual(offers[0]["price"], 200)
+        self.assertFalse(offers[0]["verified"])
+        gemini_calls = [entry for entry in call.call_args_list if "generativelanguage" in entry.args[0].full_url]
+        self.assertEqual(len(gemini_calls), 1)
+        prompt = json.loads(gemini_calls[0].args[0].data)["contents"][0]["parts"][0]["text"]
+        self.assertIn("Ryzen 7 9700X", prompt)
+        self.assertIn("9700X3D", prompt)
+        with patch.object(search, "load_key", return_value=""):
+            self.assertEqual(search.refine_candidates(NAME, [listing, wrong]), [])
+        with patch.object(search, "load_key", return_value="test"), patch.object(search.urllib.request, "urlopen", side_effect=OSError("unavailable")):
+            self.assertEqual(search.refine_candidates(NAME, [listing, wrong]), [])
+
     def test_gemini_selects_product_prices_in_one_batch(self):
         cases = [
             ("Prezzo EUR 200. Sconto EUR 20", "Prezzo EUR 200", 200),
@@ -174,7 +204,7 @@ class OfferSearchTests(unittest.TestCase):
         used = {"title": NAME + " usato", "url": "https://ebay.it/itm/123456789012"}
         generic = {"title": "AMD processor", "content": NAME + " EUR 150", "url": "https://amazon.it/dp/B0OTHER123"}
         wrong = {"title": "AMD Ryzen 7 9700X3D", "content": NAME, "url": "https://amazon.it/dp/B0WRONG123"}
-        with patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: items), patch.object(search, "read_page", side_effect=OSError("blocked")), patch.object(search.urllib.request, "urlopen", side_effect=[response([first]), response([first, generic, wrong]), response([used])]) as call:
+        with patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: [item for item in items if "9700X3D" not in item["title"]]), patch.object(search, "read_page", side_effect=OSError("blocked")), patch.object(search.urllib.request, "urlopen", side_effect=[response([first]), response([first, generic, wrong]), response([used])]) as call:
             result = search.search_offers(NAME, "CPU")
         self.assertEqual(len(result["offers"]), 3)
         self.assertIn("Used", {offer["condition"] for offer in result["offers"]})
