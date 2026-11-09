@@ -291,10 +291,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border: 1px solid;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
@@ -316,3 +316,12 @@
   background: #eef0f3;
   border-color: #c7cdd5;
 }
+
+.offer-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+.offer-name > .condition { margin-left: 0; }
+.offer-name > .offer-origin { flex-shrink: 0; }

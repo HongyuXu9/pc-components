@@ -68,3 +68,5 @@ Search selects the lowest available EUR price per store among returned listings,
 UI: offers are labeled From search or Manual. Missing prices display `undefined`. The results window has a Close button at the bottom. Verification labels are not displayed.
 
 Offer origin uses a blue From search badge or a gray Manual badge, with text and a colored dot.
+
+Origin badges appear before the store name, with compact spacing and aligned text.

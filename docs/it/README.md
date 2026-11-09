@@ -89,3 +89,5 @@ La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche d
 Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo mancante appare come `undefined`. La finestra risultati include un pulsante Chiudi. Non sono mostrate etichette di verifica.
 
 Le offerte mostrano un badge blu “Da ricerca” oppure grigio “Manuale”, con testo e indicatore colorato.
+
+Il badge di provenienza appare a sinistra del negozio, compatto e allineato al testo.
