@@ -76,3 +76,5 @@ cannot guarantee the lowest price across the whole web.
 The server checks product pages; the browser appends new offers and saves through `/api/data`. Missing prices use JSON null and an empty history. No Google Search or Live API is used.
 
 Search selects the lowest available EUR price per store among returned listings, including prices in Tavily snippets. Snippet prices need manual checking and may include stale or conditional amounts. Stores already saved are skipped entirely; existing prices and links are never changed. If no price is found, one link per missing store can still be added without a price.
+
+UI: offers are labeled From search or Manual. Missing prices display `undefined`. The results window has a Close button at the bottom. Verification labels are not displayed.

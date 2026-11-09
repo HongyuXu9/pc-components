@@ -85,3 +85,5 @@ la ricerca può includere prodotti diversi. La spedizione è esclusa e non è
 garantito il minimo assoluto di tutti i negozi online.
 
 La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi già presenti vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.
+
+Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo mancante appare come `undefined`. La finestra risultati include un pulsante Chiudi. Non sono mostrate etichette di verifica.

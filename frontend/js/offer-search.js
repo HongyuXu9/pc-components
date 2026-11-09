@@ -52,6 +52,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     if (previousFocus?.isConnected) previousFocus.focus();
   }
   $("closeOfferSearch").addEventListener("click", close);
+  $("closeOfferSearchResults").addEventListener("click", close);
   modal.addEventListener("click", (event) => { if (event.target === modal) close(); });
   modal.addEventListener("keydown", (event) => {
     if (event.key === "Escape") { event.stopPropagation(); close(); }
@@ -95,20 +96,20 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
       const added = offers.length ? await addVerifiedOffers(requestPart, offers) : 0;
       if (currentGeneration !== generation) return;
       status.textContent = added === null ? t("Component changed or save failed. No search offers were added.")
-        : t("{count} search offers added. Existing offers unchanged; check prices manually.", { count: added });
+        : t("{count} search offers added. Existing offers unchanged.", { count: added });
       if (!offers.length) status.textContent = t("No search offers found. Existing offers were not changed.");
       for (const offer of offers) {
         const row = document.createElement("article");
         row.className = "offer-search-result";
         const label = document.createElement("strong");
-        label.textContent = `${offer.store} · ${Number.isFinite(offer.price) ? `${formatCurrency(offer.price)}${offer.verified ? "" : ` · ${t("Needs verification")}`}` : t("Needs verification")}`;
+        label.textContent = `${offer.store} · ${Number.isFinite(offer.price) ? formatCurrency(offer.price) : "undefined"}`;
         const link = document.createElement("a");
         link.href = offer.url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = offer.title || offer.store;
         const note = document.createElement("small");
-        note.textContent = t(offer.reason || "Needs verification");
+        note.textContent = t("From search");
         row.append(label, link, note);
         $("offerSearchResults").append(row);
       }

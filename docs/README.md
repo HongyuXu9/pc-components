@@ -42,3 +42,5 @@ runtime files; they remain excluded from Git.
 Read [AGENTS.md](../AGENTS.md) before changing the project. Update the English, Italian and Chinese guides together when behavior changes. Local learning notes in `docs/personale/` are excluded from Git and are not the main product documentation.
 
 Search selects the lowest available EUR price per store among returned listings, including prices in Tavily snippets. Snippet prices need manual checking and may include stale or conditional amounts. Stores already saved are skipped entirely; existing prices and links are never changed. If no price is found, one link per missing store can still be added without a price.
+
+UI: offers are labeled From search or Manual. Missing prices display `undefined`. The results window has a Close button at the bottom. Verification labels are not displayed.

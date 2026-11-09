@@ -75,3 +75,5 @@ garantito il minimo assoluto di tutti i negozi online.
 Il server controlla le pagine prodotto; il browser aggiunge le offerte e salva tramite `/api/data`. Prezzi mancanti: null nel JSON e cronologia vuota. Non usiamo Google Search o Live API.
 
 La ricerca sceglie il prezzo EUR più basso per negozio tra i risultati, anche dagli estratti Tavily. Questi prezzi sono da controllare: possono essere vecchi o condizionati. I negozi già presenti vengono saltati senza modifiche. Se manca il prezzo, aggiunge un solo link per negozio assente.
+
+Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo mancante appare come `undefined`. La finestra risultati include un pulsante Chiudi. Non sono mostrate etichette di verifica.
