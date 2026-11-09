@@ -249,9 +249,8 @@ def refine_candidates(name, candidates):
 
 
 def search_offers(name, category):
-    reason = eligibility(name, category)
-    if reason:
-        raise ValueError(reason)
+    if not name.strip() or len(name) > 250 or category not in CATEGORIES:
+        raise ValueError("Invalid component name or category")
     key = load_key()
     if not key:
         raise ValueError("Tavily is not configured. Add TAVILY_API_KEY to .env.")

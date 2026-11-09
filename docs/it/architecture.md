@@ -81,3 +81,5 @@ Interfaccia: le offerte mostrano “Da ricerca” o “Manuale”. Il prezzo man
 La ricerca filtra prima i titoli per modello e variante. Gemini, se configurato, seleziona i candidati Tavily pertinenti senza Google Search. Prezzi e link restano vincolati alle fonti. Se Gemini non risponde, usa i candidati filtrati localmente. Amazon può restituire estratti senza prezzo: in quel caso resta undefined.
 
 Il grafico prolunga l’ultimo prezzo fino a oggi. I giorni senza registrazioni mantengono il prezzo precedente; i cambiamenti sono a gradini. I punti indicano solo registrazioni reali, modificabili con un clic. Non vengono aggiunti dati alla cronologia.
+
+Cerca offerte è disponibile sia in Build sia in Da valutare (wishlist), anche con nomi incompleti. I risultati si salvano nella lista di origine. Anche il grafico wishlist prolunga il prezzo fino a oggi.

@@ -64,14 +64,12 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     }
   });
 
-  async function open(part) {
-    const missing = offerSearchEligibility(part);
-    if (missing) return;
+  async function open(part, collection = "build") {
     controller?.abort();
     controller = new AbortController();
     const activeController = controller;
     const currentGeneration = ++generation;
-    const requestPart = { id: part.id, name: part.name, category: part.category };
+    const requestPart = { id: part.id, name: part.name, category: part.category, collection };
     previousFocus = document.activeElement;
     $("offerSearchName").textContent = part.name;
     $("offerSearchResults").replaceChildren();

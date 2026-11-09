@@ -334,14 +334,12 @@ function render() {
       : '<div class="part-visual image-missing"></div>';
     const offerCountLabel = t(p.offers.length === 1 ? "store offer" : "store offers");
     top.innerHTML = `${visual}<div class="part-title"><strong>${escapeHtml(p.name)}</strong><span>${escapeHtml(t(p.category))} · ${p.offers.length} ${escapeHtml(offerCountLabel)}</span></div><div class="component-actions"><button class="mini-button" data-act="add-offer" data-id="${escapeAttr(p.id)}">${escapeHtml(t("＋ Store"))}</button><button class="mini-button" title="${escapeAttr(t("Move to watchlist"))}" data-act="watchlist" data-id="${escapeAttr(p.id)}">☆ ${escapeHtml(t("Watchlist"))}</button><button class="icon-button" title="${escapeAttr(t("Edit"))}" data-act="edit" data-id="${escapeAttr(p.id)}">✎</button><button class="icon-button" title="${escapeAttr(t("Delete"))}" data-act="delete" data-id="${escapeAttr(p.id)}">×</button></div>`;
-    const searchReason = offerSearchEligibility(p);
     const searchButton = document.createElement("button");
     searchButton.type = "button";
     searchButton.className = "mini-button experimental-offer-button";
     searchButton.dataset.act = "search-offers";
     searchButton.dataset.id = p.id;
-    searchButton.disabled = Boolean(searchReason);
-    searchButton.title = t(searchReason || "Search new offers in EUR on Amazon, AliExpress and eBay.");
+    searchButton.title = t("Search new offers in EUR on Amazon, AliExpress and eBay.");
     searchButton.textContent = t("⌕ Find offers");
     top.querySelector(".component-actions").prepend(searchButton);
     row.append(top);
@@ -547,7 +545,8 @@ $("offerForm").addEventListener("submit", async (e) => {
 const offerSearch = createOfferSearch({
   reportClientIssue,
   async addVerifiedOffers(requested, offers) {
-    const part = components.find((item) => String(item.id) === String(requested.id));
+    const collection = requested.collection === "watchlist" ? watchlist : components;
+    const part = collection.find((item) => String(item.id) === String(requested.id));
     if (!part || part.name !== requested.name || part.category !== requested.category || !dataReady) return null;
     const snapshot = JSON.stringify({ components, watchlist, trash });
     const existing = new Set(part.offers.map(old => offerUrlKey(old.url)?.split(":")[0] || old.store));
@@ -663,6 +662,10 @@ $("watchlistList").addEventListener("click", async (event) => {
   const part = watchlist.find((item) => String(item.id) === button.dataset.id);
   if (!part) return;
   const action = button.dataset.listAct;
+  if (action === "search-offers") {
+    offerSearch.open(part, "watchlist");
+    return;
+  }
   if (action === "add-offer") {
     addOffer(part.id, "watchlist");
     return;

@@ -76,6 +76,11 @@ test("Build integration preserves manual prices, skips duplicate products and re
   assert.equal(saves, 1);
   assert.equal(await options.addVerifiedOffers(requested, [{ ...offers[0], price: 250 }]), 0);
   assert.equal(manual.price, 120);
+  const wished = { id: 2, name: part.name, category: part.category, offers: [] };
+  context.watchlist.push(wished);
+  assert.equal(await options.addVerifiedOffers({ id: 2, name: wished.name, category: wished.category, collection: "watchlist" }, offers), 2);
+  assert.equal(wished.offers.length, 2);
+  assert.equal(part.offers.length, 2);
   part.name = "Changed model";
   assert.equal(await options.addVerifiedOffers(requested, offers), null);
 });
