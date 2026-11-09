@@ -2,6 +2,28 @@ import { formatDate, t } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 
+export function priceTimeline(offers, currentDate) {
+  const recorded = offers.flatMap(offer => offer.history.map(entry => entry.date)).sort();
+  if (!recorded.length) return { dates: [], series: [] };
+  const end = recorded.at(-1) > currentDate ? recorded.at(-1) : currentDate;
+  const dates = [];
+  for (let date = recorded[0]; date <= end;) {
+    dates.push(date);
+    const next = new Date(date + "T00:00:00Z");
+    next.setUTCDate(next.getUTCDate() + 1);
+    date = next.toISOString().slice(0, 10);
+  }
+  const series = offers.map(offer => {
+    const history = [...offer.history].sort((a, b) => a.date.localeCompare(b.date));
+    let index = 0, price = null;
+    return dates.map(date => {
+      while (index < history.length && history[index].date <= date) price = history[index++].price;
+      return price;
+    });
+  });
+  return { dates, series };
+}
+
 export function createPriceChart({
   getComponents,
   getWatchlist,
@@ -86,11 +108,7 @@ export function createPriceChart({
     }
     if (!product || !hasHistory) return;
 
-    const dates = [
-      ...new Set(
-        offers.flatMap((offer) => offer.history.map((entry) => entry.date)),
-      ),
-    ].sort((a, b) => a.localeCompare(b));
+    const { dates, series } = priceTimeline(offers, today());
     const labels = dates.map((date) =>
       formatDate(date, {
         day: "numeric",
@@ -98,23 +116,21 @@ export function createPriceChart({
         year: "2-digit",
       }),
     );
-    const datasets = offers.map((offer) => {
+    const datasets = offers.map((offer, index) => {
       const color = storeColor(offer.store);
       return {
         label: offer.store + " · " + t(offer.condition || "New"),
-        data: dates.map(
-          (date) =>
-            offer.history.find((entry) => entry.date === date)?.price ?? null,
-        ),
+        data: series[index],
         borderColor: color,
         backgroundColor: color,
         pointBackgroundColor: color,
         pointBorderColor: "#ffffff",
         pointBorderWidth: 2,
         fill: false,
-        tension: 0.25,
+        tension: 0,
+        stepped: "before",
         spanGaps: true,
-        pointRadius: 4,
+        pointRadius: context => offer.history.some(entry => entry.date === dates[context.dataIndex]) ? 4 : 0,
         pointHoverRadius: 8,
         pointHitRadius: 12,
         borderWidth: 2,

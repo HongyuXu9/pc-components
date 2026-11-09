@@ -155,3 +155,5 @@ node --test tests/offer-search.test.mjs
 界面以搜索添加或手动添加区分报价。缺失价格显示 `undefined`。结果窗口底部有关闭按钮，不显示验证标签。
 
 搜索先按型号过滤标题，再由已配置的 Gemini 筛选 Tavily 候选，不调用 Google Search。链接和价格必须来自来源。Gemini 失败时使用本地过滤结果。Amazon 摘要缺少价格时仍显示 undefined。
+
+价格图将最近价格延续至今天。无记录日期沿用前值，价格变化显示为阶梯。圆点只表示真实记录，可点击编辑；不会添加虚构历史。
