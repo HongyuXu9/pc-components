@@ -27,6 +27,61 @@ class OfferSearchTests(unittest.TestCase):
         self.assertEqual(search.snippet_price("199.99 EUR"), 199.99)
         self.assertIsNone(search.snippet_price("9700X 250 dollars"))
 
+    def test_price_quotes_reject_ambiguous_or_non_product_amounts(self):
+        for quote in ["Sconto EUR 20", "Coupon EUR 15", "3 rate da EUR 60", "Shipping EUR 5", "Spedizione EUR 7", "EUR 200 invece di EUR 250", "EUR 100 / EUR 200", "Risparmia EUR 30"]:
+            with self.subTest(quote=quote):
+                self.assertIsNone(search.snippet_price(quote))
+
+    def test_gemini_selects_product_prices_in_one_batch(self):
+        cases = [
+            ("Prezzo EUR 200. Sconto EUR 20", "Prezzo EUR 200", 200),
+            ("Prezzo EUR 210. Coupon EUR 15; con coupon EUR 195", "Prezzo EUR 210", 210),
+            ("3 rate da EUR 70. Prezzo totale EUR 210", "Prezzo totale EUR 210", 210),
+            ("Spedizione EUR 5. Prezzo prodotto EUR 220", "Prezzo prodotto EUR 220", 220),
+            ("Prima EUR 300. Ora EUR 240. Risparmia EUR 60", "Ora EUR 240", 240),
+            ("Coupon EUR 20; 3 rate da EUR 50; spedizione EUR 5", "", None),
+            ("Prezzo EUR 200 oppure EUR 250", "Prezzo EUR 200 oppure EUR 250", None),
+            ("Coupon EUR 20", "Coupon EUR 20", None),
+            ("Prezzo EUR 200", "Prezzo EUR 1", None),
+        ]
+        candidates = [{"title": NAME, "url": URL, "content": text} for text, _, _ in cases]
+        candidates.append({"title": "AMD Ryzen 7 9700X3D", "url": URL})
+        selected = [{"id": i, "price_evidence": quote} for i, (_, quote, _) in enumerate(cases)]
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({"candidates": [{"content": {"parts": [{"text": json.dumps({"selected": selected})}]}}]}).encode()
+        with patch.object(search, "load_key", return_value="test"), patch.object(search.urllib.request, "urlopen", return_value=response) as call:
+            result = search.refine_candidates(NAME, candidates)
+        call.assert_called_once()
+        self.assertEqual(len(result), len(cases))
+        self.assertEqual([item.get("selected_price") for item in result], [price for _, _, price in cases])
+        prompt = json.loads(call.call_args.args[0].data)["contents"][0]["parts"][0]["text"]
+        for requirement in ["exact model", "coupons", "installment", "shipping", "unverified"]:
+            self.assertIn(requirement, prompt)
+
+    def test_page_price_wins_and_missing_gemini_price_stays_null(self):
+        listings = [{"title": NAME, "url": URL, "content": "Prezzo EUR 250. Coupon EUR 20. Spedizione EUR 5", "selected_price": 5}]
+        tavily = unittest.mock.MagicMock()
+        tavily.__enter__.return_value.read.return_value = json.dumps({"results": listings}).encode()
+        gemini = unittest.mock.MagicMock()
+        def selection(quote):
+            return json.dumps({"candidates": [{"content": {"parts": [{"text": json.dumps({"selected": [{"id": 0, "price_evidence": quote}]})}]}}]}).encode()
+        with patch.object(search, "load_key", return_value="test"), patch.object(search, "read_page", return_value=(URL, page())) as read, patch.object(search.urllib.request, "urlopen", side_effect=lambda request, **kwargs: gemini if "generativelanguage" in request.full_url else tavily) as call:
+            gemini.__enter__.return_value.read.return_value = selection("Prezzo EUR 250")
+            offer = search.search_offers(NAME, "CPU")["offers"][0]
+            self.assertEqual(offer["price"], 199.99)
+            self.assertTrue(offer["verified"])
+            self.assertEqual(sum("generativelanguage" in entry.args[0].full_url for entry in call.call_args_list), 1)
+            read.side_effect = OSError("blocked")
+            offer = search.search_offers(NAME, "CPU")["offers"][0]
+            self.assertEqual(offer["price"], 250)
+            self.assertFalse(offer["verified"])
+            gemini.__enter__.return_value.read.return_value = selection("")
+            self.assertIsNone(search.search_offers(NAME, "CPU")["offers"][0]["price"])
+            gemini.__enter__.return_value.read.side_effect = OSError("Gemini unavailable")
+            self.assertIsNone(search.search_offers(NAME, "CPU")["offers"][0]["price"])
+            with patch.object(search, "load_key", side_effect=lambda variable="TAVILY_API_KEY": "test" if variable == "TAVILY_API_KEY" else ""):
+                self.assertIsNone(search.search_offers(NAME, "CPU")["offers"][0]["price"])
+
     def test_urls_and_redirect_boundaries(self):
         self.assertEqual(search.product_key("https://alternate.it/old-name/product/123456"), search.product_key("https://alternate.it/new-name/product/123456"))
         self.assertEqual(search.product_key(URL), ("Amazon", "B0TEST1234"))

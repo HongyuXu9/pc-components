@@ -34,6 +34,7 @@ test("all search offers reach the save callback; close aborts late results", asy
   await search.open(part);
   assert.equal(saved.length, 2);
   assert.equal(nodes.get("offerSearchResults").children.length, 2);
+  assert.match(nodes.get("offerSearchResults").children[1].children[2].textContent, /Needs verification/);
   globalThis.fetch = () => new Promise(done => { resolve = done; });
   const pending = search.open(part);
   nodes.get("closeOfferSearch").listeners.click();
