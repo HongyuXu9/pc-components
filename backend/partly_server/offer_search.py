@@ -247,28 +247,61 @@ def search_offers(name, category):
         raise ValueError("Tavily is not configured. Add TAVILY_API_KEY to .env.")
     started = time.monotonic()
     logger.info("Experimental offer search started: provider=Tavily, depth=basic, category=%s", category)
-    payload = {"query": name + " prezzo acquisto Italia EUR nuovo usato", "search_depth": "basic",
-               "auto_parameters": False, "include_domains": list(STORES), "max_results": MAX_CANDIDATES,
-               "include_answer": False, "include_raw_content": False, "include_usage": True}
-    request = urllib.request.Request("https://api.tavily.com/search", data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key}, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=45) as response:
-            raw = response.read(2_000_001)
-            if len(raw) > 2_000_000:
-                raise ValueError("Search response too large")
-            data = json.loads(raw)
-    except urllib.error.HTTPError as error:
-        logger.warning("Tavily search HTTP %s", error.code)
-        raise ValueError(f"Tavily HTTP {error.code}. Check API key, credits and rate limits in Tavily.") from None
-    results = data.get("results")
-    if not isinstance(results, list):
-        raise ValueError("Tavily returned an unreadable search response. No offers were added.")
-    proposed = [item for item in results[:MAX_CANDIDATES] if isinstance(item, dict) and product_key(str(item.get("url", "")))]
-    proposed = [item for item in proposed if exact_identity(name, re.sub(r"\b(usato|used|refurbished|ricondizionato)\b", "", str(item.get("title", "")), flags=re.I))
-                and not re.search(r"\b(pc gaming|desktop|workstation|computer completo|notebook)\b", str(item.get("title", "")), re.I)]
+    # Keep variant details (capacity, speed, suffixes) in every query.
+    model = re.sub(r"\b(?:CPU|GPU|processor|processore|scheda video|memory|memoria|RAM)\b", "", name, flags=re.I)
+    model = " ".join(model.replace('"', " ").split()) or name.strip()
+    kind = {"CPU": "processore", "GPU": "scheda video", "RAM": "memoria", "Storage": "disco", "Cooling": "dissipatore"}.get(category, category)
+    queries = [f'"{model}" prezzo', f"{model} {kind} acquisto", f"{model} usato ricondizionato"]
+    proposed, seen = [], set()
+    for query in queries:
+        payload = {"query": query, "search_depth": "basic",
+                   "auto_parameters": False, "include_domains": list(STORES), "max_results": MAX_CANDIDATES,
+                   "include_answer": False, "include_raw_content": False, "include_usage": True}
+        request = urllib.request.Request("https://api.tavily.com/search", data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json", "Authorization": "Bearer " + key}, method="POST")
+        try:
+            with urllib.request.urlopen(request, timeout=25) as response:
+                raw = response.read(2_000_001)
+                if len(raw) > 2_000_000:
+                    raise ValueError("Search response too large")
+                data = json.loads(raw)
+            results = data.get("results") if isinstance(data, dict) else None
+            if not isinstance(results, list):
+                raise ValueError("Tavily returned an unreadable search response. No offers were added.")
+        except (OSError, ValueError) as error:
+            if proposed:
+                logger.warning("Tavily fallback unavailable; keeping %s candidates", len(proposed))
+                break
+            if isinstance(error, urllib.error.HTTPError):
+                logger.warning("Tavily search HTTP %s", error.code)
+                raise ValueError(f"Tavily HTTP {error.code}. Check API key, credits and rate limits in Tavily.") from None
+            raise
+        logger.info("Tavily query returned %s results, usage=%s", len(results), data.get("usage", {}))
+        for item in results[:MAX_CANDIDATES]:
+            if not isinstance(item, dict):
+                continue
+            identity = product_key(str(item.get("url", "")))
+            title = str(item.get("title", ""))
+            # Generic titles can carry the exact model in the snippet. Never use
+            # snippet text to rescue a title naming a different model/variant.
+            evidence = title if re.search(r"\d", title) else title + " " + str(item.get("content", ""))
+            evidence = re.sub(r"\b(usato|used|refurbished|ricondizionato)\b", "", evidence, flags=re.I)
+            if not identity or not exact_identity(name, evidence):
+                continue
+            if re.search(r"\b(pc gaming|computer completo|desktop pc|workstation completa)\b", title, re.I):
+                continue
+            condition = "Refurbished" if re.search(r"\b(ricondizionato|refurbished)\b", title, re.I) else "Used" if re.search(r"\b(usato|used|seconda mano)\b", title, re.I) else "Unknown"
+            candidate_key = (identity, condition)
+            if candidate_key in seen:
+                continue
+            seen.add(candidate_key)
+            proposed.append(item)
+            if len(proposed) >= MAX_CANDIDATES:
+                break
+        if len(proposed) >= min(5, MAX_OFFERS, MAX_CANDIDATES):
+            break
     proposed = refine_candidates(name, proposed)
-    logger.info("Tavily search returned %s listings, usage=%s", len(proposed), data.get("usage", {}))
+    logger.info("Tavily search selected %s listings", len(proposed))
     offers = []
     sources = {}
     checked = set()

@@ -145,7 +145,7 @@ I file statici sono serviti da `FRONTEND_ROOT` (`frontend/`), indipendentemente 
 
 Premi **Find offers** su un componente Build per cercare su Amazon.it,
 eBay.it e AliExpress.com. Inserisci `TAVILY_API_KEY=la_tua_chiave` nel `.env`
-locale e riavvia Partly. Ogni clic invia una ricerca basic; il consumo restituito
+locale e riavvia Partly. Ogni clic invia fino a tre ricerche basic; il consumo restituito
 dal servizio viene scritto nel log. Gemini supporta screenshot AI e selezione delle offerte.
 
 La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
@@ -177,3 +177,5 @@ La ricerca filtra prima i titoli per modello e variante. Gemini, se configurato,
 Il grafico prolunga l’ultimo prezzo fino a oggi. I giorni senza registrazioni mantengono il prezzo precedente; i cambiamenti sono a gradini. I punti indicano solo registrazioni reali, modificabili con un clic. Non vengono aggiunti dati alla cronologia.
 
 Cerca offerte è disponibile sia in Build sia in Da valutare (wishlist), anche con nomi incompleti. I risultati si salvano nella lista di origine. Anche il grafico wishlist prolunga il prezzo fino a oggi.
+
+La ricerca prova prima il modello esatto tra virgolette. Con meno di cinque inserzioni valide (o del limite configurato per offerte/candidati), prova una query senza virgolette con il tipo di componente, poi una query per usato e ricondizionato. Ogni clic invia al massimo tre richieste Tavily basic, ciascuna con il proprio consumo di crediti. Capacità, velocità e suffissi del modello restano in tutte le query. Per titoli generici si può usare il modello nello snippet; un titolo con variante errata viene scartato. Se un fallback fallisce, conserva i risultati precedenti. Non servono nuove impostazioni o dipendenze.

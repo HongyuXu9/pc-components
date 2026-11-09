@@ -110,6 +110,47 @@ class OfferSearchTests(unittest.TestCase):
             call.side_effect = OSError("unavailable")
             self.assertEqual(search.refine_candidates(NAME, candidates), candidates)
 
+    def test_search_fallback_merges_new_used_and_snippet_identity(self):
+        def response(items):
+            result = unittest.mock.MagicMock()
+            result.__enter__.return_value.read.return_value = json.dumps({"results": items}).encode()
+            return result
+        first = {"title": NAME + " desktop processor", "url": URL}
+        used = {"title": NAME + " usato", "url": "https://ebay.it/itm/123456789012"}
+        generic = {"title": "AMD processor", "content": NAME + " EUR 150", "url": "https://amazon.it/dp/B0OTHER123"}
+        wrong = {"title": "AMD Ryzen 7 9700X3D", "content": NAME, "url": "https://amazon.it/dp/B0WRONG123"}
+        with patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: items), patch.object(search, "read_page", side_effect=OSError("blocked")), patch.object(search.urllib.request, "urlopen", side_effect=[response([first]), response([first, generic, wrong]), response([used])]) as call:
+            result = search.search_offers(NAME, "CPU")
+        self.assertEqual(len(result["offers"]), 3)
+        self.assertIn("Used", {offer["condition"] for offer in result["offers"]})
+        queries = [json.loads(entry.args[0].data)["query"] for entry in call.call_args_list]
+        self.assertEqual(queries[0], '\"AMD Ryzen 7 9700X\" prezzo')
+        self.assertIn("processore", queries[1])
+        self.assertNotIn('"', queries[1])
+        self.assertIn("usato", queries[2])
+        self.assertTrue(all("9700X" in query for query in queries))
+
+    def test_enough_results_skip_fallback_and_ram_query_keeps_variant(self):
+        name = "Corsair DDR5 2x16GB 6000MHz CL36 RAM"
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({"results": [{"title": name, "url": f"https://amazon.it/dp/B0TEST123{i}"} for i in range(8)]}).encode()
+        with patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: items), patch.object(search, "read_page", side_effect=OSError("blocked")), patch.object(search.urllib.request, "urlopen", return_value=response) as call:
+            result = search.search_offers(name, "RAM")
+        self.assertEqual(len(result["offers"]), 8)
+        call.assert_called_once()
+        query = json.loads(call.call_args.args[0].data)["query"]
+        for detail in ["DDR5", "2x16GB", "6000MHz", "CL36"]:
+            self.assertIn(detail, query)
+
+    def test_fallback_failure_keeps_first_results_but_initial_failure_propagates(self):
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({"results": [{"title": NAME, "url": URL}]}).encode()
+        with patch.object(search, "load_key", return_value="test"), patch.object(search, "refine_candidates", side_effect=lambda name, items: items), patch.object(search, "read_page", side_effect=OSError("blocked")), patch.object(search.urllib.request, "urlopen", side_effect=[response, OSError("timeout")]) as call:
+            self.assertEqual(len(search.search_offers(NAME, "CPU")["offers"]), 1)
+            call.side_effect = OSError("initial failure")
+            with self.assertRaises(OSError):
+                search.search_offers(NAME, "CPU")
+
     def test_invalid_request_does_not_search(self):
         class Handler:
             headers = {"Content-Length": "2"}

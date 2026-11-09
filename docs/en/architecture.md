@@ -55,7 +55,7 @@ launcher chain, see [Python server and Windows launcher](python-and-windows-laun
 
 Click **Find offers** on a Build component to search Amazon.it, eBay.it
 and AliExpress.com. Add `TAVILY_API_KEY=your_key` to the local `.env`, then restart
-Partly. Each click sends one basic search request; the API reports credit usage
+Partly. Each click sends up to three basic search requests; the API reports credit usage
 in the log. Gemini supports screenshot recognition and optional offer refinement.
 
 The search adds new product links, including results that need manual checking.
@@ -82,3 +82,5 @@ Search first filters titles by exact model, then uses configured Gemini to selec
 The chart carries the last recorded price through today. Days without records retain the previous price; changes use steps. Dots represent actual editable records only. No synthetic history is saved.
 
 Find offers is available in Build and Watchlist, including incomplete model names. Results save into the originating collection. Watchlist charts also carry prices through today.
+
+Search first uses the exact model in quotes. With fewer than five valid listings (or the configured offer/candidate limit), it tries an unquoted query with a component hint, then a used/refurbished query. There are at most three basic Tavily requests per click, each with its own credit usage. Capacity, speed and model suffixes stay in all queries. Generic titles can use snippet model evidence; a title naming a wrong variant is rejected. A failed fallback keeps earlier results. No new settings or dependencies are needed.
