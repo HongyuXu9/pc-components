@@ -81,7 +81,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
     status.setAttribute("aria-busy", "true");
     modal.classList.add("open");
     $("closeOfferSearch").focus();
-    reportClientIssue("info", "Experimental offer search started", part.name);
+    reportClientIssue("info", "Offer search started", part.name);
     const timer = setTimeout(() => activeController.abort("timeout"), 180_000);
     try {
       const response = await fetch("/api/search-offers", {
@@ -136,7 +136,7 @@ export function createOfferSearch({ addVerifiedOffers, reportClientIssue }) {
       const message = activeController.signal.aborted ? t("Offer search timed out. Retry from the component button.")
         : `${t("Offer search failed; existing offers were not changed.")} ${t(error.message || String(error))}`;
       status.textContent = message;
-      reportClientIssue("warning", message, "Experimental offer search");
+      reportClientIssue("warning", message, "Offer search");
     } finally {
       clearTimeout(timer);
       if (currentGeneration === generation) status.setAttribute("aria-busy", "false");

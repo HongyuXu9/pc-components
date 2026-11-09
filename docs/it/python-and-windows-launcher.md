@@ -152,7 +152,7 @@ La ricerca aggiunge nuovi link, anche quelli da controllare manualmente.
 Non modifica mai prezzo, link o cronologia di un'offerta già salvata. Non aggiunge
 due volte lo stesso prodotto; viene aggiunta una sola offerta per negozio.
 Un risultato è verificato se la pagina conferma modello, prodotto nuovo,
-disponibilità e prezzo in euro. Altrimenti resta da verificare.
+disponibilità e prezzo in euro. Il risultato mostra il prezzo disponibile, altrimenti `undefined`.
 Se manca un prezzo attendibile, salva il link senza prezzo e senza cronologia.
 Queste offerte non incidono sul prezzo minimo della Build. Apri il link e usa
 **Log price** per inserire personalmente il prezzo.

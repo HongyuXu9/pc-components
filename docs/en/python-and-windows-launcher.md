@@ -150,7 +150,7 @@ The search adds new product links, including results that need manual checking.
 It never changes an existing offer's price, link or history. The same product
 link is not added twice; only one offer per store is added.
 A verified result has a matching model and page metadata confirming a new,
-in-stock product with a EUR price. Other results are marked for manual checking.
+in-stock product with a EUR price. Search results display their price when available, otherwise `undefined`.
 When no reliable price is available, the saved offer has no price and an empty
 history. It is excluded from the Build's lowest-price calculation. Open the link
 and use **Log price** to enter the amount yourself.
